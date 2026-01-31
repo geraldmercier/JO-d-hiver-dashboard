@@ -1,0 +1,428 @@
+/* =============================================================
+   FICHIER : styles.css
+   DESCRIPTION : Styles visuels pour tout le projet "JO d'Hiver"
+   
+   ORGANISATION :
+   1. Variables de couleurs (la palette du projet)
+   2. Reset & styles de base
+   3. Page de connexion (Login)
+   4. Styles réutilisables (boutons, cartes, etc.)
+   ============================================================= */
+
+
+/* -------------------------------------------------------------
+   1. VARIABLES DE COULEURS
+   
+   Les "variables CSS" permettent de définir des couleurs une seule
+   fois et de les réutiliser partout. Si vous voulez changer une
+   couleur, vous n'avez à la changer qu'ICI.
+   
+   La syntaxe est : --nom-de-la-variable: valeur;
+   Pour l'utiliser : color: var(--nom-de-la-variable);
+   ------------------------------------------------------------- */
+:root {
+    /* Palette principale — tons hivernaux */
+    --bleu-glace:       #E3F2FD;   /* Bleu très clair — fond général */
+    --bleu-medio:       #BBDEFB;   /* Bleu un peu plus soutenu */
+    --bleu-sombre:      #1565C0;   /* Bleu profond — textes importants */
+    --bleu-tres-sombre: #0D47A1;   /* Bleu très sombre — titres */
+    --blanc:            #FFFFFF;   /* Blanc pur */
+    --argent-clair:     #F8F9FA;   /* Presque blanc — fonds de cartes */
+    --argent:           #DEE2E6;   /* Gris clair — bordures */
+    --gris-texte:       #6C757D;   /* Gris pour textes secondaires */
+
+    /* Accents dynamiques */
+    --orange:           #FF9800;   /* Orange vif — boutons d'action */
+    --orange-hover:     #F57C00;   /* Orange plus sombre — quand on passe dessus */
+    --rouge-erreur:     #F44336;   /* Rouge — messages d'erreur */
+    --vert-succes:      #4CAF50;   /* Vert — messages de succès */
+
+    /* Médailles */
+    --or:               #FFD700;
+    --argent-medaille:  #C0C0C0;
+    --bronze:           #CD7F32;
+
+    /* Ombres */
+    --ombre-carte:      0 2px 12px rgba(0, 0, 0, 0.08);
+    --ombre-carte-hover:0 4px 20px rgba(0, 0, 0, 0.15);
+
+    /* Arrondis */
+    --arrondi-petit:    8px;
+    --arrondi-moyen:    12px;
+    --arrondi-grand:    16px;
+    --arrondi-rond:     50%;
+}
+
+
+/* -------------------------------------------------------------
+   2. RESET & STYLES DE BASE
+   
+   Le "reset" efface les styles par défaut des navigateurs pour
+   que notre site ressemble pareille sur tous les ordinateurs.
+   ------------------------------------------------------------- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;    /* Les dimensions incluent le padding */
+}
+
+body {
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 16px;
+    color: var(--bleu-tres-sombre);
+    background-color: var(--bleu-glace);
+    min-height: 100vh;         /* La page fait au moins la hauteur de l'écran */
+    -webkit-font-smoothing: antialiased;  /* Texte plus lisse sur Mac */
+}
+
+/* Les liens : on retire le soulignement par défaut */
+a {
+    text-decoration: none;
+    color: var(--bleu-sombre);
+}
+a:hover {
+    color: var(--bleu-tres-sombre);
+}
+
+/* Les images ne dépassent jamais leur conteneur */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+
+/* -------------------------------------------------------------
+   3. PAGE DE CONNEXION (LOGIN)
+   
+   Structure visuelle :
+   ┌─────────────────────────────────────┐
+   │         Fond avec motif neige       │
+   │  ┌───────────────────────────────┐  │
+   │  │     Logo + Titre du projet    │  │
+   │  │     ─────────────────────     │  │
+   │  │     Champ : Email             │  │
+   │  │     Bouton : Se Connecter     │  │
+   │  │     Texte : Message d'erreur  │  │
+   │  └───────────────────────────────┘  │
+   └─────────────────────────────────────┘
+   ------------------------------------------------------------- */
+
+/* Le fond de la page de connexion */
+.login-page {
+    min-height: 100vh;
+    display: flex;                  /* On utilise flexbox pour centrer */
+    align-items: center;            /* Centrer verticalement */
+    justify-content: center;        /* Centrer horizontalement */
+    background: linear-gradient(    /* Un dégradé de bleus */
+        160deg,
+        #0D47A1 0%,                 /* Bleu très sombre en haut */
+        #1565C0 40%,                /* Bleu sombre au milieu */
+        #1976D2 70%,                /* Bleu moyen */
+        #42A5F5 100%                /* Bleu clair en bas */
+    );
+    position: relative;
+    overflow: hidden;               /* Cacher ce qui dépasse du bord */
+}
+
+/* Les cercles décératifs en arrière-plan (effect atmosphérique) */
+.login-page::before,
+.login-page::after {
+    content: '';                    /* Créer un élément vide */
+    position: absolute;
+    border-radius: 50%;            /* Forme rond */
+    background: rgba(255, 255, 255, 0.05);  /* Blanc très transparent */
+    pointer-events: none;          /* Ne pas bloquer les clics */
+}
+.login-page::before {
+    width: 500px;
+    height: 500px;
+    top: -150px;
+    right: -100px;
+}
+.login-page::after {
+    width: 350px;
+    height: 350px;
+    bottom: -100px;
+    left: -80px;
+}
+
+/* Petites particules de neige (décoratives) */
+.neige-particule {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: tomber-neige 8s linear infinite;  /* Animation en boucle */
+}
+/* On décale chaque particule pour créer un effet naturel */
+.neige-particule:nth-child(1) { left: 10%;  animation-delay: 0s;   animation-duration: 6s; }
+.neige-particule:nth-child(2) { left: 20%;  animation-delay: 1s;   animation-duration: 8s; }
+.neige-particule:nth-child(3) { left: 35%;  animation-delay: 2s;   animation-duration: 7s; }
+.neige-particule:nth-child(4) { left: 50%;  animation-delay: 0.5s; animation-duration: 9s; }
+.neige-particule:nth-child(5) { left: 65%;  animation-delay: 1.5s; animation-duration: 6s; }
+.neige-particule:nth-child(6) { left: 80%;  animation-delay: 3s;   animation-duration: 8s; }
+.neige-particule:nth-child(7) { left: 90%;  animation-delay: 2.5s; animation-duration: 7s; }
+
+/* L'animation de chute de neige */
+@keyframes tomber-neige {
+    0%   { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 1; }
+    100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+}
+
+/* La carte blanche au centre (le formulaire) */
+.login-carte {
+    background: var(--blanc);
+    border-radius: var(--arrondi-grand);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2);
+    padding: 48px 40px 40px;
+    width: 100%;
+    max-width: 420px;              /* Largeur maximale de la carte */
+    position: relative;            /* Pour que z-index fonctionne */
+    z-index: 1;                    /* En avant des cercles décératifs */
+    animation: apparition 0.6s ease-out;  /* Animation d'apparition */
+}
+
+/* Animation d'apparition de la carte */
+@keyframes apparition {
+    from {
+        opacity: 0;
+        transform: translateY(20px);  /* Part de 20px plus bas */
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);     /* Arrive à sa position normale */
+    }
+}
+
+/* La section du logo et du titre en haut de la carte */
+.login-header {
+    text-align: center;
+    margin-bottom: 36px;
+}
+
+/* L'icône du projet (grande) */
+.login-icone {
+    font-size: 56px;
+    display: block;
+    margin-bottom: 12px;
+    animation: pulse-douce 3s ease-in-out infinite;  /* Pulsation subtle */
+}
+
+/* Animation de pulsation douce */
+@keyframes pulse-douce {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.08); }
+}
+
+/* Le titre principal */
+.login-titre {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--bleu-tres-sombre);
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+}
+
+/* Le sous-titre */
+.login-sous-titre {
+    font-size: 14px;
+    color: var(--gris-texte);
+    font-weight: 400;
+}
+
+/* La ligne séparatrice entre le titre et le formulaire */
+.login-separateur {
+    height: 1px;
+    background: var(--argent);
+    margin: 0 auto 28px;
+    width: 60px;                   /* Trait court au centre */
+}
+
+/* Le groupe d'un label + un champ de saisie */
+.groupe-champ {
+    margin-bottom: 20px;
+}
+
+/* Le label (texte au-dessus du champ) */
+.groupe-champ label {
+    display: block;                /* Sur sa propre ligne */
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--bleu-sombre);
+    margin-bottom: 8px;
+    letter-spacing: 0.3px;
+}
+
+/* Le champ de saisie (input) */
+.groupe-champ input {
+    width: 100%;                   /* Prend toute la largeur disponible */
+    padding: 14px 16px;
+    border: 2px solid var(--argent);
+    border-radius: var(--arrondi-petit);
+    font-size: 15px;
+    font-family: inherit;          /* Même police que le reste */
+    color: var(--bleu-tres-sombre);
+    background: var(--argent-clair);
+    transition: all 0.2s ease;     /* Transition douce sur les changements */
+    outline: none;                 /* Retirer le contour par défaut */
+}
+
+/* Quand le champ est actif (on clique dessus) */
+.groupe-champ input:focus {
+    border-color: var(--bleu-sombre);
+    background: var(--blanc);
+    box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.15);  /* Lueur bleue */
+}
+
+/* Le texte gris dans le champ quand il est vide (placeholder) */
+.groupe-champ input::placeholder {
+    color: var(--gris-texte);
+    opacity: 0.7;
+}
+
+/* Le bouton principal "Se Connecter" */
+.btn-connexion {
+    width: 100%;                   /* Toute la largeur */
+    padding: 15px;
+    background: var(--orange);
+    color: var(--blanc);
+    border: none;                  /* Pas de bordure */
+    border-radius: var(--arrondi-petit);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;               /* Le curseur devient une main */
+    transition: all 0.2s ease;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+/* Quand on passe la souris sur le bouton */
+.btn-connexion:hover {
+    background: var(--orange-hover);
+    transform: translateY(-1px);   /* Légère élévation */
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+}
+
+/* Quand on clique sur le bouton */
+.btn-connexion:active {
+    transform: translateY(0);      /* Retour en place */
+    box-shadow: none;
+}
+
+/* Le bouton quand il est désactivé (en cours de chargement) */
+.btn-connexion:disabled {
+    background: var(--argent);
+    cursor: not-allowed;           /* Curseur interdit */
+    transform: none;
+    box-shadow: none;
+}
+
+/* Le spinner (cercle qui tourne) quand on attend */
+.spinner {
+    display: none;                 /* Caché par défaut */
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: var(--blanc);
+    border-radius: 50%;
+    animation: tourner 0.6s linear infinite;
+    margin: 0 auto;
+}
+.spinner.actif {
+    display: block;                /* Affiché quand on ajoute la classe "actif" */
+}
+@keyframes tourner {
+    to { transform: rotate(360deg); }
+}
+
+/* Le message d'erreur (rouge, caché par défaut) */
+.message-erreur {
+    display: none;                 /* Caché par défaut */
+    background: #FFEBEE;           /* Fond rouge très clair */
+    border: 1px solid #FFCDD2;
+    border-radius: var(--arrondi-petit);
+    padding: 12px 14px;
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--rouge-erreur);
+    text-align: center;
+    animation: secouer 0.4s ease;  /* Petit secouement pour attirer l'attention */
+}
+.message-erreur.visible {
+    display: block;                /* Affiché quand on ajoute "visible" */
+}
+
+/* Animation de secouement pour les erreurs */
+@keyframes secouer {
+    0%, 100% { transform: translateX(0); }
+    25%      { transform: translateX(-6px); }
+    75%      { transform: translateX(6px); }
+}
+
+/* Le texte en bas de la carte (information) */
+.login-info {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 12px;
+    color: var(--gris-texte);
+    line-height: 1.5;
+}
+
+/* Le texte avec le drapeau des équipes en bas */
+.login-equipes {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 22px;
+    letter-spacing: 6px;
+    opacity: 0.8;
+}
+
+
+/* -------------------------------------------------------------
+   4. STYLES RÉUTILISABLES
+   
+   Ces styles pourront être utilisés sur d'autres pages aussi.
+   ------------------------------------------------------------- */
+
+/* Une carte générique (sera utilisée dans le dashboard) */
+.carte {
+    background: var(--blanc);
+    border-radius: var(--arrondi-moyen);
+    box-shadow: var(--ombre-carte);
+    padding: 20px;
+    transition: box-shadow 0.2s ease;
+}
+.carte:hover {
+    box-shadow: var(--ombre-carte-hover);
+}
+
+/* Un titre de section */
+.titre-section {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--bleu-tres-sombre);
+    margin-bottom: 16px;
+}
+
+
+/* -------------------------------------------------------------
+   5. RESPONSIVE — Adaptation pour les petits écrans
+   
+   @media signifie : "si l'écran est plus petit que X pixels"
+   On ajuste alors le design pour qu'il reste lisible.
+   ------------------------------------------------------------- */
+@media (max-width: 480px) {
+    .login-carte {
+        margin: 20px;
+        padding: 36px 24px 32px;
+    }
+    .login-titre {
+        font-size: 22px;
+    }
+}
