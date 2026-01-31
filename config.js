@@ -11,11 +11,11 @@ const SUPABASE_CONFIG = {
 
     // Votre URL de projet Supabase
     // Exemple : https://abcdefghijk.supabase.co
-    URL: https://zmzwuutqyxgwjcbifpfq.supabase.co,
+    URL: "https://zmzwuutqyxgwjcbifpfq.supabase.co",
 
     // Votre clé API "anon" (la clé publique)
     // Elle ressemble à : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-    KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inptend1dXRxeXhnd2pjYmlmcGZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4NDI0OTAsImV4cCI6MjA4NTQxODQ5MH0.yJvJf71P3frQhhTgmKx5vLCz6NGP-_YQfQuyU-G8E3M
+    KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inptend1dXRxeXhnd2pjYmlmcGZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4NDI0OTAsImV4cCI6MjA4NTQxODQ5MH0.yJvJf71P3frQhhTgmKx5vLCz6NGP-_YQfQuyU-G8E3M"
 
 };
 
