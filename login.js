@@ -131,9 +131,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const { data, error } = await supabase.auth.signInWithOtp({
                 email: emailSaisi,
                 options: {
-                    emailRedirectTo: window.location.origin + '/dashboard.html'
-                    // Quand l'utilisateur clique le lien dans l'email,
-                    // il sera redirigé vers dashboard.html (qu'on créera plus tard)
+                    // On redirige vers une page de vérification qui décidera où aller
+                    emailRedirectTo: window.location.origin + '/auth-callback.html'
                 }
             });
 

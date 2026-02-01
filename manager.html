@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<!--
+    =============================================================
+    FICHIER : manager.html
+    PROJET  : JO d'Hiver — Dashboard Commercial
+    PAGE    : Dashboard Manager (vue équipe)
+    =============================================================
+-->
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>👔 Dashboard Manager — JO d'Hiver</title>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="manager.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="manager-body">
+
+    <!-- =============================================================
+         HEADER MANAGER
+         ============================================================= -->
+    <header class="manager-header">
+        <div class="header-container">
+            
+            <!-- Logo -->
+            <div class="header-logo">
+                <span class="logo-icon">🏔️</span>
+                <div class="logo-text">
+                    <h1>JO d'Hiver 2026</h1>
+                    <p>Dashboard Manager</p>
+                </div>
+            </div>
+
+            <!-- Info Manager -->
+            <div class="header-manager">
+                <div class="manager-avatar">
+                    <img src="https://ui-avatars.com/api/?name=Sophie+Martin&background=002395&color=fff&size=80" 
+                         alt="Avatar" id="avatar-manager">
+                </div>
+                <div class="manager-info">
+                    <h2 id="nom-manager">Sophie Martin</h2>
+                    <p id="equipe-manager">Manager — Équipe France 🇫🇷</p>
+                </div>
+                <div class="manager-stats">
+                    <div class="stat-equipe">
+                        <span class="stat-valeur" id="score-equipe">1,247</span>
+                        <span class="stat-label">pts équipe</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-notif" id="btn-notifications">
+                        🔔
+                        <span class="notif-badge" id="notif-count">3</span>
+                    </button>
+                    <button class="btn-deconnexion" id="btn-deconnexion">
+                        🚪 Déconnexion
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- =============================================================
+         CONTENU PRINCIPAL
+         ============================================================= -->
+    <main class="manager-main">
+        <div class="manager-container">
+
+            <!-- SECTION VALIDATION CONTRATS (Priorité haute) -->
+            <section class="section-validation">
+                <div class="section-header">
+                    <h2 class="section-titre">⚠️ Contrats en attente de validation</h2>
+                    <span class="badge-count" id="contrats-attente-count">3</span>
+                </div>
+
+                <!-- Liste des contrats en attente -->
+                <div class="contrats-validation-liste" id="contrats-validation-liste">
+                    <!-- Chargés dynamiquement par JS -->
+                    <div class="contrat-validation-item">
+                        <div class="contrat-validation-info">
+                            <div class="contrat-type-badge">📞 Telco</div>
+                            <div class="contrat-details">
+                                <div class="contrat-agent">Gerald Mercier (Mover)</div>
+                                <div class="contrat-date">Aujourd'hui à 14:32</div>
+                            </div>
+                        </div>
+                        <div class="contrat-validation-actions">
+                            <button class="btn-lien" onclick="ouvrirLien('https://salesforce.com/12345')">
+                                🔗 Voir piste
+                            </button>
+                            <button class="btn-valider" onclick="validerContrat('c1')">
+                                ✅ Valider
+                            </button>
+                            <button class="btn-rejeter" onclick="rejeterContrat('c1')">
+                                ❌ Rejeter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message si aucun contrat -->
+                <div class="aucun-contrat" id="aucun-contrat" style="display: none;">
+                    ✅ Tous les contrats sont validés ! Excellent travail.
+                </div>
+            </section>
+
+            <!-- STATISTIQUES ÉQUIPE -->
+            <section class="section-stats">
+                <div class="stats-grid">
+                    
+                    <!-- Position équipe -->
+                    <div class="stat-carte">
+                        <div class="stat-icone">🏆</div>
+                        <div class="stat-contenu">
+                            <div class="stat-label">Position</div>
+                            <div class="stat-valeur" id="position-equipe">2ème</div>
+                            <div class="stat-detail">sur 5 équipes</div>
+                        </div>
+                    </div>
+
+                    <!-- Agents actifs -->
+                    <div class="stat-carte">
+                        <div class="stat-icone">👥</div>
+                        <div class="stat-contenu">
+                            <div class="stat-label">Agents</div>
+                            <div class="stat-valeur" id="agents-actifs">10/10</div>
+                            <div class="stat-detail">actifs</div>
+                        </div>
+                    </div>
+
+                    <!-- Moyenne -->
+                    <div class="stat-carte">
+                        <div class="stat-icone">📊</div>
+                        <div class="stat-contenu">
+                            <div class="stat-label">Moyenne</div>
+                            <div class="stat-valeur" id="score-moyen">124.7</div>
+                            <div class="stat-detail">pts par agent</div>
+                        </div>
+                    </div>
+
+                    <!-- Contrats validés -->
+                    <div class="stat-carte">
+                        <div class="stat-icone">✅</div>
+                        <div class="stat-contenu">
+                            <div class="stat-label">Contrats</div>
+                            <div class="stat-valeur" id="contrats-valides">127</div>
+                            <div class="stat-detail">validés</div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- PERFORMANCE PAR CELLULE -->
+            <section class="section-cellules">
+                <h2 class="section-titre">📊 Performance par Cellule</h2>
+                
+                <div class="cellules-grid" id="cellules-grid">
+                    <!-- Chargées dynamiquement par JS -->
+                </div>
+            </section>
+
+            <!-- TABLEAU DÉTAILLÉ DES AGENTS -->
+            <section class="section-agents">
+                <div class="section-header">
+                    <h2 class="section-titre">📋 Tous les Agents de l'Équipe</h2>
+                    <div class="section-actions">
+                        <select id="filtre-cellule" class="filtre-select">
+                            <option value="">Toutes les cellules</option>
+                            <option value="Mover">Movers</option>
+                            <option value="Switcher">Switchers</option>
+                            <option value="Coach">Coachs</option>
+                            <option value="Pépinière">Pépinière</option>
+                        </select>
+                        <button class="btn-export" onclick="exporterCSV()">
+                            📥 Exporter CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tableau -->
+                <div class="tableau-container">
+                    <table class="tableau-agents" id="tableau-agents">
+                        <thead>
+                            <tr>
+                                <th onclick="trierTableau('nom')">Agent</th>
+                                <th onclick="trierTableau('cellule')">Cellule</th>
+                                <th onclick="trierTableau('score')">Score</th>
+                                <th onclick="trierTableau('global')">Rang Global</th>
+                                <th onclick="trierTableau('equipe')">Rang Équipe</th>
+                                <th onclick="trierTableau('cellule-rang')">Rang Cellule</th>
+                                <th>Contrats</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableau-agents-body">
+                            <!-- Chargé dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- CALENDRIER ÉQUIPE -->
+            <section class="section-calendrier">
+                <h2 class="section-titre">📅 Performance Quotidienne de l'Équipe</h2>
+                <div class="calendrier-equipe-grid" id="calendrier-equipe-grid">
+                    <!-- Chargé dynamiquement -->
+                </div>
+            </section>
+
+            <!-- ACTIONS RAPIDES -->
+            <section class="section-actions-rapides">
+                <h2 class="section-titre">⚡ Actions Rapides</h2>
+                <div class="actions-grid">
+                    <button class="action-btn" onclick="ouvrirModalPoints()">
+                        <span class="action-icone">➕</span>
+                        <span class="action-texte">Attribuer Points Bonus</span>
+                    </button>
+                    <button class="action-btn" onclick="ouvrirModalBadge()">
+                        <span class="action-icone">🏅</span>
+                        <span class="action-texte">Débloquer un Badge</span>
+                    </button>
+                    <button class="action-btn" onclick="genererRapport()">
+                        <span class="action-icone">📊</span>
+                        <span class="action-texte">Rapport Détaillé</span>
+                    </button>
+                    <button class="action-btn" onclick="envoyerNotification()">
+                        <span class="action-icone">📢</span>
+                        <span class="action-texte">Notification Équipe</span>
+                    </button>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- =============================================================
+         MODALS
+         ============================================================= -->
+
+    <!-- Modal Attribution Points -->
+    <div class="modal" id="modal-points">
+        <div class="modal-overlay" onclick="fermerModal('modal-points')"></div>
+        <div class="modal-contenu">
+            <h3>➕ Attribuer des Points Bonus</h3>
+            <form id="form-points" onsubmit="return soumettrePoints(event)">
+                <div class="form-groupe">
+                    <label>Agent :</label>
+                    <select id="select-agent-points" required>
+                        <option value="">-- Sélectionner un agent --</option>
+                    </select>
+                </div>
+                <div class="form-groupe">
+                    <label>Points (positif ou négatif) :</label>
+                    <input type="number" id="input-points" placeholder="Ex: 10 ou -5" required>
+                </div>
+                <div class="form-groupe">
+                    <label>Raison :</label>
+                    <textarea id="textarea-raison" rows="3" placeholder="Expliquez la raison..." required></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="fermerModal('modal-points')">Annuler</button>
+                    <button type="submit" class="btn-primary">Confirmer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Badge -->
+    <div class="modal" id="modal-badge">
+        <div class="modal-overlay" onclick="fermerModal('modal-badge')"></div>
+        <div class="modal-contenu">
+            <h3>🏅 Débloquer un Badge</h3>
+            <form id="form-badge" onsubmit="return soumettreB adge(event)">
+                <div class="form-groupe">
+                    <label>Agent :</label>
+                    <select id="select-agent-badge" required>
+                        <option value="">-- Sélectionner un agent --</option>
+                    </select>
+                </div>
+                <div class="form-groupe">
+                    <label>Badge :</label>
+                    <select id="select-badge" required>
+                        <option value="">-- Sélectionner un badge --</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="fermerModal('modal-badge')">Annuler</button>
+                    <button type="submit" class="btn-primary">Débloquer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =============================================================
+         SCRIPTS
+         ============================================================= -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="manager.js"></script>
+
+</body>
+</html>

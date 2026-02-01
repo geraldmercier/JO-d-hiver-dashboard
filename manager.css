@@ -1,0 +1,832 @@
+/* =============================================================
+   FICHIER : manager.css
+   DESCRIPTION : Styles pour le Dashboard Manager
+   
+   SECTIONS :
+   1. Layout général
+   2. Header manager
+   3. Section validation de contrats
+   4. Statistiques équipe
+   5. Performance par cellule
+   6. Tableau des agents
+   7. Calendrier équipe
+   8. Actions rapides
+   9. Modals
+   10. Responsive
+   ============================================================= */
+
+
+/* -------------------------------------------------------------
+   1. LAYOUT GÉNÉRAL
+   ------------------------------------------------------------- */
+.manager-body {
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+    background: #F5F7FA;
+    min-height: 100vh;
+    padding-top: 100px;
+}
+
+.manager-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+
+/* -------------------------------------------------------------
+   2. HEADER MANAGER
+   ------------------------------------------------------------- */
+.manager-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: var(--blanc);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    z-index: 100;
+}
+
+.header-manager {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.manager-avatar {
+    width: 60px;
+    height: 60px;
+}
+
+.manager-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 3px solid var(--bleu-sombre);
+}
+
+.manager-info h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--bleu-tres-sombre);
+    margin: 0 0 4px 0;
+}
+
+.manager-info p {
+    font-size: 13px;
+    color: var(--gris-texte);
+    margin: 0;
+}
+
+.manager-stats {
+    padding: 0 20px;
+    border-left: 1px solid var(--argent);
+}
+
+.stat-equipe {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stat-valeur {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--bleu-sombre);
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: var(--gris-texte);
+    text-transform: uppercase;
+}
+
+
+/* -------------------------------------------------------------
+   3. SECTION VALIDATION DE CONTRATS
+   ------------------------------------------------------------- */
+.section-validation {
+    background: #FFF3E0;
+    border: 2px solid var(--orange);
+    border-radius: var(--arrondi-moyen);
+    padding: 24px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-titre {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--bleu-tres-sombre);
+    margin: 0;
+}
+
+.badge-count {
+    background: var(--orange);
+    color: var(--blanc);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.contrats-validation-liste {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.contrat-validation-item {
+    background: var(--blanc);
+    border-radius: var(--arrondi-petit);
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease;
+}
+
+.contrat-validation-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.contrat-validation-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+}
+
+.contrat-type-badge {
+    background: var(--bleu-sombre);
+    color: var(--blanc);
+    padding: 8px 16px;
+    border-radius: var(--arrondi-petit);
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.contrat-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.contrat-agent {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--bleu-tres-sombre);
+}
+
+.contrat-date {
+    font-size: 13px;
+    color: var(--gris-texte);
+}
+
+.contrat-validation-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-lien {
+    padding: 10px 16px;
+    background: var(--bleu-glace);
+    color: var(--bleu-sombre);
+    border: none;
+    border-radius: var(--arrondi-petit);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-lien:hover {
+    background: var(--bleu-medio);
+}
+
+.btn-valider {
+    padding: 10px 20px;
+    background: var(--vert-succes);
+    color: var(--blanc);
+    border: none;
+    border-radius: var(--arrondi-petit);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-valider:hover {
+    background: #45a049;
+    transform: scale(1.05);
+}
+
+.btn-rejeter {
+    padding: 10px 20px;
+    background: var(--rouge-erreur);
+    color: var(--blanc);
+    border: none;
+    border-radius: var(--arrondi-petit);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-rejeter:hover {
+    background: #d32f2f;
+    transform: scale(1.05);
+}
+
+.aucun-contrat {
+    text-align: center;
+    padding: 40px;
+    color: var(--vert-succes);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+
+/* -------------------------------------------------------------
+   4. STATISTIQUES ÉQUIPE
+   ------------------------------------------------------------- */
+.section-stats {
+    background: var(--blanc);
+    border-radius: var(--arrondi-moyen);
+    padding: 24px;
+    box-shadow: var(--ombre-carte);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.stat-carte {
+    background: var(--bleu-glace);
+    border-radius: var(--arrondi-petit);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.2s ease;
+}
+
+.stat-carte:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icone {
+    font-size: 36px;
+}
+
+.stat-contenu {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-carte .stat-label {
+    font-size: 12px;
+    color: var(--gris-texte);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.stat-carte .stat-valeur {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--bleu-tres-sombre);
+    line-height: 1;
+}
+
+.stat-carte .stat-detail {
+    font-size: 13px;
+    color: var(--gris-texte);
+    margin-top: 4px;
+}
+
+
+/* -------------------------------------------------------------
+   5. PERFORMANCE PAR CELLULE
+   ------------------------------------------------------------- */
+.section-cellules {
+    background: var(--blanc);
+    border-radius: var(--arrondi-moyen);
+    padding: 24px;
+    box-shadow: var(--ombre-carte);
+}
+
+.cellules-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.cellule-block {
+    background: var(--argent-clair);
+    border-radius: var(--arrondi-petit);
+    padding: 20px;
+}
+
+.cellule-block-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--argent);
+}
+
+.cellule-block-titre {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--bleu-tres-sombre);
+}
+
+.cellule-block-moyenne {
+    font-size: 14px;
+    color: var(--gris-texte);
+}
+
+.cellule-agents-liste {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cellule-agent-item {
+    background: var(--blanc);
+    border-radius: var(--arrondi-petit);
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cellule-agent-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.cellule-agent-rang {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gris-texte);
+    width: 30px;
+}
+
+.cellule-agent-nom {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--bleu-tres-sombre);
+}
+
+.cellule-agent-score {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--bleu-sombre);
+}
+
+.cellule-agent-global {
+    font-size: 12px;
+    color: var(--gris-texte);
+}
+
+
+/* -------------------------------------------------------------
+   6. TABLEAU DES AGENTS
+   ------------------------------------------------------------- */
+.section-agents {
+    background: var(--blanc);
+    border-radius: var(--arrondi-moyen);
+    padding: 24px;
+    box-shadow: var(--ombre-carte);
+}
+
+.section-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.filtre-select {
+    padding: 10px 16px;
+    border: 2px solid var(--argent);
+    border-radius: var(--arrondi-petit);
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.btn-export {
+    padding: 10px 20px;
+    background: var(--bleu-sombre);
+    color: var(--blanc);
+    border: none;
+    border-radius: var(--arrondi-petit);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-export:hover {
+    background: var(--bleu-tres-sombre);
+}
+
+.tableau-container {
+    overflow-x: auto;
+    margin-top: 20px;
+}
+
+.tableau-agents {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tableau-agents thead {
+    background: var(--bleu-glace);
+}
+
+.tableau-agents th {
+    padding: 14px 12px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--bleu-tres-sombre);
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.tableau-agents th:hover {
+    background: var(--bleu-medio);
+}
+
+.tableau-agents td {
+    padding: 14px 12px;
+    border-bottom: 1px solid var(--argent);
+    font-size: 14px;
+}
+
+.tableau-agents tbody tr:hover {
+    background: var(--bleu-glace);
+}
+
+.agent-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.agent-avatar {
+    font-size: 28px;
+}
+
+.agent-nom {
+    font-weight: 600;
+    color: var(--bleu-tres-sombre);
+}
+
+.cellule-badge {
+    background: var(--orange);
+    color: var(--blanc);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.score-cell {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--bleu-sombre);
+}
+
+.rang-cell {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.contrats-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.contrats-valides {
+    color: var(--vert-succes);
+    font-weight: 600;
+}
+
+.contrats-attente {
+    color: var(--orange);
+    font-weight: 600;
+}
+
+.btn-action-agent {
+    padding: 6px 12px;
+    background: var(--bleu-glace);
+    color: var(--bleu-sombre);
+    border: none;
+    border-radius: var(--arrondi-petit);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-action-agent:hover {
+    background: var(--bleu-sombre);
+    color: var(--blanc);
+}
+
+
+/* -------------------------------------------------------------
+   7. CALENDRIER ÉQUIPE
+   ------------------------------------------------------------- */
+.section-calendrier {
+    background: var(--blanc);
+    border-radius: var(--arrondi-moyen);
+    padding: 24px;
+    box-shadow: var(--ombre-carte);
+}
+
+.calendrier-equipe-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.jour-equipe-item {
+    background: var(--argent-clair);
+    border-radius: var(--arrondi-petit);
+    padding: 16px;
+    text-align: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.jour-equipe-item:hover {
+    background: var(--bleu-glace);
+    transform: translateY(-2px);
+}
+
+.jour-equipe-item.actif {
+    background: var(--orange);
+    color: var(--blanc);
+}
+
+.jour-equipe-date {
+    font-size: 12px;
+    margin-bottom: 8px;
+    opacity: 0.8;
+}
+
+.jour-equipe-score {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.jour-equipe-medaille {
+    font-size: 24px;
+}
+
+
+/* -------------------------------------------------------------
+   8. ACTIONS RAPIDES
+   ------------------------------------------------------------- */
+.section-actions-rapides {
+    background: var(--blanc);
+    border-radius: var(--arrondi-moyen);
+    padding: 24px;
+    box-shadow: var(--ombre-carte);
+}
+
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.action-btn {
+    background: var(--bleu-glace);
+    border: 2px solid var(--bleu-medio);
+    border-radius: var(--arrondi-petit);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+    background: var(--bleu-sombre);
+    color: var(--blanc);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.action-icone {
+    font-size: 36px;
+}
+
+.action-texte {
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+}
+
+
+/* -------------------------------------------------------------
+   9. MODALS
+   ------------------------------------------------------------- */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-contenu {
+    position: relative;
+    background: var(--blanc);
+    border-radius: var(--arrondi-moyen);
+    padding: 32px;
+    width: 90%;
+    max-width: 500px;
+    z-index: 1001;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-contenu h3 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--bleu-tres-sombre);
+    margin: 0 0 24px 0;
+}
+
+.form-groupe {
+    margin-bottom: 20px;
+}
+
+.form-groupe label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--bleu-sombre);
+    margin-bottom: 8px;
+}
+
+.form-groupe input,
+.form-groupe select,
+.form-groupe textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid var(--argent);
+    border-radius: var(--arrondi-petit);
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.form-groupe input:focus,
+.form-groupe select:focus,
+.form-groupe textarea:focus {
+    outline: none;
+    border-color: var(--bleu-sombre);
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+
+.btn-secondary {
+    padding: 12px 24px;
+    background: var(--gris-texte);
+    color: var(--blanc);
+    border: none;
+    border-radius: var(--arrondi-petit);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-primary {
+    padding: 12px 24px;
+    background: var(--orange);
+    color: var(--blanc);
+    border: none;
+    border-radius: var(--arrondi-petit);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+
+/* -------------------------------------------------------------
+   10. RESPONSIVE
+   ------------------------------------------------------------- */
+@media (max-width: 1200px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .cellules-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .manager-header {
+        height: auto;
+        padding: 16px;
+    }
+    
+    .header-manager {
+        flex-wrap: wrap;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .contrat-validation-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .contrat-validation-actions {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    
+    .calendrier-equipe-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .actions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .tableau-container {
+        overflow-x: scroll;
+    }
+}

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<!--
+    =============================================================
+    FICHIER : onboarding.html
+    PROJET  : JO d'Hiver — Dashboard Commercial
+    PAGE    : Onboarding (première connexion)
+    
+    ÉTAPES :
+    1. Bienvenue
+    2. Choix de l'avatar
+    3. Choix du manager (détermine l'équipe automatiquement)
+    4. Choix de la cellule
+    =============================================================
+-->
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>🏔️ Configuration du profil — JO d'Hiver</title>
+
+    <!-- Les fichiers CSS -->
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="onboarding.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="onboarding-body">
+
+    <!-- Fond animé avec particules de neige -->
+    <div class="neige-particule"></div>
+    <div class="neige-particule"></div>
+    <div class="neige-particule"></div>
+    <div class="neige-particule"></div>
+    <div class="neige-particule"></div>
+
+    <!-- =============================================================
+         CONTAINER PRINCIPAL
+         ============================================================= -->
+    <div class="onboarding-container">
+
+        <!-- Indicateur de progression (étapes) -->
+        <div class="progress-steps" id="progress-steps">
+            <div class="step active" data-step="1">
+                <div class="step-number">1</div>
+                <div class="step-label">Bienvenue</div>
+            </div>
+            <div class="step" data-step="2">
+                <div class="step-number">2</div>
+                <div class="step-label">Avatar</div>
+            </div>
+            <div class="step" data-step="3">
+                <div class="step-number">3</div>
+                <div class="step-label">Manager</div>
+            </div>
+            <div class="step" data-step="4">
+                <div class="step-number">4</div>
+                <div class="step-label">Cellule</div>
+            </div>
+        </div>
+
+        <!-- Carte principale contenant toutes les étapes -->
+        <div class="onboarding-carte">
+
+            <!-- =============================================================
+                 ÉTAPE 1 : BIENVENUE
+                 ============================================================= -->
+            <div class="etape active" id="etape-1">
+                <div class="etape-icone">🏔️</div>
+                <h1 class="etape-titre">Bienvenue au Challenge JO d'Hiver 2026 !</h1>
+                <p class="etape-description">
+                    Bonjour <strong id="nom-utilisateur">Agent</strong> ! 👋<br><br>
+                    Avant de commencer le challenge, configurons votre profil en quelques étapes simples.
+                    Cela ne prendra que 2 minutes !
+                </p>
+                <button class="btn-onboarding btn-primary" onclick="allerEtape(2)">
+                    Commencer →
+                </button>
+            </div>
+
+            <!-- =============================================================
+                 ÉTAPE 2 : CHOIX DE L'AVATAR
+                 ============================================================= -->
+            <div class="etape" id="etape-2">
+                <h2 class="etape-titre">Choisissez votre avatar</h2>
+                <p class="etape-description">
+                    Sélectionnez l'avatar qui vous représentera durant le challenge
+                </p>
+
+                <!-- Grille des avatars (remplie dynamiquement par JS) -->
+                <div class="avatars-grid" id="avatars-grid">
+                    <!-- Les avatars sont insérés ici par JavaScript -->
+                </div>
+
+                <!-- Message si aucun avatar sélectionné -->
+                <div class="erreur-message" id="erreur-avatar">
+                    ⚠️ Veuillez choisir un avatar
+                </div>
+
+                <!-- Boutons navigation -->
+                <div class="btn-group">
+                    <button class="btn-onboarding btn-secondary" onclick="allerEtape(1)">
+                        ← Retour
+                    </button>
+                    <button class="btn-onboarding btn-primary" onclick="validerAvatar()">
+                        Continuer →
+                    </button>
+                </div>
+            </div>
+
+            <!-- =============================================================
+                 ÉTAPE 3 : CHOIX DU MANAGER
+                 ============================================================= -->
+            <div class="etape" id="etape-3">
+                <h2 class="etape-titre">👔 Qui est votre manager ?</h2>
+                <p class="etape-description">
+                    Sélectionnez votre manager. Vous serez automatiquement affecté à son équipe.
+                </p>
+
+                <!-- Menu déroulant des managers -->
+                <div class="form-groupe-onboarding">
+                    <label for="select-manager">Manager :</label>
+                    <select id="select-manager" class="select-onboarding">
+                        <option value="">-- Choisissez votre manager --</option>
+                        <!-- Les managers sont chargés dynamiquement par JS -->
+                    </select>
+                </div>
+
+                <!-- Affichage de l'équipe automatique -->
+                <div class="info-equipe" id="info-equipe" style="display: none;">
+                    <div class="info-equipe-icone">ℹ️</div>
+                    <div class="info-equipe-texte">
+                        Vous serez affecté à l'équipe : 
+                        <strong id="nom-equipe-affectee"></strong> 
+                        <span id="drapeau-equipe-affectee"></span>
+                    </div>
+                </div>
+
+                <!-- Message si aucun manager sélectionné -->
+                <div class="erreur-message" id="erreur-manager">
+                    ⚠️ Veuillez choisir votre manager
+                </div>
+
+                <!-- Boutons navigation -->
+                <div class="btn-group">
+                    <button class="btn-onboarding btn-secondary" onclick="allerEtape(2)">
+                        ← Retour
+                    </button>
+                    <button class="btn-onboarding btn-primary" onclick="validerManager()">
+                        Continuer →
+                    </button>
+                </div>
+            </div>
+
+            <!-- =============================================================
+                 ÉTAPE 4 : CHOIX DE LA CELLULE
+                 ============================================================= -->
+            <div class="etape" id="etape-4">
+                <h2 class="etape-titre">📊 Quelle est votre cellule ?</h2>
+                <p class="etape-description">
+                    Votre cellule détermine les objectifs de performance que vous devrez atteindre
+                </p>
+
+                <!-- Grille des 4 cellules -->
+                <div class="cellules-grid">
+                    
+                    <!-- Cellule Mover -->
+                    <div class="cellule-carte" data-cellule="Mover" onclick="selectionnerCellule('Mover')">
+                        <div class="cellule-icone">📞</div>
+                        <h3 class="cellule-nom">Mover</h3>
+                        <p class="cellule-description">
+                            <strong>KPI :</strong> Taux de Rétention (TR)<br>
+                            <strong>Objectif Ski de Fond :</strong> TR %<br>
+                            <strong>Contrats :</strong> Telco, MRH
+                        </p>
+                    </div>
+
+                    <!-- Cellule Switcher -->
+                    <div class="cellule-carte" data-cellule="Switcher" onclick="selectionnerCellule('Switcher')">
+                        <div class="cellule-icone">📱</div>
+                        <h3 class="cellule-nom">Switcher</h3>
+                        <p class="cellule-description">
+                            <strong>KPI :</strong> Volume Homeserve<br>
+                            <strong>Objectif Ski de Fond :</strong> Quantité<br>
+                            <strong>Contrats :</strong> Mobile, Compensation Carbone
+                        </p>
+                    </div>
+
+                    <!-- Cellule Coach -->
+                    <div class="cellule-carte" data-cellule="Coach" onclick="selectionnerCellule('Coach')">
+                        <div class="cellule-icone">⭐</div>
+                        <h3 class="cellule-nom">Coach</h3>
+                        <p class="cellule-description">
+                            <strong>KPI :</strong> Volume Premium<br>
+                            <strong>Objectif Ski de Fond :</strong> Quantité<br>
+                            <strong>Contrats :</strong> Premium
+                        </p>
+                    </div>
+
+                    <!-- Cellule Pépinière -->
+                    <div class="cellule-carte" data-cellule="Pépinière" onclick="selectionnerCellule('Pépinière')">
+                        <div class="cellule-icone">🌱</div>
+                        <h3 class="cellule-nom">Pépinière</h3>
+                        <p class="cellule-description">
+                            <strong>KPI :</strong> Volume de contrats<br>
+                            <strong>Objectif Ski de Fond :</strong> Quantité totale<br>
+                            <strong>Contrats :</strong> Tous types
+                        </p>
+                    </div>
+
+                </div>
+
+                <!-- Message si aucune cellule sélectionnée -->
+                <div class="erreur-message" id="erreur-cellule">
+                    ⚠️ Veuillez choisir votre cellule
+                </div>
+
+                <!-- Boutons navigation -->
+                <div class="btn-group">
+                    <button class="btn-onboarding btn-secondary" onclick="allerEtape(3)">
+                        ← Retour
+                    </button>
+                    <button class="btn-onboarding btn-primary" onclick="terminerOnboarding()">
+                        <span id="btn-terminer-texte">Terminer et accéder au dashboard →</span>
+                        <div class="spinner-small" id="spinner-terminer"></div>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Logo en bas -->
+        <div class="onboarding-footer">
+            <p>Challenge Commercial JO d'Hiver 2026 🏔️</p>
+        </div>
+
+    </div>
+
+
+    <!-- =============================================================
+         SCRIPTS JAVASCRIPT
+         ============================================================= -->
+    
+    <!-- Bibliothèque Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Notre configuration -->
+    <script src="config.js"></script>
+    
+    <!-- Notre logique onboarding - DEFER pour charger après le HTML -->
+    <script defer src="onboarding.js"></script>
+
+</body>
+</html>

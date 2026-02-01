@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<!--
+    =============================================================
+    FICHIER : auth-callback.html
+    PROJET  : JO d'Hiver — Dashboard Commercial
+    PAGE    : Callback d'authentification
+    
+    RÔLE :
+    Quand l'utilisateur clique le magic link dans son email,
+    Supabase le redirige vers cette page.
+    
+    Cette page vérifie si c'est la première connexion :
+    - SI onboarding_complete = FALSE → Redirection vers onboarding.html
+    - SI onboarding_complete = TRUE → Redirection vers dashboard.html
+    =============================================================
+-->
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion en cours...</title>
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(160deg, #0D47A1 0%, #1565C0 40%, #1976D2 70%, #42A5F5 100%);
+            font-family: 'Segoe UI', sans-serif;
+        }
+        
+        .loader-container {
+            text-align: center;
+            color: white;
+        }
+        
+        .loader {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 24px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        h2 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0 0 12px 0;
+        }
+        
+        p {
+            font-size: 16px;
+            opacity: 0.9;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="loader-container">
+        <div class="loader"></div>
+        <h2>Connexion en cours...</h2>
+        <p>Veuillez patienter</p>
+    </div>
+
+    <!-- Bibliothèque Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Configuration -->
+    <script src="config.js"></script>
+    
+    <script>
+        // =============================================================
+        // LOGIQUE DE REDIRECTION
+        // =============================================================
+        
+        (async function() {
+            try {
+                console.log('🔄 Callback d\'authentification...');
+                
+                // Initialiser Supabase
+                const supabase = window.supabase.createClient(
+                    SUPABASE_CONFIG.URL,
+                    SUPABASE_CONFIG.KEY
+                );
+
+                // Récupérer l'utilisateur connecté
+                const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+                if (authError || !user) {
+                    console.error('❌ Erreur authentification:', authError);
+                    // Rediriger vers la page de connexion
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                console.log('✅ Utilisateur authentifié:', user.email);
+
+                // Récupérer les infos de l'utilisateur depuis la table users
+                const { data: userData, error: userError } = await supabase
+                    .from('users')
+                    .select('onboarding_complete, role')
+                    .eq('email', user.email)
+                    .single();
+
+                if (userError) {
+                    console.error('❌ Erreur récupération user:', userError);
+                    
+                    // Si l'utilisateur n'existe pas encore dans la table users,
+                    // on le crée automatiquement
+                    if (userError.code === 'PGRST116') {
+                        console.log('📝 Création de l\'utilisateur dans la base...');
+                        
+                        // Extraire prénom et nom de l'email
+                        const emailParts = user.email.split('@')[0].split('.');
+                        const prenom = emailParts[0] || 'Agent';
+                        const nom = emailParts[1] || 'Nouveau';
+                        
+                        const { error: insertError } = await supabase
+                            .from('users')
+                            .insert({
+                                email: user.email,
+                                prenom: prenom.charAt(0).toUpperCase() + prenom.slice(1),
+                                nom: nom.charAt(0).toUpperCase() + nom.slice(1),
+                                role: 'agent',
+                                onboarding_complete: false,
+                                actif: true
+                            });
+
+                        if (insertError) {
+                            console.error('❌ Erreur création user:', insertError);
+                            alert('Erreur lors de la création de votre compte. Contactez l\'administrateur.');
+                            window.location.href = 'index.html';
+                            return;
+                        }
+
+                        // Rediriger vers l'onboarding
+                        console.log('➡️ Redirection vers onboarding');
+                        window.location.href = 'onboarding.html';
+                        return;
+                    }
+                    
+                    alert('Erreur lors de la connexion. Veuillez réessayer.');
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                console.log('📊 Données utilisateur:', userData);
+
+                // Redirection selon le statut d'onboarding
+                if (!userData.onboarding_complete) {
+                    console.log('➡️ Première connexion → Redirection vers onboarding');
+                    window.location.href = 'onboarding.html';
+                } else {
+                    console.log('➡️ Onboarding complété → Redirection vers dashboard');
+                    window.location.href = 'dashboard.html';
+                }
+
+            } catch (err) {
+                console.error('❌ Erreur inattendue:', err);
+                alert('Une erreur est survenue. Veuillez réessayer.');
+                window.location.href = 'index.html';
+            }
+        })();
+    </script>
+
+</body>
+</html>
