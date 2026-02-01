@@ -1,9 +1,9 @@
 // =============================================================
 // FICHIER : onboarding.js
-// VERSION : Simplifiée pour test
+// VERSION : PRODUCTION - Connexion Supabase réelle
 // =============================================================
 
-console.log('✅ Script onboarding.js chargé');
+console.log('✅ onboarding.js PRODUCTION chargé');
 
 // -------------------------------------------------------------
 // VARIABLES GLOBALES
@@ -16,244 +16,173 @@ const selectionUtilisateur = {
 };
 
 const AVATARS_DISPONIBLES = [
-    'chicken.png',
-    'woman.png',
-    'lion.png',
-    'man (1).png',
-    'man (2).png',
-    'man (3).png',
-    'man (4).png',
-    'man (5).png',
-    'man.png',
-    'panda.png',
-    'parrot.png',
-    'sea-lion.png',
-    'tiger.png',
-    'woman (1).png',
-    'woman (2).png'
+    'chicken.png', 'woman.png', 'lion.png', 'man (1).png', 'man (2).png',
+    'man (3).png', 'man (4).png', 'man (5).png', 'man.png', 'panda.png',
+    'parrot.png', 'sea-lion.png', 'tiger.png', 'woman (1).png', 'woman (2).png'
 ];
 
-
 // -------------------------------------------------------------
-// FONCTIONS GLOBALES (accessibles depuis onclick)
+// FONCTIONS GLOBALES
 // -------------------------------------------------------------
 
 function allerEtape(numeroEtape) {
-    console.log('📍 Aller à l\'étape', numeroEtape);
+    document.querySelectorAll('.etape').forEach(e => e.classList.remove('active'));
+    document.getElementById('etape-' + numeroEtape).classList.add('active');
     
-    // Cacher toutes les étapes
-    const etapes = document.querySelectorAll('.etape');
-    etapes.forEach(etape => {
-        etape.classList.remove('active');
+    document.querySelectorAll('.indicateur-etape').forEach((ind, i) => {
+        ind.classList.toggle('completed', i < numeroEtape);
+        ind.classList.toggle('active', i + 1 === numeroEtape);
     });
-
-    // Afficher l'étape demandée
-    const etapeCible = document.getElementById('etape-' + numeroEtape);
-    if (etapeCible) {
-        etapeCible.classList.add('active');
-        console.log('✅ Étape ' + numeroEtape + ' affichée');
-    } else {
-        console.error('❌ Étape ' + numeroEtape + ' introuvable');
-    }
-
-    // Mettre à jour l'indicateur
-    const steps = document.querySelectorAll('.step');
-    steps.forEach(step => {
-        const stepNum = parseInt(step.getAttribute('data-step'));
-        step.classList.remove('active', 'completed');
-        
-        if (stepNum === numeroEtape) {
-            step.classList.add('active');
-        } else if (stepNum < numeroEtape) {
-            step.classList.add('completed');
-        }
-    });
-
-    // Scroll en haut
-    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function validerAvatar() {
-    console.log('✅ Validation avatar');
     if (!selectionUtilisateur.avatarUrl) {
+        document.getElementById('erreur-avatar').textContent = '⚠️ Choisissez un avatar';
         document.getElementById('erreur-avatar').classList.add('visible');
-        console.warn('⚠️ Aucun avatar sélectionné');
         return;
     }
     allerEtape(3);
 }
 
 function validerManager() {
-    console.log('✅ Validation manager');
     if (!selectionUtilisateur.managerId) {
+        document.getElementById('erreur-manager').textContent = '⚠️ Choisissez un manager';
         document.getElementById('erreur-manager').classList.add('visible');
-        console.warn('⚠️ Aucun manager sélectionné');
         return;
     }
     allerEtape(4);
 }
 
-function selectionnerAvatar(nomFichier) {
-    console.log('🖼️ Avatar sélectionné:', nomFichier);
-    
-    // Retirer la sélection des autres
-    const items = document.querySelectorAll('.avatar-item');
-    items.forEach(item => {
-        item.classList.remove('selected');
-    });
-
-    // Sélectionner celui cliqué
-    if (event && event.currentTarget) {
-        event.currentTarget.classList.add('selected');
-    }
-    
-    selectionUtilisateur.avatarUrl = 'assets/' + nomFichier;
-
-    // Cacher l'erreur
+function selectionnerAvatar(filename) {
+    document.querySelectorAll('.avatar-option').forEach(d => d.classList.remove('selected'));
+    event.currentTarget.classList.add('selected');
+    selectionUtilisateur.avatarUrl = 'assets/' + filename;
     document.getElementById('erreur-avatar').classList.remove('visible');
 }
 
-function selectionnerCellule(nomCellule) {
-    console.log('📊 Cellule sélectionnée:', nomCellule);
-    
-    // Retirer la sélection des autres
-    const cartes = document.querySelectorAll('.cellule-carte');
-    cartes.forEach(carte => {
-        carte.classList.remove('selected');
-    });
-
-    // Sélectionner celle cliquée
-    if (event && event.currentTarget) {
-        event.currentTarget.classList.add('selected');
-    }
-    
-    selectionUtilisateur.cellule = nomCellule;
-
-    // Cacher l'erreur
+function selectionnerCellule(celluleNom) {
+    document.querySelectorAll('.cellule-carte').forEach(d => d.classList.remove('selected'));
+    event.currentTarget.classList.add('selected');
+    selectionUtilisateur.cellule = celluleNom;
     document.getElementById('erreur-cellule').classList.remove('visible');
 }
 
-function terminerOnboarding() {
-    console.log('🏁 Terminer onboarding');
-    
+async function terminerOnboarding() {
     if (!selectionUtilisateur.cellule) {
+        document.getElementById('erreur-cellule').textContent = '⚠️ Choisissez une cellule';
         document.getElementById('erreur-cellule').classList.add('visible');
-        console.warn('⚠️ Aucune cellule sélectionnée');
         return;
     }
 
-    console.log('✅ Données collectées:', selectionUtilisateur);
-    
-    // Pour le test, on affiche juste un message
-    alert('Onboarding terminé !\n\nAvatar: ' + selectionUtilisateur.avatarUrl + '\nCellule: ' + selectionUtilisateur.cellule);
-    
-    // En production, on sauvegarderait dans Supabase ici
-    // et on redirigerait vers dashboard.html
+    const btn = document.getElementById('btn-terminer');
+    btn.disabled = true;
+    btn.textContent = '⏳ Enregistrement...';
+
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        const { error } = await supabase
+            .from('users')
+            .update({
+                avatar_url: selectionUtilisateur.avatarUrl,
+                manager_id: selectionUtilisateur.managerId,
+                equipe_id: selectionUtilisateur.equipeId,
+                cellule: selectionUtilisateur.cellule,
+                onboarding_complete: true
+            })
+            .eq('id', user.id);
+
+        if (error) throw error;
+
+        alert('✅ Bienvenue !');
+        window.location.href = 'dashboard.html';
+    } catch (error) {
+        alert('❌ Erreur : ' + error.message);
+        btn.disabled = false;
+        btn.textContent = '✅ Terminer';
+    }
 }
 
-
 // -------------------------------------------------------------
-// INITIALISATION AU CHARGEMENT
+// INITIALISATION
 // -------------------------------------------------------------
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🏔️ Onboarding — Initialisation...');
+document.addEventListener('DOMContentLoaded', async function() {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+        window.location.href = 'index.html';
+        return;
+    }
 
-    // Afficher le nom d'utilisateur
-    document.getElementById('nom-utilisateur').textContent = 'Agent';
+    const { data: userData } = await supabase
+        .from('users')
+        .select('onboarding_complete')
+        .eq('id', user.id)
+        .single();
 
-    // Charger les avatars
+    if (userData?.onboarding_complete) {
+        window.location.href = 'dashboard.html';
+        return;
+    }
+
     chargerAvatars();
-
-    // Charger les managers (version simplifiée)
-    chargerManagersTest();
-
-    console.log('✅ Onboarding initialisé');
+    await chargerManagersReels();
 });
-
-
-// -------------------------------------------------------------
-// FONCTIONS INTERNES
-// -------------------------------------------------------------
 
 function chargerAvatars() {
     const grid = document.getElementById('avatars-grid');
-    if (!grid) {
-        console.error('❌ Grille avatars introuvable');
-        return;
-    }
-
     grid.innerHTML = '';
 
-    AVATARS_DISPONIBLES.forEach(function(nomFichier) {
+    AVATARS_DISPONIBLES.forEach(filename => {
         const div = document.createElement('div');
-        div.className = 'avatar-item';
-        div.onclick = function() { selectionnerAvatar(nomFichier); };
-
+        div.className = 'avatar-option';
+        div.onclick = () => selectionnerAvatar(filename);
+        
         const img = document.createElement('img');
-        img.src = 'assets/' + nomFichier;
-        img.alt = nomFichier;
-        img.onerror = function() {
-            console.warn('⚠️ Avatar introuvable:', nomFichier);
-            div.style.display = 'none';
-        };
-
+        img.src = 'assets/' + filename;
+        
         div.appendChild(img);
         grid.appendChild(div);
     });
-
-    console.log('✅ ' + AVATARS_DISPONIBLES.length + ' avatars chargés');
 }
 
-function chargerManagersTest() {
+async function chargerManagersReels() {
     const select = document.getElementById('select-manager');
-    if (!select) {
-        console.error('❌ Select manager introuvable');
-        return;
+
+    try {
+        const { data: managers, error } = await supabase
+            .from('users')
+            .select('id, nom, prenom, equipe_id, equipes(nom, drapeau)')
+            .eq('role', 'manager')
+            .order('nom');
+
+        if (error) throw error;
+
+        select.innerHTML = '<option value="">-- Choisissez votre manager --</option>';
+
+        managers.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.id;
+            opt.textContent = `${m.prenom} ${m.nom} (Équipe ${m.equipes.nom} ${m.equipes.drapeau})`;
+            opt.setAttribute('data-equipe-id', m.equipe_id);
+            opt.setAttribute('data-equipe-nom', m.equipes.nom);
+            opt.setAttribute('data-equipe-drapeau', m.equipes.drapeau);
+            select.appendChild(opt);
+        });
+
+        select.addEventListener('change', function() {
+            const opt = this.options[this.selectedIndex];
+            if (opt.value) {
+                selectionUtilisateur.managerId = opt.value;
+                selectionUtilisateur.equipeId = opt.getAttribute('data-equipe-id');
+                
+                document.getElementById('nom-equipe-affectee').textContent = opt.getAttribute('data-equipe-nom');
+                document.getElementById('drapeau-equipe-affectee').textContent = opt.getAttribute('data-equipe-drapeau');
+                document.getElementById('info-equipe').style.display = 'flex';
+                document.getElementById('erreur-manager').classList.remove('visible');
+            }
+        });
+    } catch (error) {
+        alert('❌ Erreur chargement managers');
     }
-
-    // Version test avec managers fictifs
-    const managersTest = [
-        { id: '1', nom: 'Sophie Martin', equipe: 'France', drapeau: '🇫🇷', equipeId: 2 },
-        { id: '2', nom: 'John Smith', equipe: 'Canada', drapeau: '🇨🇦', equipeId: 3 },
-        { id: '3', nom: 'Lars Olsen', equipe: 'Norvège', drapeau: '🇳🇴', equipeId: 1 }
-    ];
-
-    select.innerHTML = '<option value="">-- Choisissez votre manager --</option>';
-
-    managersTest.forEach(function(manager) {
-        const option = document.createElement('option');
-        option.value = manager.id;
-        option.textContent = manager.nom + ' (Équipe ' + manager.equipe + ' ' + manager.drapeau + ')';
-        option.setAttribute('data-equipe-id', manager.equipeId);
-        option.setAttribute('data-equipe-nom', manager.equipe);
-        option.setAttribute('data-equipe-drapeau', manager.drapeau);
-        select.appendChild(option);
-    });
-
-    select.addEventListener('change', function() {
-        const option = this.options[this.selectedIndex];
-        
-        if (option.value) {
-            selectionUtilisateur.managerId = option.value;
-            selectionUtilisateur.equipeId = option.getAttribute('data-equipe-id');
-
-            const infoEquipe = document.getElementById('info-equipe');
-            const nomEquipe = document.getElementById('nom-equipe-affectee');
-            const drapeauEquipe = document.getElementById('drapeau-equipe-affectee');
-
-            nomEquipe.textContent = option.getAttribute('data-equipe-nom');
-            drapeauEquipe.textContent = option.getAttribute('data-equipe-drapeau');
-            infoEquipe.style.display = 'flex';
-
-            document.getElementById('erreur-manager').classList.remove('visible');
-
-            console.log('✅ Manager sélectionné:', option.textContent);
-        } else {
-            document.getElementById('info-equipe').style.display = 'none';
-        }
-    });
-
-    console.log('✅ Managers test chargés');
 }
-
-console.log('✅ Toutes les fonctions sont déclarées');
