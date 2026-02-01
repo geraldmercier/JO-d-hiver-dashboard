@@ -790,6 +790,168 @@
 
 
 /* -------------------------------------------------------------
+   NOUVEAU : CHECKBOX APIAPP
+   ------------------------------------------------------------- */
+.checkbox-groupe {
+    background: var(--bleu-glace);
+    padding: 12px;
+    border-radius: var(--arrondi-petit);
+    border: 2px solid var(--bleu-medio);
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.checkbox-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--bleu-tres-sombre);
+}
+
+.checkbox-hint {
+    font-size: 12px;
+    color: var(--gris-texte);
+    margin: 6px 0 0 30px;
+}
+
+
+/* -------------------------------------------------------------
+   NOUVEAU : PODIUM DU JOUR (mini)
+   ------------------------------------------------------------- */
+.carte-podium-jour {
+    background: linear-gradient(135deg, #FFF9E6 0%, #FFFFFF 100%);
+    border: 2px solid #FFD700;
+}
+
+.podium-mini {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 12px;
+    margin: 20px 0;
+    padding: 20px 10px;
+}
+
+.podium-place-mini {
+    background: var(--argent-clair);
+    border-radius: var(--arrondi-petit);
+    padding: 12px;
+    text-align: center;
+    width: 90px;
+    transition: transform 0.2s ease;
+}
+
+.podium-place-mini:hover {
+    transform: translateY(-4px);
+}
+
+.podium-place-mini.place-1 {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    height: 140px;
+    order: 2;
+}
+
+.podium-place-mini.place-2 {
+    background: linear-gradient(135deg, #C0C0C0, #A8A8A8);
+    height: 110px;
+    order: 1;
+}
+
+.podium-place-mini.place-3 {
+    background: linear-gradient(135deg, #CD7F32, #B8733C);
+    height: 90px;
+    order: 3;
+}
+
+.podium-avatar-mini {
+    font-size: 32px;
+    margin-bottom: 6px;
+}
+
+.podium-nom-mini {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--bleu-tres-sombre);
+    margin-bottom: 4px;
+}
+
+.podium-score-mini {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--bleu-sombre);
+    margin-bottom: 4px;
+}
+
+.podium-medaille-mini {
+    font-size: 24px;
+}
+
+.podium-info {
+    background: var(--bleu-glace);
+    padding: 12px;
+    border-radius: var(--arrondi-petit);
+    text-align: center;
+    font-size: 14px;
+}
+
+.podium-info strong {
+    color: var(--orange);
+}
+
+.podium-encouragement {
+    margin-top: 8px;
+    font-weight: 600;
+    color: var(--vert-succes);
+}
+
+
+/* -------------------------------------------------------------
+   NOUVEAU : BADGE APIAPP & BOUTON SUPPRIMER
+   ------------------------------------------------------------- */
+.badge-apiapp {
+    display: inline-block;
+    background: #E8F5E9;
+    color: #2E7D32;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+.contrat-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-supprimer-contrat {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: var(--arrondi-petit);
+    transition: all 0.2s ease;
+}
+
+.btn-supprimer-contrat:hover {
+    background: #FFEBEE;
+    transform: scale(1.2);
+}
+
+
+/* -------------------------------------------------------------
    14. RESPONSIVE - Adaptation mobile/tablette
    ------------------------------------------------------------- */
 @media (max-width: 1024px) {

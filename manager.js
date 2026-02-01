@@ -240,6 +240,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialiser les selects des modals
     initialiserModals();
 
+    // NOUVEAU : Bouton Vue Plateau
+    document.getElementById('btn-vue-plateau').addEventListener('click', function() {
+        window.location.href = 'plateau.html';
+    });
+
+    // NOUVEAU : Initialiser le menu Équipes si admin
+    initialiserMenuEquipes();
+
     // Bouton déconnexion
     document.getElementById('btn-deconnexion').addEventListener('click', deconnexion);
 
@@ -655,5 +663,46 @@ function deconnexion() {
         window.location.href = 'index.html';
     }
 }
+
+
+// -------------------------------------------------------------
+// NOUVEAU : INITIALISER MENU ÉQUIPES (pour admins)
+// -------------------------------------------------------------
+function initialiserMenuEquipes() {
+    // TODO: Vérifier si l'utilisateur est admin
+    // Pour l'instant, on cache toujours le menu (sera activé plus tard)
+    const isAdmin = false; // À remplacer par: utilisateurActuel.role === 'admin'
+
+    if (isAdmin) {
+        document.getElementById('dropdown-equipes').style.display = 'block';
+
+        const equipes = [
+            { id: 1, nom: 'Norvège', drapeau: '🇳🇴' },
+            { id: 2, nom: 'France', drapeau: '🇫🇷' },
+            { id: 3, nom: 'Canada', drapeau: '🇨🇦' },
+            { id: 4, nom: 'Autriche', drapeau: '🇦🇹' },
+            { id: 5, nom: 'États-Unis', drapeau: '🇺🇸' }
+        ];
+
+        const menu = document.getElementById('menu-equipes');
+        menu.innerHTML = '';
+
+        equipes.forEach(equipe => {
+            const div = document.createElement('div');
+            div.className = 'dropdown-item';
+            div.textContent = `${equipe.drapeau} Équipe ${equipe.nom}`;
+            div.onclick = function() {
+                changerEquipe(equipe.id);
+            };
+            menu.appendChild(div);
+        });
+    }
+}
+
+function changerEquipe(equipeId) {
+    // Recharger la page avec le paramètre équipe
+    window.location.href = `manager.html?equipe=${equipeId}`;
+}
+
 
 console.log('✅ manager.js chargé');

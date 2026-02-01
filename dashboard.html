@@ -112,6 +112,42 @@
                     </div>
                 </section>
 
+                <!-- NOUVEAU : PODIUM DU JOUR -->
+                <section class="carte carte-podium-jour">
+                    <h3 class="carte-titre">🏆 Podium du Jour (Actualisé en temps réel)</h3>
+                    
+                    <div class="podium-mini">
+                        <!-- Place 2 -->
+                        <div class="podium-place-mini place-2">
+                            <div class="podium-avatar-mini" id="podium-jour-2-avatar">🐯</div>
+                            <div class="podium-nom-mini" id="podium-jour-2-nom">Tom J.</div>
+                            <div class="podium-score-mini" id="podium-jour-2-score">28 pts</div>
+                            <div class="podium-medaille-mini">🥈</div>
+                        </div>
+                        
+                        <!-- Place 1 (plus haute) -->
+                        <div class="podium-place-mini place-1">
+                            <div class="podium-avatar-mini" id="podium-jour-1-avatar">🦁</div>
+                            <div class="podium-nom-mini" id="podium-jour-1-nom">Anna K.</div>
+                            <div class="podium-score-mini" id="podium-jour-1-score">32 pts</div>
+                            <div class="podium-medaille-mini">🥇</div>
+                        </div>
+                        
+                        <!-- Place 3 -->
+                        <div class="podium-place-mini place-3">
+                            <div class="podium-avatar-mini" id="podium-jour-3-avatar">🐼</div>
+                            <div class="podium-nom-mini" id="podium-jour-3-nom">Sophie M.</div>
+                            <div class="podium-score-mini" id="podium-jour-3-score">24 pts</div>
+                            <div class="podium-medaille-mini">🥉</div>
+                        </div>
+                    </div>
+
+                    <div class="podium-info">
+                        <p id="podium-position-agent">Vous êtes actuellement <strong id="position-agent-jour">5ème</strong> avec <strong id="score-agent-jour">18 pts</strong></p>
+                        <p class="podium-encouragement" id="podium-encouragement">💪 Plus que 6 pts pour le podium !</p>
+                    </div>
+                </section>
+
                 <!-- 2. SKI DE FOND (Fil Rouge) -->
                 <section class="carte carte-ski-fond">
                     <h3 class="carte-titre">⛷️ Ski de Fond — Fil Rouge</h3>
@@ -233,6 +269,15 @@
                             >
                         </div>
 
+                        <!-- NOUVEAU : Case à cocher ApiApp -->
+                        <div class="form-groupe checkbox-groupe">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="contrat-apiapp">
+                                <span class="checkbox-text">📱 Contrat ApiApp</span>
+                            </label>
+                            <p class="checkbox-hint">Cochez si ce contrat provient de l'application mobile</p>
+                        </div>
+
                         <!-- Bouton d'envoi -->
                         <button type="submit" class="btn-enregistrer" id="btn-enregistrer">
                             <span id="btn-texte">✅ Enregistrer</span>
@@ -256,8 +301,12 @@
                             <div class="contrat-info">
                                 <span class="contrat-type">Telco</span>
                                 <span class="contrat-heure">14:32</span>
+                                <span class="badge-apiapp">📱 ApiApp</span>
                             </div>
-                            <a href="#" class="contrat-lien" target="_blank">🔗</a>
+                            <div class="contrat-actions">
+                                <a href="#" class="contrat-lien" target="_blank" title="Voir la piste">🔗</a>
+                                <button class="btn-supprimer-contrat" onclick="supprimerContrat('c1')" title="Supprimer">🗑️</button>
+                            </div>
                         </div>
                         <div class="contrat-item">
                             <span class="contrat-icone">📱</span>
@@ -265,7 +314,10 @@
                                 <span class="contrat-type">Mobile</span>
                                 <span class="contrat-heure">11:15</span>
                             </div>
-                            <a href="#" class="contrat-lien" target="_blank">🔗</a>
+                            <div class="contrat-actions">
+                                <a href="#" class="contrat-lien" target="_blank" title="Voir la piste">🔗</a>
+                                <button class="btn-supprimer-contrat" onclick="supprimerContrat('c2')" title="Supprimer">🗑️</button>
+                            </div>
                         </div>
                         <div class="contrat-vide">
                             Aucun contrat enregistré pour aujourd'hui

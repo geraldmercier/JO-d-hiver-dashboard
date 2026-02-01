@@ -778,6 +778,89 @@
 
 
 /* -------------------------------------------------------------
+   NOUVEAU : BOUTONS NAVIGATION (Vue Plateau & Équipes)
+   ------------------------------------------------------------- */
+.btn-vue-plateau {
+    padding: 10px 20px;
+    background: var(--bleu-sombre);
+    color: var(--blanc);
+    border: none;
+    border-radius: var(--arrondi-petit);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-vue-plateau:hover {
+    background: var(--bleu-tres-sombre);
+    transform: translateY(-2px);
+}
+
+.dropdown-equipes {
+    position: relative;
+}
+
+.btn-changer-equipe {
+    padding: 10px 20px;
+    background: var(--orange);
+    color: var(--blanc);
+    border: none;
+    border-radius: var(--arrondi-petit);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-changer-equipe:hover {
+    background: var(--orange-hover);
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    background: var(--blanc);
+    border-radius: var(--arrondi-petit);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    min-width: 220px;
+    z-index: 1000;
+}
+
+.dropdown-equipes:hover .dropdown-menu {
+    display: block;
+}
+
+.dropdown-item {
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    font-size: 14px;
+    font-weight: 500;
+    border-bottom: 1px solid var(--argent);
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item:hover {
+    background: var(--bleu-glace);
+}
+
+.dropdown-item:first-child {
+    border-radius: var(--arrondi-petit) var(--arrondi-petit) 0 0;
+}
+
+.dropdown-item:last-child {
+    border-radius: 0 0 var(--arrondi-petit) var(--arrondi-petit);
+}
+
+
+/* -------------------------------------------------------------
    10. RESPONSIVE
    ------------------------------------------------------------- */
 @media (max-width: 1200px) {

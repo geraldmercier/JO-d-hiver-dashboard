@@ -57,6 +57,21 @@
                     </div>
                 </div>
                 <div class="header-actions">
+                    <!-- NOUVEAU : Bouton Vue Plateau -->
+                    <button class="btn-vue-plateau" id="btn-vue-plateau" title="Voir les classements globaux">
+                        📊 Vue Plateau
+                    </button>
+
+                    <!-- NOUVEAU : Menu déroulant Équipes (uniquement pour admins) -->
+                    <div class="dropdown-equipes" id="dropdown-equipes" style="display: none;">
+                        <button class="btn-changer-equipe" id="btn-changer-equipe">
+                            Changer équipe ▼
+                        </button>
+                        <div class="dropdown-menu" id="menu-equipes">
+                            <!-- Rempli dynamiquement par JS -->
+                        </div>
+                    </div>
+
                     <button class="btn-notif" id="btn-notifications">
                         🔔
                         <span class="notif-badge" id="notif-count">3</span>

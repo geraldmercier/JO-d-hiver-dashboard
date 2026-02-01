@@ -472,6 +472,39 @@ function deconnexion() {
 
 
 // -------------------------------------------------------------
+// NOUVEAU : SUPPRESSION DE CONTRAT
+// -------------------------------------------------------------
+function supprimerContrat(contratId) {
+    if (!confirm('⚠️ Êtes-vous sûr de vouloir supprimer ce contrat ?\n\nCette action est irréversible.')) {
+        return;
+    }
+
+    console.log('🗑️ Suppression contrat:', contratId);
+
+    // TODO: Supprimer dans Supabase
+    // const { error } = await supabase.from('contrats').delete().eq('id', contratId);
+
+    // En attendant, on retire juste visuellement
+    const contratElement = event.currentTarget.closest('.contrat-item');
+    if (contratElement) {
+        contratElement.style.opacity = '0';
+        contratElement.style.transform = 'translateX(-20px)';
+        setTimeout(() => {
+            contratElement.remove();
+            // Vérifier s'il reste des contrats
+            const liste = document.getElementById('contrats-liste');
+            const items = liste.querySelectorAll('.contrat-item');
+            if (items.length === 0) {
+                liste.querySelector('.contrat-vide').style.display = 'block';
+            }
+        }, 300);
+    }
+
+    alert('✅ Contrat supprimé avec succès');
+}
+
+
+// -------------------------------------------------------------
 // PARTIE 13 : FONCTIONS UTILITAIRES
 // -------------------------------------------------------------
 

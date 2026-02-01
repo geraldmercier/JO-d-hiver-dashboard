@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<!--
+    =============================================================
+    FICHIER : plateau.html
+    PROJET  : JO d'Hiver — Dashboard Commercial
+    PAGE    : Vue Plateau (Classements globaux)
+    
+    ACCÈS :
+    - Managers : Lecture seule + navigation vers leur équipe
+    - Admins : Création/validation challenges + accès toutes équipes
+    =============================================================
+-->
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>🏔️ Vue Plateau — JO d'Hiver</title>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="plateau.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="plateau-body">
+
+    <!-- =============================================================
+         HEADER
+         ============================================================= -->
+    <header class="plateau-header">
+        <div class="header-container">
+            
+            <!-- Logo -->
+            <div class="header-logo">
+                <span class="logo-icon">🏔️</span>
+                <div class="logo-text">
+                    <h1>JO d'Hiver 2026</h1>
+                    <p>Vue Plateau</p>
+                </div>
+            </div>
+
+            <!-- Info utilisateur -->
+            <div class="header-user">
+                <div class="user-info">
+                    <h2 id="nom-utilisateur">Direction</h2>
+                    <p id="role-utilisateur">Administrateur</p>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="header-actions">
+                
+                <!-- Bouton Créer Challenge (uniquement admins) -->
+                <button class="btn-creer-challenge" id="btn-creer-challenge" style="display: none;">
+                    ⚡ Créer Challenge
+                </button>
+                
+                <!-- Menu déroulant équipes (uniquement admins) -->
+                <div class="dropdown-equipes" id="dropdown-equipes-admin" style="display: none;">
+                    <button class="btn-equipes" id="btn-equipes">
+                        👔 Équipes ▼
+                    </button>
+                    <div class="dropdown-menu" id="menu-equipes-admin">
+                        <!-- Rempli dynamiquement -->
+                    </div>
+                </div>
+                
+                <!-- Bouton retour (uniquement managers) -->
+                <button class="btn-retour-manager" id="btn-retour-manager" style="display: none;">
+                    👔 Mon Équipe
+                </button>
+                
+                <button class="btn-deconnexion" id="btn-deconnexion">
+                    🚪 Déconnexion
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- =============================================================
+         CONTENU PRINCIPAL
+         ============================================================= -->
+    <main class="plateau-main">
+        <div class="plateau-container">
+
+            <!-- CHALLENGES ACTIFS -->
+            <section class="section-challenges-actifs" id="section-challenges-actifs">
+                <h2 class="section-titre">⚡ Challenges Flash Actifs</h2>
+                <div class="challenges-actifs-liste" id="challenges-actifs-liste">
+                    <!-- Chargés dynamiquement -->
+                    <div class="aucun-challenge">
+                        Aucun challenge actif pour le moment
+                    </div>
+                </div>
+            </section>
+
+            <!-- CHALLENGES À VALIDER (Admins uniquement) -->
+            <section class="section-challenges-validation" id="section-challenges-validation" style="display: none;">
+                <h2 class="section-titre">⏳ Challenges à Valider</h2>
+                <div class="challenges-validation-liste" id="challenges-validation-liste">
+                    <!-- Chargés dynamiquement -->
+                </div>
+            </section>
+
+            <!-- ONGLETS DE NAVIGATION -->
+            <div class="plateau-tabs">
+                <button class="tab-btn active" onclick="changerTab('global')">🌍 Classement Global</button>
+                <button class="tab-btn" onclick="changerTab('equipes')">🏆 Classement Équipes</button>
+                <button class="tab-btn" onclick="changerTab('cellules')">📊 Par Cellule</button>
+                <button class="tab-btn" onclick="changerTab('performance')">📅 Performance</button>
+                <button class="tab-btn" onclick="changerTab('records')">🏅 Hall of Fame</button>
+            </div>
+
+            <!-- TAB 1 : CLASSEMENT GLOBAL -->
+            <section class="tab-content active" id="tab-global">
+                
+                <!-- Podium Top 3 -->
+                <div class="podium-container">
+                    <div class="podium-place place-2">
+                        <div class="podium-avatar" id="podium-2-avatar">🐯</div>
+                        <div class="podium-nom" id="podium-2-nom">Tom Johnson</div>
+                        <div class="podium-equipe" id="podium-2-equipe">🇨🇦 Canada</div>
+                        <div class="podium-score" id="podium-2-score">312 pts</div>
+                        <div class="podium-medaille">🥈</div>
+                        <div class="podium-rank">2</div>
+                    </div>
+                    
+                    <div class="podium-place place-1">
+                        <div class="podium-avatar" id="podium-1-avatar">🦁</div>
+                        <div class="podium-nom" id="podium-1-nom">Anna Karlsen</div>
+                        <div class="podium-equipe" id="podium-1-equipe">🇳🇴 Norvège</div>
+                        <div class="podium-score" id="podium-1-score">324 pts</div>
+                        <div class="podium-medaille">🥇</div>
+                        <div class="podium-rank">1</div>
+                    </div>
+                    
+                    <div class="podium-place place-3">
+                        <div class="podium-avatar" id="podium-3-avatar">🐼</div>
+                        <div class="podium-nom" id="podium-3-nom">Sophie Martin</div>
+                        <div class="podium-equipe" id="podium-3-equipe">🇫🇷 France</div>
+                        <div class="podium-score" id="podium-3-score">298 pts</div>
+                        <div class="podium-medaille">🥉</div>
+                        <div class="podium-rank">3</div>
+                    </div>
+                </div>
+
+                <!-- Tableau complet 50 agents -->
+                <div class="tableau-wrapper">
+                    <h3>🏆 Classement Complet (50 agents)</h3>
+                    <table class="tableau-classement" id="tableau-global">
+                        <thead>
+                            <tr>
+                                <th>Rang</th>
+                                <th>Agent</th>
+                                <th>Équipe</th>
+                                <th>Cellule</th>
+                                <th>Score</th>
+                                <th>Contrats</th>
+                                <th>Médailles</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableau-global-body">
+                            <!-- Chargé dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- TAB 2 : CLASSEMENT ÉQUIPES -->
+            <section class="tab-content" id="tab-equipes">
+                <h3>🏆 Classement des 5 Équipes</h3>
+                
+                <div class="equipes-classement" id="equipes-classement">
+                    <!-- Chargé dynamiquement -->
+                </div>
+            </section>
+
+            <!-- TAB 3 : CLASSEMENT PAR CELLULE -->
+            <section class="tab-content" id="tab-cellules">
+                <div class="cellules-tabs">
+                    <button class="cellule-tab-btn active" onclick="changerCellule('Mover')">📞 Movers</button>
+                    <button class="cellule-tab-btn" onclick="changerCellule('Switcher')">📱 Switchers</button>
+                    <button class="cellule-tab-btn" onclick="changerCellule('Coach')">⭐ Coachs</button>
+                    <button class="cellule-tab-btn" onclick="changerCellule('Pépinière')">🌱 Pépinière</button>
+                </div>
+
+                <!-- Tableaux par cellule -->
+                <div class="cellule-content active" id="cellule-Mover">
+                    <h3>📞 Top 10 Movers (tous plateaux confondus)</h3>
+                    <table class="tableau-classement">
+                        <thead>
+                            <tr>
+                                <th>Rang</th>
+                                <th>Agent</th>
+                                <th>Équipe</th>
+                                <th>Score</th>
+                                <th>TR %</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableau-movers">
+                            <!-- Chargé dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="cellule-content" id="cellule-Switcher">
+                    <h3>📱 Top 10 Switchers</h3>
+                    <table class="tableau-classement">
+                        <thead>
+                            <tr>
+                                <th>Rang</th>
+                                <th>Agent</th>
+                                <th>Équipe</th>
+                                <th>Score</th>
+                                <th>Volume HS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableau-switchers">
+                            <!-- Chargé dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="cellule-content" id="cellule-Coach">
+                    <h3>⭐ Top 10 Coachs</h3>
+                    <table class="tableau-classement">
+                        <thead>
+                            <tr>
+                                <th>Rang</th>
+                                <th>Agent</th>
+                                <th>Équipe</th>
+                                <th>Score</th>
+                                <th>Premium</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableau-coachs">
+                            <!-- Chargé dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="cellule-content" id="cellule-Pépinière">
+                    <h3>🌱 Top 10 Pépinière</h3>
+                    <table class="tableau-classement">
+                        <thead>
+                            <tr>
+                                <th>Rang</th>
+                                <th>Agent</th>
+                                <th>Équipe</th>
+                                <th>Score</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableau-pepiniere">
+                            <!-- Chargé dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- TAB 4 : PERFORMANCE DU JOUR -->
+            <section class="tab-content" id="tab-performance">
+                <h3>📅 Performance du Jour</h3>
+                
+                <div class="performance-jour">
+                    <div class="perf-carte">
+                        <h4>🥇 Top 3 du Jour</h4>
+                        <div id="top3-jour">
+                            <!-- Chargé dynamiquement -->
+                        </div>
+                    </div>
+                    
+                    <div class="perf-carte">
+                        <h4>🎯 Épreuve Actuelle</h4>
+                        <div id="epreuve-actuelle">
+                            <div class="epreuve-nom">Ski de Fond</div>
+                            <div class="epreuve-desc">Objectif : Atteindre 75% de TR</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5 : HALL OF FAME -->
+            <section class="tab-content" id="tab-records">
+                <h3>🏅 Hall of Fame</h3>
+                
+                <div class="records-grid">
+                    <div class="record-carte">
+                        <div class="record-icone">🏆</div>
+                        <div class="record-titre">Plus de médailles</div>
+                        <div class="record-valeur" id="record-medailles">Anna K. - 8 médailles</div>
+                    </div>
+                    
+                    <div class="record-carte">
+                        <div class="record-icone">🔥</div>
+                        <div class="record-titre">Meilleure série</div>
+                        <div class="record-valeur" id="record-serie">Tom J. - 5 jours consécutifs</div>
+                    </div>
+                    
+                    <div class="record-carte">
+                        <div class="record-icone">⚡</div>
+                        <div class="record-titre">Record points/jour</div>
+                        <div class="record-valeur" id="record-points-jour">Sophie M. - 48 pts</div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- =============================================================
+         MODAL CRÉATION CHALLENGE FLASH
+         ============================================================= -->
+    <div class="modal" id="modal-challenge">
+        <div class="modal-overlay" onclick="fermerModal('modal-challenge')"></div>
+        <div class="modal-contenu modal-large">
+            <h3>⚡ Créer un Challenge Flash</h3>
+            
+            <form id="form-challenge" onsubmit="return creerChallenge(event)">
+                
+                <!-- Titre -->
+                <div class="form-groupe">
+                    <label>Titre du challenge :</label>
+                    <input type="text" id="challenge-titre" placeholder="Ex: Sprint du vendredi !" required maxlength="200">
+                </div>
+
+                <!-- Type de challenge -->
+                <div class="form-groupe">
+                    <label>Type de challenge :</label>
+                    <select id="challenge-type" required onchange="afficherCriteres()">
+                        <option value="">-- Choisir un type --</option>
+                        <option value="nb_contrats">Premier à X contrats</option>
+                        <option value="meilleur_tr">Meilleur TR % (Movers)</option>
+                        <option value="type_contrat_telco">Plus de contrats Telco</option>
+                        <option value="type_contrat_mobile">Plus de contrats Mobile</option>
+                        <option value="type_contrat_premium">Plus de contrats Premium</option>
+                        <option value="volume_total">Volume total de contrats</option>
+                    </select>
+                </div>
+
+                <!-- Critères (selon type choisi) -->
+                <div class="form-groupe" id="groupe-critere" style="display: none;">
+                    <label id="label-critere">Nombre de contrats :</label>
+                    <input type="number" id="challenge-critere" min="1" placeholder="Ex: 5">
+                </div>
+
+                <!-- Période -->
+                <div class="form-row">
+                    <div class="form-groupe">
+                        <label>Début :</label>
+                        <input type="datetime-local" id="challenge-debut" required>
+                    </div>
+                    <div class="form-groupe">
+                        <label>Fin :</label>
+                        <input type="datetime-local" id="challenge-fin" required>
+                    </div>
+                </div>
+
+                <!-- Points -->
+                <div class="form-groupe">
+                    <label>Points attribués au gagnant :</label>
+                    <input type="number" id="challenge-points" min="1" placeholder="Ex: 50" required>
+                </div>
+
+                <!-- Description optionnelle -->
+                <div class="form-groupe">
+                    <label>Description (optionnelle) :</label>
+                    <textarea id="challenge-description" rows="3" placeholder="Détails supplémentaires..."></textarea>
+                </div>
+
+                <!-- Actions -->
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="fermerModal('modal-challenge')">Annuler</button>
+                    <button type="submit" class="btn-primary">⚡ Créer le Challenge</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =============================================================
+         MODAL VALIDATION CHALLENGE
+         ============================================================= -->
+    <div class="modal" id="modal-validation-challenge">
+        <div class="modal-overlay" onclick="fermerModal('modal-validation-challenge')"></div>
+        <div class="modal-contenu">
+            <h3>✅ Valider le Challenge</h3>
+            
+            <div id="challenge-details">
+                <!-- Rempli dynamiquement -->
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" onclick="fermerModal('modal-validation-challenge')">Annuler</button>
+                <button type="button" class="btn-primary" onclick="validerChallengeResultat()">✅ Confirmer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =============================================================
+         SCRIPTS
+         ============================================================= -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="plateau.js"></script>
+
+</body>
+</html>
