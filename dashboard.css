@@ -1,0 +1,829 @@
+/* =============================================================
+   FICHIER : dashboard.css
+   DESCRIPTION : Styles pour le dashboard agent
+   
+   ORGANISATION :
+   1. Variables spécifiques au dashboard
+   2. Layout général (body, header, colonnes)
+   3. Header et profil agent
+   4. Cartes (styles communs)
+   5. Sections spécifiques (position, ski fond, etc.)
+   6. Formulaires
+   7. Animations
+   8. Responsive
+
+   Note : Ce fichier utilise les variables CSS définies dans styles.css
+   ============================================================= */
+
+
+/* -------------------------------------------------------------
+   1. VARIABLES SPÉCIFIQUES AU DASHBOARD
+   ------------------------------------------------------------- */
+:root {
+    --header-height: 100px;
+    --sidebar-width: 280px;
+    --gap: 24px;                    /* Espacement entre les cartes */
+    
+    /* Animations */
+    --transition-rapide: 0.2s ease;
+    --transition-normale: 0.3s ease;
+}
+
+
+/* -------------------------------------------------------------
+   2. LAYOUT GÉNÉRAL
+   ------------------------------------------------------------- */
+.dashboard-body {
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+    background: var(--bleu-glace);
+    min-height: 100vh;
+    padding-top: var(--header-height);   /* Pour que le contenu ne passe pas sous le header fixe */
+}
+
+
+/* -------------------------------------------------------------
+   3. HEADER - En-tête fixe en haut
+   ------------------------------------------------------------- */
+.dashboard-header {
+    position: fixed;                    /* Reste en haut même quand on scroll */
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--header-height);
+    background: var(--blanc);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    z-index: 100;                       /* Au-dessus de tout */
+}
+
+.header-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    height: 100%;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Logo + Titre à gauche */
+.header-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-icon {
+    font-size: 40px;
+}
+
+.logo-text h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--bleu-tres-sombre);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.logo-text p {
+    font-size: 12px;
+    color: var(--gris-texte);
+    margin: 0;
+}
+
+/* Profil de l'agent à droite */
+.header-profil {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.profil-avatar {
+    position: relative;
+    width: 60px;
+    height: 60px;
+}
+
+.profil-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 3px solid var(--bleu-medio);
+}
+
+.profil-drapeau {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    font-size: 24px;
+    background: var(--blanc);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.profil-info h2 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--bleu-tres-sombre);
+    margin: 0 0 4px 0;
+}
+
+.profil-equipe {
+    font-size: 13px;
+    color: var(--gris-texte);
+    margin: 0;
+}
+
+.profil-score {
+    text-align: center;
+    padding: 0 20px;
+    border-left: 1px solid var(--argent);
+    border-right: 1px solid var(--argent);
+}
+
+.score-valeur {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--bleu-sombre);
+    line-height: 1;
+}
+
+.score-label {
+    font-size: 11px;
+    color: var(--gris-texte);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.medaille-container {
+    margin-top: 4px;
+    font-size: 24px;
+}
+
+/* Boutons actions */
+.header-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-notif {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: var(--bleu-glace);
+    font-size: 20px;
+    cursor: pointer;
+    transition: var(--transition-rapide);
+}
+
+.btn-notif:hover {
+    background: var(--bleu-medio);
+    transform: scale(1.1);
+}
+
+.notif-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: var(--rouge-erreur);
+    color: var(--blanc);
+    font-size: 10px;
+    font-weight: 600;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-deconnexion {
+    padding: 10px 20px;
+    border: none;
+    border-radius: var(--arrondi-petit);
+    background: var(--gris-texte);
+    color: var(--blanc);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-rapide);
+}
+
+.btn-deconnexion:hover {
+    background: var(--bleu-tres-sombre);
+}
+
+
+/* -------------------------------------------------------------
+   4. CONTENU PRINCIPAL - Layout 2 colonnes
+   ------------------------------------------------------------- */
+.dashboard-main {
+    padding: 24px;
+}
+
+.dashboard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;      /* 2 colonnes égales */
+    gap: var(--gap);
+}
+
+.colonne-gauche,
+.colonne-droite {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+}
+
+
+/* -------------------------------------------------------------
+   5. CARTES - Styles communs à toutes les sections
+   ------------------------------------------------------------- */
+.carte {
+    background: var(--blanc);
+    border-radius: var(--arrondi-moyen);
+    box-shadow: var(--ombre-carte);
+    padding: 24px;
+    transition: box-shadow var(--transition-normale);
+    animation: apparition-carte 0.5s ease-out;   /* Animation au chargement */
+}
+
+.carte:hover {
+    box-shadow: var(--ombre-carte-hover);
+}
+
+/* Titres des cartes */
+.carte-titre {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--bleu-tres-sombre);
+    margin: 0 0 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Animation d'apparition en cascade */
+@keyframes apparition-carte {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Décalage de l'animation pour chaque carte */
+.carte:nth-child(1) { animation-delay: 0.1s; }
+.carte:nth-child(2) { animation-delay: 0.2s; }
+.carte:nth-child(3) { animation-delay: 0.3s; }
+.carte:nth-child(4) { animation-delay: 0.4s; }
+
+
+/* -------------------------------------------------------------
+   6. CARTE POSITION
+   ------------------------------------------------------------- */
+.position-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.position-item {
+    background: var(--bleu-glace);
+    border-radius: var(--arrondi-petit);
+    padding: 16px;
+    text-align: center;
+}
+
+.position-label {
+    font-size: 12px;
+    color: var(--gris-texte);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.position-valeur {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--bleu-tres-sombre);
+    margin-bottom: 8px;
+}
+
+.position-evolution {
+    font-size: 13px;
+    color: var(--vert-succes);
+    font-weight: 600;
+}
+
+.position-evolution .fleche {
+    font-size: 16px;
+}
+
+.position-manquant {
+    font-size: 12px;
+    color: var(--gris-texte);
+}
+
+
+/* -------------------------------------------------------------
+   7. CARTE SKI DE FOND
+   ------------------------------------------------------------- */
+.ski-fond-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 12px;
+    background: var(--bleu-glace);
+    border-radius: var(--arrondi-petit);
+}
+
+.badge-categorie {
+    background: var(--orange);
+    color: var(--blanc);
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-right: 8px;
+}
+
+.ski-fond-kpi {
+    text-align: right;
+}
+
+.kpi-label {
+    font-size: 11px;
+    color: var(--gris-texte);
+    text-transform: uppercase;
+}
+
+.kpi-valeur {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--bleu-sombre);
+}
+
+.kpi-objectif {
+    font-size: 12px;
+    color: var(--gris-texte);
+}
+
+.graphique-container {
+    height: 200px;
+    margin-top: 16px;
+}
+
+.graphique-container canvas {
+    max-height: 100%;
+}
+
+
+/* -------------------------------------------------------------
+   8. CARTE PERFORMANCE DU JOUR
+   ------------------------------------------------------------- */
+.epreuve-info {
+    text-align: center;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--bleu-sombre), var(--bleu-tres-sombre));
+    border-radius: var(--arrondi-petit);
+    color: var(--blanc);
+    margin-bottom: 20px;
+}
+
+.epreuve-nom {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.epreuve-date {
+    font-size: 13px;
+    opacity: 0.9;
+}
+
+.performance-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.perf-item {
+    text-align: center;
+    padding: 12px;
+    background: var(--bleu-glace);
+    border-radius: var(--arrondi-petit);
+}
+
+.perf-label {
+    font-size: 11px;
+    color: var(--gris-texte);
+    margin-bottom: 6px;
+}
+
+.perf-valeur {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--bleu-tres-sombre);
+}
+
+.perf-valeur.score-actuel {
+    color: var(--orange);
+    font-size: 22px;
+}
+
+.medaille-potentielle {
+    padding: 12px;
+    background: #FFF3E0;
+    border-left: 4px solid var(--bronze);
+    border-radius: var(--arrondi-petit);
+    font-size: 13px;
+    color: #E65100;
+}
+
+
+/* -------------------------------------------------------------
+   9. CARTE ÉQUIPE
+   ------------------------------------------------------------- */
+.equipe-classement {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: var(--bleu-glace);
+    border-radius: var(--arrondi-petit);
+    margin-bottom: 20px;
+}
+
+.equipe-position {
+    display: flex;
+    flex-direction: column;
+}
+
+.position-rang {
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--bleu-sombre);
+}
+
+.position-label {
+    font-size: 12px;
+    color: var(--gris-texte);
+}
+
+.equipe-score {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--bleu-tres-sombre);
+}
+
+.equipe-top3 h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gris-texte);
+    margin: 0 0 12px 0;
+}
+
+.top3-liste {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.top3-liste li {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: var(--argent-clair);
+    border-radius: var(--arrondi-petit);
+    transition: var(--transition-rapide);
+}
+
+.top3-liste li:hover {
+    background: var(--bleu-glace);
+}
+
+.top3-liste li.vous {
+    background: var(--orange);
+    color: var(--blanc);
+    font-weight: 600;
+}
+
+.top3-nom {
+    flex: 1;
+}
+
+.top3-score {
+    font-weight: 600;
+}
+
+
+/* -------------------------------------------------------------
+   10. FORMULAIRE SAISIE CONTRAT
+   ------------------------------------------------------------- */
+.form-contrat {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.form-groupe {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-groupe label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--bleu-sombre);
+    margin-bottom: 6px;
+}
+
+.form-groupe select,
+.form-groupe input {
+    padding: 12px;
+    border: 2px solid var(--argent);
+    border-radius: var(--arrondi-petit);
+    font-size: 14px;
+    font-family: inherit;
+    transition: var(--transition-rapide);
+}
+
+.form-groupe select:focus,
+.form-groupe input:focus {
+    outline: none;
+    border-color: var(--bleu-sombre);
+    box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.1);
+}
+
+.btn-enregistrer {
+    padding: 14px;
+    background: var(--orange);
+    color: var(--blanc);
+    border: none;
+    border-radius: var(--arrondi-petit);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-rapide);
+    position: relative;
+}
+
+.btn-enregistrer:hover {
+    background: var(--orange-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+}
+
+.btn-enregistrer:disabled {
+    background: var(--argent);
+    cursor: not-allowed;
+}
+
+.spinner-small {
+    display: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: var(--blanc);
+    border-radius: 50%;
+    animation: tourner 0.6s linear infinite;
+    margin: 0 auto;
+}
+
+.spinner-small.actif {
+    display: block;
+}
+
+.message-succes,
+.message-erreur-form {
+    display: none;
+    padding: 12px;
+    border-radius: var(--arrondi-petit);
+    font-size: 13px;
+    text-align: center;
+}
+
+.message-succes {
+    background: #E8F5E9;
+    color: var(--vert-succes);
+    border: 1px solid var(--vert-succes);
+}
+
+.message-succes.visible {
+    display: block;
+}
+
+.message-erreur-form {
+    background: #FFEBEE;
+    color: var(--rouge-erreur);
+    border: 1px solid #FFCDD2;
+}
+
+.message-erreur-form.visible {
+    display: block;
+}
+
+
+/* -------------------------------------------------------------
+   11. LISTE DES CONTRATS DU JOUR
+   ------------------------------------------------------------- */
+.contrats-liste {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.contrat-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--argent-clair);
+    border-radius: var(--arrondi-petit);
+    margin-bottom: 8px;
+    transition: var(--transition-rapide);
+}
+
+.contrat-item:hover {
+    background: var(--bleu-glace);
+}
+
+.contrat-icone {
+    font-size: 24px;
+}
+
+.contrat-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.contrat-type {
+    font-weight: 600;
+    color: var(--bleu-tres-sombre);
+}
+
+.contrat-heure {
+    font-size: 12px;
+    color: var(--gris-texte);
+}
+
+.contrat-lien {
+    font-size: 20px;
+    transition: var(--transition-rapide);
+}
+
+.contrat-lien:hover {
+    transform: scale(1.2);
+}
+
+.contrat-vide {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--gris-texte);
+    font-size: 14px;
+}
+
+
+/* -------------------------------------------------------------
+   12. CALENDRIER 12 JOURS
+   ------------------------------------------------------------- */
+.calendrier-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.jour-item {
+    background: var(--argent-clair);
+    border-radius: var(--arrondi-petit);
+    padding: 12px;
+    text-align: center;
+    transition: var(--transition-rapide);
+    cursor: pointer;
+}
+
+.jour-item:hover {
+    background: var(--bleu-glace);
+    transform: translateY(-2px);
+}
+
+.jour-item.actif {
+    background: var(--orange);
+    color: var(--blanc);
+}
+
+.jour-date {
+    font-size: 11px;
+    margin-bottom: 6px;
+}
+
+.jour-score {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.jour-medaille {
+    font-size: 20px;
+    margin-top: 4px;
+}
+
+
+/* -------------------------------------------------------------
+   13. BADGES
+   ------------------------------------------------------------- */
+.badges-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.badge-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    border-radius: var(--arrondi-petit);
+    transition: var(--transition-rapide);
+    cursor: pointer;
+}
+
+.badge-item.deblocque {
+    background: linear-gradient(135deg, var(--or), #FFA000);
+    color: var(--blanc);
+}
+
+.badge-item.deblocque:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+}
+
+.badge-item.verroui {
+    background: var(--argent-clair);
+    color: var(--gris-texte);
+    opacity: 0.6;
+}
+
+.badge-icone {
+    font-size: 32px;
+    margin-bottom: 8px;
+}
+
+.badge-nom {
+    font-size: 11px;
+    text-align: center;
+    font-weight: 600;
+}
+
+
+/* -------------------------------------------------------------
+   14. RESPONSIVE - Adaptation mobile/tablette
+   ------------------------------------------------------------- */
+@media (max-width: 1024px) {
+    .dashboard-container {
+        grid-template-columns: 1fr;    /* 1 seule colonne sur tablette */
+    }
+
+    .position-grid,
+    .performance-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .header-container {
+        flex-wrap: wrap;
+        height: auto;
+        padding: 12px;
+    }
+
+    .header-profil {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .dashboard-main {
+        padding: 12px;
+    }
+
+    .calendrier-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .badges-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

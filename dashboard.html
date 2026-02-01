@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<!--
+    =============================================================
+    FICHIER : dashboard.html
+    PROJET  : JO d'Hiver — Dashboard Commercial
+    PAGE    : Dashboard Agent (vue principale)
+    =============================================================
+-->
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>🏔️ Dashboard Agent — JO d'Hiver</title>
+
+    <!-- Les fichiers CSS -->
+    <link rel="stylesheet" href="styles.css">      <!-- Styles communs (variables, reset) -->
+    <link rel="stylesheet" href="dashboard.css">   <!-- Styles spécifiques au dashboard -->
+    
+    <!-- Google Fonts - Police moderne pour les titres -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="dashboard-body">
+
+    <!-- =============================================================
+         HEADER - En-tête avec profil de l'agent
+         ============================================================= -->
+    <header class="dashboard-header">
+        <div class="header-container">
+            
+            <!-- Logo + Titre du projet -->
+            <div class="header-logo">
+                <span class="logo-icon">🏔️</span>
+                <div class="logo-text">
+                    <h1>JO d'Hiver 2026</h1>
+                    <p>Challenge Commercial</p>
+                </div>
+            </div>
+
+            <!-- Profil de l'agent -->
+            <div class="header-profil">
+                <!-- Avatar + Drapeau de l'équipe -->
+                <div class="profil-avatar">
+                    <img src="https://ui-avatars.com/api/?name=Gerald+Mercier&background=1565C0&color=fff&size=80" 
+                         alt="Avatar" id="avatar-agent">
+                    <span class="profil-drapeau" id="drapeau-equipe">🇫🇷</span>
+                </div>
+
+                <!-- Nom + Équipe -->
+                <div class="profil-info">
+                    <h2 class="profil-nom" id="nom-agent">Gerald Mercier</h2>
+                    <p class="profil-equipe" id="nom-equipe">Équipe France</p>
+                </div>
+
+                <!-- Score total + Médaille -->
+                <div class="profil-score">
+                    <div class="score-valeur" id="score-total">245</div>
+                    <div class="score-label">points</div>
+                    <div class="medaille-container" id="medaille-container">
+                        <!-- La médaille apparaît ici si top 3 -->
+                    </div>
+                </div>
+
+                <!-- Notifications + Déconnexion -->
+                <div class="header-actions">
+                    <button class="btn-notif" id="btn-notifications" title="Notifications">
+                        🔔
+                        <span class="notif-badge">3</span>
+                    </button>
+                    <button class="btn-deconnexion" id="btn-deconnexion" title="Se déconnecter">
+                        🚪 Déconnexion
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- =============================================================
+         CONTENU PRINCIPAL - Layout en 2 colonnes
+         ============================================================= -->
+    <main class="dashboard-main">
+        <div class="dashboard-container">
+
+            <!-- COLONNE GAUCHE -->
+            <div class="colonne-gauche">
+
+                <!-- 1. POSITION ACTUELLE -->
+                <section class="carte carte-position">
+                    <h3 class="carte-titre">📊 Votre Position</h3>
+                    
+                    <div class="position-grid">
+                        <!-- Rang global -->
+                        <div class="position-item">
+                            <div class="position-label">Classement Global</div>
+                            <div class="position-valeur" id="rang-global">12ème/50</div>
+                            <div class="position-evolution" id="evolution-global">
+                                <span class="fleche">↑</span> +3 places
+                            </div>
+                        </div>
+
+                        <!-- Rang dans l'équipe -->
+                        <div class="position-item">
+                            <div class="position-label">Dans Votre Équipe</div>
+                            <div class="position-valeur" id="rang-equipe">3ème/10</div>
+                            <div class="position-manquant" id="points-manquants">
+                                15 pts pour la 2ème place
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. SKI DE FOND (Fil Rouge) -->
+                <section class="carte carte-ski-fond">
+                    <h3 class="carte-titre">⛷️ Ski de Fond — Fil Rouge</h3>
+                    
+                    <div class="ski-fond-info">
+                        <div class="ski-fond-categorie">
+                            <span class="badge-categorie">Mover</span>
+                            Votre catégorie
+                        </div>
+                        <div class="ski-fond-kpi">
+                            <div class="kpi-label">Taux de Rétention (TR)</div>
+                            <div class="kpi-valeur" id="ski-fond-valeur">67%</div>
+                            <div class="kpi-objectif">Objectif : 75%</div>
+                        </div>
+                    </div>
+
+                    <!-- Graphique de progression -->
+                    <div class="graphique-container">
+                        <canvas id="graphique-ski-fond"></canvas>
+                    </div>
+                </section>
+
+                <!-- 3. PERFORMANCE DU JOUR -->
+                <section class="carte carte-performance-jour">
+                    <h3 class="carte-titre">🎯 Épreuve du Jour</h3>
+                    
+                    <div class="epreuve-info">
+                        <div class="epreuve-nom" id="nom-epreuve">Sprint Biathlon</div>
+                        <div class="epreuve-date" id="date-epreuve">Vendredi 9 Février 2026</div>
+                    </div>
+
+                    <div class="performance-grid">
+                        <div class="perf-item">
+                            <div class="perf-label">KPI à maximiser</div>
+                            <div class="perf-valeur" id="kpi-jour">Telco (Movers)</div>
+                        </div>
+                        <div class="perf-item">
+                            <div class="perf-label">Votre score</div>
+                            <div class="perf-valeur score-actuel" id="score-jour">18 pts</div>
+                        </div>
+                        <div class="perf-item">
+                            <div class="perf-label">Classement du jour</div>
+                            <div class="perf-valeur" id="classement-jour">5ème</div>
+                        </div>
+                    </div>
+
+                    <!-- Indicateur de médaille potentielle -->
+                    <div class="medaille-potentielle" id="medaille-potentielle">
+                        🥉 Vous êtes à 2 contrats de la médaille de bronze !
+                    </div>
+                </section>
+
+                <!-- 4. VUE ÉQUIPE -->
+                <section class="carte carte-equipe">
+                    <h3 class="carte-titre">🇫🇷 Votre Équipe — France</h3>
+                    
+                    <div class="equipe-classement">
+                        <div class="equipe-position">
+                            <span class="position-rang">2ème</span>
+                            <span class="position-label">position sur 5 équipes</span>
+                        </div>
+                        <div class="equipe-score" id="score-equipe">1,247 pts</div>
+                    </div>
+
+                    <!-- Top 3 de l'équipe -->
+                    <div class="equipe-top3">
+                        <h4>🏆 Top 3 de l'équipe</h4>
+                        <ol class="top3-liste" id="top3-equipe">
+                            <li>
+                                <span class="top3-nom">Sophie Martin</span>
+                                <span class="top3-score">298 pts</span>
+                            </li>
+                            <li>
+                                <span class="top3-nom">Pierre Dubois</span>
+                                <span class="top3-score">267 pts</span>
+                            </li>
+                            <li class="vous">
+                                <span class="top3-nom">Vous (Gerald)</span>
+                                <span class="top3-score">245 pts</span>
+                            </li>
+                        </ol>
+                    </div>
+                </section>
+
+            </div>
+            <!-- FIN COLONNE GAUCHE -->
+
+
+            <!-- COLONNE DROITE -->
+            <div class="colonne-droite">
+
+                <!-- 5. FORMULAIRE SAISIE RAPIDE -->
+                <section class="carte carte-formulaire">
+                    <h3 class="carte-titre">✅ Enregistrer un Contrat</h3>
+                    
+                    <form id="formulaire-contrat" class="form-contrat">
+                        <!-- Type de contrat -->
+                        <div class="form-groupe">
+                            <label for="type-contrat">Type de contrat</label>
+                            <select id="type-contrat" required>
+                                <option value="">-- Sélectionnez --</option>
+                                <option value="Telco">Telco (Movers S1)</option>
+                                <option value="Mobile">Mobile (Switchers S1)</option>
+                                <option value="MRH">MRH (Movers S2)</option>
+                                <option value="Compensation Carbone">Compensation Carbone (Switchers S2)</option>
+                                <option value="Premium">Premium (Coachs)</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                        </div>
+
+                        <!-- Lien vers la piste -->
+                        <div class="form-groupe">
+                            <label for="lien-piste">Lien vers la piste Salesforce</label>
+                            <input 
+                                type="url" 
+                                id="lien-piste" 
+                                placeholder="https://salesforce.com/piste/..."
+                                required
+                            >
+                        </div>
+
+                        <!-- Bouton d'envoi -->
+                        <button type="submit" class="btn-enregistrer" id="btn-enregistrer">
+                            <span id="btn-texte">✅ Enregistrer</span>
+                            <div class="spinner-small" id="spinner-form"></div>
+                        </button>
+
+                        <!-- Message de confirmation -->
+                        <div class="message-succes" id="message-succes"></div>
+                        <div class="message-erreur-form" id="message-erreur-form"></div>
+                    </form>
+                </section>
+
+                <!-- 6. LISTE DES CONTRATS DU JOUR -->
+                <section class="carte carte-contrats-jour">
+                    <h3 class="carte-titre">📝 Vos Contrats Aujourd'hui</h3>
+                    
+                    <div class="contrats-liste" id="contrats-liste">
+                        <!-- Les contrats apparaissent ici dynamiquement -->
+                        <div class="contrat-item">
+                            <span class="contrat-icone">📞</span>
+                            <div class="contrat-info">
+                                <span class="contrat-type">Telco</span>
+                                <span class="contrat-heure">14:32</span>
+                            </div>
+                            <a href="#" class="contrat-lien" target="_blank">🔗</a>
+                        </div>
+                        <div class="contrat-item">
+                            <span class="contrat-icone">📱</span>
+                            <div class="contrat-info">
+                                <span class="contrat-type">Mobile</span>
+                                <span class="contrat-heure">11:15</span>
+                            </div>
+                            <a href="#" class="contrat-lien" target="_blank">🔗</a>
+                        </div>
+                        <div class="contrat-vide">
+                            Aucun contrat enregistré pour aujourd'hui
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 7. CALENDRIER 12 JOURS -->
+                <section class="carte carte-calendrier">
+                    <h3 class="carte-titre">📅 Calendrier du Challenge</h3>
+                    
+                    <div class="calendrier-grid" id="calendrier-grid">
+                        <!-- Les 12 jours apparaissent ici -->
+                    </div>
+                </section>
+
+                <!-- 8. BADGES DÉBLOQUÉS -->
+                <section class="carte carte-badges">
+                    <h3 class="carte-titre">🏅 Vos Badges</h3>
+                    
+                    <div class="badges-grid" id="badges-grid">
+                        <!-- Les badges apparaissent ici -->
+                        <div class="badge-item deblocque" title="Premier Contrat !">
+                            <span class="badge-icone">🎯</span>
+                            <span class="badge-nom">Premier Contrat</span>
+                        </div>
+                        <div class="badge-item deblocque" title="Série de 5 jours">
+                            <span class="badge-icone">🔥</span>
+                            <span class="badge-nom">Série de 5</span>
+                        </div>
+                        <div class="badge-item verroui" title="Top 3 Global - À débloquer">
+                            <span class="badge-icone">🔒</span>
+                            <span class="badge-nom">Top 3 Global</span>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+            <!-- FIN COLONNE DROITE -->
+
+        </div>
+    </main>
+
+    <!-- =============================================================
+         SCRIPTS JAVASCRIPT
+         ============================================================= -->
+    
+    <!-- Bibliothèque Chart.js pour les graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    
+    <!-- Bibliothèque Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Notre configuration -->
+    <script src="config.js"></script>
+    
+    <!-- Notre logique dashboard -->
+    <script src="dashboard.js"></script>
+
+</body>
+</html>
