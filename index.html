@@ -4,30 +4,16 @@
     FICHIER : index.html
     PROJET  : JO d'Hiver — Dashboard Commercial
     PAGE    : Connexion (Login)
-    
-    COMMENT LIRE CE FICHIER :
-    • Les lignes qui commencent par <!-- sont des commentaires.
-      Le navigateur les ignore. Elles sont là pour vous aider
-      à comprendre le code.
-    • Les balises HTML créent la structure de la page.
-    • Le CSS (styles.css) s'occupe du visuel.
-    • Le JS (login.js) s'occupe du comportement.
     =============================================================
 -->
 <html lang="fr">
 <head>
-    <!-- META : informations sur la page pour le navigateur -->
-    <meta charset="UTF-8">                        <!-- On utilise les caractères français (é, è, ç...) -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">  <!-- Pour que ça marche sur mobile -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- Le titre affiché dans l'onglet du navigateur -->
     <title>🏔️ JO d'Hiver — Connexion</title>
 
-    <!-- 
-        Le fichier CSS : on le met dans le <head> pour que les styles
-        soient chargés avant que la page s'affiche.
-        "rel=stylesheet" dit au navigateur que c'est un fichier de styles.
-    -->
+    <!-- Le fichier CSS pour les styles visuels -->
     <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -35,16 +21,10 @@
 
     <!-- =============================================================
          LA PAGE DE CONNEXION
-         
-         Classe "login-page" = le fond bleu avec les décors
          ============================================================= -->
     <div class="login-page">
 
-        <!-- 
-            Les particules de neige (décoratives)
-            Ce sont des div vides qui sont animées avec le CSS.
-            Le JS ne les touche pas.
-        -->
+        <!-- Les particules de neige décoratives -->
         <div class="neige-particule"></div>
         <div class="neige-particule"></div>
         <div class="neige-particule"></div>
@@ -53,53 +33,25 @@
         <div class="neige-particule"></div>
         <div class="neige-particule"></div>
 
-        <!-- =============================================================
-             LA CARTE BLANCHE (au centre de la page)
-             
-             C'est le conteneur du formulaire de connexion.
-             ============================================================= -->
+        <!-- La carte blanche au centre -->
         <div class="login-carte">
 
             <!-- Le titre et le logo en haut -->
             <div class="login-header">
-                <!-- L'icône du projet (emoji) -->
                 <span class="login-icone">🏔️</span>
-
-                <!-- Le titre du challenge -->
                 <h1 class="login-titre">JO d'Hiver 2026</h1>
-
-                <!-- Le sous-titre -->
                 <p class="login-sous-titre">Challenge Commercial — Call Center</p>
             </div>
 
-            <!-- La ligne séparatrice entre le titre et le formulaire -->
+            <!-- La ligne séparatrice -->
             <div class="login-separateur"></div>
 
-            <!-- =============================================================
-                 LE FORMULAIRE DE CONNEXION
-                 
-                 id="formulaire-login" : utilisé par login.js pour 
-                 référencer ce formulaire.
-                 
-                 onsubmit : quand l'utilisateur appuie sur Entrée ou clique
-                 le bouton, le formulaire se soumet. Le JS intercepte ça.
-                 ============================================================= -->
+            <!-- Le formulaire de connexion -->
             <form id="formulaire-login">
 
                 <!-- Le groupe : label + champ email -->
                 <div class="groupe-champ">
-                    <!-- Le label : texte au-dessus du champ -->
-                    <!-- "for=champ-email" lie ce label au champ avec id="champ-email" -->
                     <label for="champ-email">📧 Email personnel</label>
-
-                    <!-- Le champ de saisie email -->
-                    <!-- 
-                        type="email"        : le navigateur vérifie le format de base
-                        id="champ-email"    : utilisé par login.js pour récupérer la valeur
-                        placeholder         : texte gris affiché quand le champ est vide
-                        required            : le navigateur empêche la soumission si vide
-                        autocomplete="off"  : ne pas proposer les emails sauvegardés
-                    -->
                     <input 
                         type="email" 
                         id="champ-email" 
@@ -110,30 +62,12 @@
                 </div>
 
                 <!-- Le bouton de connexion -->
-                <!-- 
-                    type="submit"    : en cliquant, ça soumet le formulaire
-                    id="btn-connexion": utilisé par login.js
-                -->
                 <button type="submit" class="btn-connexion" id="btn-connexion">
-                    <!-- 
-                        Le texte du bouton (caché pendant le chargement)
-                        id="texte-btn" : utilisé par login.js pour le cacher/remontrer
-                    -->
                     <span id="texte-btn">Se Connecter →</span>
-
-                    <!-- 
-                        Le spinner (cercle qui tourne pendant le chargement)
-                        Il est caché par défaut (voir styles.css).
-                        login.js lui ajoute la classe "actif" pour le montrer.
-                    -->
                     <div class="spinner" id="spinner"></div>
                 </button>
 
-                <!-- 
-                    Le message d'erreur (caché par défaut)
-                    login.js lui ajoute la classe "visible" en cas d'erreur.
-                    Le texte est mis à jour dynamiquement par login.js.
-                -->
+                <!-- Le message d'erreur (caché par défaut) -->
                 <div class="message-erreur" id="message-erreur"></div>
 
             </form>
@@ -150,25 +84,26 @@
             </div>
 
         </div>
-        <!-- Fin de la carte blanche -->
 
     </div>
-    <!-- Fin de la page de connexion -->
 
 
     <!-- =============================================================
          LES FICHIERS JAVASCRIPT
          
-         On les met EN BAS du body (avant </body>) pour une raison
-         importante : le navigateur lit le HTML de haut en bas.
-         Si on mettait le JS en haut, il essaierait d'agir sur des
-         éléments qui n'existent pas encore.
-         
-         L'ordre est important :
-         1. config.js      → les paramètres Supabase (utilisés par login.js)
-         2. login.js       → la logique de connexion
+         IMPORTANT : L'ordre est crucial !
+         1. Supabase JS (bibliothèque officielle depuis CDN)
+         2. config.js (nos identifiants)
+         3. login.js (la logique de connexion)
          ============================================================= -->
+    
+    <!-- 1. Bibliothèque Supabase JS depuis CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- 2. Notre fichier de configuration -->
     <script src="config.js"></script>
+    
+    <!-- 3. Notre logique de connexion -->
     <script src="login.js"></script>
 
 </body>
