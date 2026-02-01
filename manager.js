@@ -551,7 +551,7 @@ function soumettrePoints(event) {
     return false;
 }
 
-function soumettreB adge(event) {
+function soumettreBadge(event) {
     event.preventDefault();
     
     const agentId = document.getElementById('select-agent-badge').value;
