@@ -1,205 +1,270 @@
 // =============================================================
-// FICHIER : login.js
-// DESCRIPTION : Logique de la page de connexion
-//
-// COMMENT ÇA MARCHE :
-//   1. On charge la bibliothèque Supabase depuis un CDN
-//   2. L'utilisateur tape son email (@papernest.com)
-//   3. On vérifie que l'email est au bon format
-//   4. On utilise Supabase Auth pour envoyer un magic link
-//   5. On affiche un message de confirmation
+// FICHIER : login.js - SYSTÈME INTELLIGENT
+// Détecte si première connexion ou pas
 // =============================================================
 
+console.log('🔐 Système de connexion intelligent — Chargement...');
 
-// -------------------------------------------------------------
-// PARTIE 1 : ATTENDRE QUE LA PAGE SOIT CHARGÉE
-// -------------------------------------------------------------
+let emailSaisi = '';
+
 document.addEventListener('DOMContentLoaded', function() {
 
-    // -------------------------------------------------------------
-    // PARTIE 2 : INITIALISER SUPABASE
-    //
-    // On crée une connexion à Supabase en utilisant nos identifiants
-    // du fichier config.js
-    // -------------------------------------------------------------
     const supabase = window.supabase.createClient(
         SUPABASE_CONFIG.URL,
         SUPABASE_CONFIG.KEY
     );
 
-    // -------------------------------------------------------------
-    // PARTIE 3 : RÉCUPÉRER LES ÉLÉMENTS DE LA PAGE
-    // -------------------------------------------------------------
-    const formulaire    = document.getElementById('formulaire-login');
-    const champEmail    = document.getElementById('champ-email');
-    const btnConnexion  = document.getElementById('btn-connexion');
-    const spinner       = document.getElementById('spinner');
-    const texteBtn      = document.getElementById('texte-btn');
-    const messageErreur = document.getElementById('message-erreur');
-
+    // Éléments DOM
+    const formEtape1 = document.getElementById('form-etape1');
+    const formPremiereConnexion = document.getElementById('form-premiere-connexion');
+    const formConnexionNormale = document.getElementById('form-connexion-normale');
 
     // -------------------------------------------------------------
-    // PARTIE 4 : FONCTION DE VALIDATION DE L'EMAIL
+    // ÉTAPE 1 : Vérifier si l'email existe
     // -------------------------------------------------------------
-    function validerEmail(email) {
-        if (!email || email.trim() === '') {
-            return { valide: false, message: '📧 Veuillez entrer votre email.' };
-        }
-
-        if (!email.toLowerCase().endsWith('@papernest.com')) {
-            return {
-                valide: false,
-                message: '❌ Votre email doit se terminer par @papernest.com'
-            };
-        }
-
-        const partiesEmail = email.split('@');
-        const partieAvantAt = partiesEmail[0];
-
-        if (partieAvantAt.length === 0) {
-            return {
-                valide: false,
-                message: '❌ Format incorrect. Utilisez : prénom.nom@papernest.com'
-            };
-        }
-
-        if (!partieAvantAt.includes('.')) {
-            return {
-                valide: false,
-                message: '❌ Format attendu : prénom.nom@papernest.com'
-            };
-        }
-
-        return { valide: true, message: '' };
-    }
-
-
-    // -------------------------------------------------------------
-    // PARTIE 5 : AFFICHER / CACHER UN MESSAGE D'ERREUR
-    // -------------------------------------------------------------
-    function afficherErreur(texte) {
-        messageErreur.textContent = texte;
-        messageErreur.classList.add('visible');
-    }
-
-    function cacherErreur() {
-        messageErreur.classList.remove('visible');
-    }
-
-
-    // -------------------------------------------------------------
-    // PARTIE 6 : GÉRER L'ÉTAT DU BOUTON (chargement en cours)
-    // -------------------------------------------------------------
-    function mettreBoutonEnChargement(enChargement) {
-        if (enChargement) {
-            btnConnexion.disabled = true;
-            texteBtn.style.display = 'none';
-            spinner.classList.add('actif');
-        } else {
-            btnConnexion.disabled = false;
-            texteBtn.style.display = 'inline';
-            spinner.classList.remove('actif');
-        }
-    }
-
-
-    // -------------------------------------------------------------
-    // PARTIE 7 : LA FONCTION PRINCIPALE — ENVOYER LE MAGIC LINK
-    // -------------------------------------------------------------
-    async function envoyerMagicLink(event) {
-        event.preventDefault();
-
-        const emailSaisi = champEmail.value.trim();
-        cacherErreur();
-
-        // Validation de l'email
-        const validation = validerEmail(emailSaisi);
-        if (!validation.valide) {
-            afficherErreur(validation.message);
+    formEtape1.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        emailSaisi = document.getElementById('email').value.trim();
+        
+        // Validation
+        if (!emailSaisi.toLowerCase().endsWith('@papernest.com')) {
+            afficherErreur('erreur-etape1', '❌ Email doit se terminer par @papernest.com');
             return;
         }
 
-        mettreBoutonEnChargement(true);
+        cacherErreur('erreur-etape1');
+        document.getElementById('btn-etape1').textContent = '⏳ Vérification...';
+        document.getElementById('btn-etape1').disabled = true;
 
         try {
-            // -------------------------------------------------------------
-            // APPEL À SUPABASE AUTH — Envoi du Magic Link
-            //
-            // On utilise la méthode officielle signInWithOtp() de Supabase
-            // qui envoie automatiquement un email avec un lien magique
-            // -------------------------------------------------------------
-            const { data, error } = await supabase.auth.signInWithOtp({
+            // Vérifier si l'utilisateur existe dans la table users
+            const { data: userData, error } = await supabase
+                .from('users')
+                .select('id, email')
+                .eq('email', emailSaisi)
+                .maybeSingle();
+
+            document.getElementById('btn-etape1').textContent = 'Continuer →';
+            document.getElementById('btn-etape1').disabled = false;
+
+            if (userData) {
+                // L'utilisateur existe → Connexion normale
+                console.log('✅ Utilisateur existant, connexion normale');
+                afficherFormConnexionNormale();
+            } else {
+                // Nouvel utilisateur → Créer mot de passe
+                console.log('✨ Nouvel utilisateur, création mot de passe');
+                afficherFormPremiereConnexion();
+            }
+
+        } catch (error) {
+            console.error('❌ Erreur:', error);
+            afficherErreur('erreur-etape1', '❌ Erreur de connexion. Vérifiez votre connexion Internet.');
+            document.getElementById('btn-etape1').textContent = 'Continuer →';
+            document.getElementById('btn-etape1').disabled = false;
+        }
+    });
+
+    // -------------------------------------------------------------
+    // PREMIÈRE CONNEXION : Créer le compte
+    // -------------------------------------------------------------
+    formPremiereConnexion.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const nouveauMdp = document.getElementById('nouveau-mdp').value;
+        const confirmMdp = document.getElementById('confirm-mdp').value;
+
+        // Validation
+        if (nouveauMdp.length < 8) {
+            afficherErreur('erreur-creation', '❌ Le mot de passe doit contenir au moins 8 caractères');
+            return;
+        }
+
+        if (nouveauMdp !== confirmMdp) {
+            afficherErreur('erreur-creation', '❌ Les mots de passe ne correspondent pas');
+            return;
+        }
+
+        cacherErreur('erreur-creation');
+        document.getElementById('btn-creer').textContent = '⏳ Création du compte...';
+        document.getElementById('btn-creer').disabled = true;
+
+        try {
+            // 1. Créer le compte dans Supabase Auth
+            const { data: authData, error: authError } = await supabase.auth.signUp({
                 email: emailSaisi,
+                password: nouveauMdp,
                 options: {
-                    // On redirige vers une page de vérification qui décidera où aller
-                    emailRedirectTo: window.location.origin + '/auth-callback.html'
+                    data: {
+                        email: emailSaisi
+                    }
                 }
             });
 
-            if (error) {
-                // ❌ ERREUR de Supabase
-                console.error('Erreur Supabase:', error);
-                
-                let messageErreurTexte = 'Une erreur est survenue.';
-                
-                // Messages d'erreur personnalisés selon le type
-                if (error.message.includes('Email not allowed')) {
-                    messageErreurTexte = '❌ Cet email n\'est pas autorisé. Contactez votre administrateur.';
-                } else if (error.message.includes('rate limit')) {
-                    messageErreurTexte = '⏱️ Trop de tentatives. Attendez quelques minutes.';
-                } else {
-                    messageErreurTexte = '❌ ' + error.message;
-                }
-                
-                afficherErreur(messageErreurTexte);
-                mettreBoutonEnChargement(false);
-            } else {
-                // ✅ SUCCÈS !
-                formulaire.innerHTML = `
-                    <div style="text-align: center; padding: 20px 0;">
-                        <div style="font-size: 64px; margin-bottom: 16px; animation: pulse-douce 2s ease-in-out infinite;">✉️</div>
-                        <h3 style="color: var(--bleu-tres-sombre); font-size: 20px; margin-bottom: 10px;">
-                            Email envoyé !
-                        </h3>
-                        <p style="color: var(--gris-texte); font-size: 14px; line-height: 1.6;">
-                            Nous avons envoyé un lien de connexion à :<br>
-                            <strong style="color: var(--bleu-sombre);">${emailSaisi}</strong>
-                        </p>
-                        <p style="color: var(--gris-texte); font-size: 13px; margin-top: 16px; padding: 12px; background: var(--bleu-glace); border-radius: 8px;">
-                            📬 Vérifiez votre boîte de réception.<br>
-                            Le lien est valable pendant <strong>1 heure</strong>.<br>
-                            Si vous ne le trouvez pas, regardez dans les <em>Spam</em>.
-                        </p>
-                        <button 
-                            onclick="location.reload()" 
-                            style="margin-top: 24px; padding: 10px 24px; background: var(--bleu-sombre); color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;"
-                        >
-                            ← Retour
-                        </button>
-                    </div>
-                `;
+            if (authError) {
+                console.error('❌ Erreur Auth:', authError);
+                afficherErreur('erreur-creation', '❌ ' + authError.message);
+                document.getElementById('btn-creer').textContent = '✅ Créer mon compte';
+                document.getElementById('btn-creer').disabled = false;
+                return;
             }
 
-        } catch (erreur) {
-            // -------------------------------------------------------------
-            // ERREUR RÉSEAU ou autre erreur inattendue
-            // -------------------------------------------------------------
-            console.error('Erreur réseau:', erreur);
-            afficherErreur('🌐 Impossible de se connecter au serveur. Vérifiez votre connexion Internet.');
-            mettreBoutonEnChargement(false);
+            console.log('✅ Compte Auth créé:', authData.user.email);
+
+            // 2. Créer le profil dans notre table users
+            const emailParts = emailSaisi.split('@')[0].split('.');
+            const prenom = emailParts[0] ? emailParts[0].charAt(0).toUpperCase() + emailParts[0].slice(1) : '';
+            const nom = emailParts[1] ? emailParts[1].toUpperCase() : '';
+
+            const { error: dbError } = await supabase
+                .from('users')
+                .insert({
+                    id: authData.user.id,
+                    email: emailSaisi,
+                    prenom: prenom,
+                    nom: nom,
+                    role: 'agent',
+                    onboarding_complete: false,
+                    created_at: new Date().toISOString()
+                });
+
+            if (dbError) {
+                console.error('❌ Erreur DB:', dbError);
+            }
+
+            console.log('✅ Profil créé, redirection vers onboarding');
+            
+            // Rediriger vers l'onboarding
+            window.location.href = 'onboarding.html';
+
+        } catch (error) {
+            console.error('❌ Erreur:', error);
+            afficherErreur('erreur-creation', '❌ Erreur : ' + error.message);
+            document.getElementById('btn-creer').textContent = '✅ Créer mon compte';
+            document.getElementById('btn-creer').disabled = false;
+        }
+    });
+
+    // -------------------------------------------------------------
+    // CONNEXION NORMALE : Se connecter
+    // -------------------------------------------------------------
+    formConnexionNormale.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const mdp = document.getElementById('mdp-connexion').value;
+
+        cacherErreur('erreur-connexion');
+        document.getElementById('btn-connexion').textContent = '⏳ Connexion...';
+        document.getElementById('btn-connexion').disabled = true;
+
+        try {
+            // Connexion
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email: emailSaisi,
+                password: mdp
+            });
+
+            if (error) {
+                console.error('❌ Erreur connexion:', error);
+                
+                let message = 'Erreur de connexion';
+                if (error.message.includes('Invalid login credentials')) {
+                    message = '❌ Mot de passe incorrect';
+                } else {
+                    message = '❌ ' + error.message;
+                }
+                
+                afficherErreur('erreur-connexion', message);
+                document.getElementById('btn-connexion').textContent = 'Se Connecter →';
+                document.getElementById('btn-connexion').disabled = false;
+                return;
+            }
+
+            console.log('✅ Connexion réussie:', data.user.email);
+
+            // Rediriger selon le profil
+            await redirigerSelonProfil(data.user.id);
+
+        } catch (error) {
+            console.error('❌ Erreur:', error);
+            afficherErreur('erreur-connexion', '❌ ' + error.message);
+            document.getElementById('btn-connexion').textContent = 'Se Connecter →';
+            document.getElementById('btn-connexion').disabled = false;
+        }
+    });
+
+    // -------------------------------------------------------------
+    // BOUTONS RETOUR
+    // -------------------------------------------------------------
+    document.getElementById('btn-retour1').addEventListener('click', retourEtape1);
+    document.getElementById('btn-retour2').addEventListener('click', retourEtape1);
+
+    // -------------------------------------------------------------
+    // FONCTIONS UTILITAIRES
+    // -------------------------------------------------------------
+    function afficherFormPremiereConnexion() {
+        formEtape1.style.display = 'none';
+        formPremiereConnexion.style.display = 'block';
+        formConnexionNormale.style.display = 'none';
+        document.getElementById('nouveau-mdp').focus();
+    }
+
+    function afficherFormConnexionNormale() {
+        formEtape1.style.display = 'none';
+        formPremiereConnexion.style.display = 'none';
+        formConnexionNormale.style.display = 'block';
+        document.getElementById('mdp-connexion').focus();
+    }
+
+    function retourEtape1() {
+        formEtape1.style.display = 'block';
+        formPremiereConnexion.style.display = 'none';
+        formConnexionNormale.style.display = 'none';
+        cacherErreur('erreur-creation');
+        cacherErreur('erreur-connexion');
+    }
+
+    function afficherErreur(id, texte) {
+        const elem = document.getElementById(id);
+        elem.textContent = texte;
+        elem.classList.add('visible');
+    }
+
+    function cacherErreur(id) {
+        const elem = document.getElementById(id);
+        elem.classList.remove('visible');
+    }
+
+    async function redirigerSelonProfil(userId) {
+        try {
+            const { data: userData } = await supabase
+                .from('users')
+                .select('*')
+                .eq('id', userId)
+                .single();
+
+            if (!userData) {
+                window.location.href = 'onboarding.html';
+                return;
+            }
+
+            if (!userData.onboarding_complete) {
+                window.location.href = 'onboarding.html';
+                return;
+            }
+
+            if (userData.role === 'manager' || userData.role === 'admin') {
+                window.location.href = 'manager.html';
+            } else {
+                window.location.href = 'dashboard.html';
+            }
+
+        } catch (error) {
+            console.error('❌ Erreur redirection:', error);
+            window.location.href = 'dashboard.html';
         }
     }
 
-
-    // -------------------------------------------------------------
-    // PARTIE 8 : CONNECTER LE BOUTON À LA FONCTION
-    // -------------------------------------------------------------
-    formulaire.addEventListener('submit', envoyerMagicLink);
-
-
-    // -------------------------------------------------------------
-    // PARTIE 9 : FOCUS AUTOMATIQUE SUR LE CHAMP EMAIL
-    // -------------------------------------------------------------
-    champEmail.focus();
-
+    console.log('✅ Système de connexion initialisé');
 });

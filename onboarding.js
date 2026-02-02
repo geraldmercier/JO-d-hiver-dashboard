@@ -1,13 +1,12 @@
 // =============================================================
-// FICHIER : onboarding.js
-// VERSION : PRODUCTION - Connexion Supabase réelle
+// FICHIER : onboarding.js - VERSION PRODUCTION PROPRE
 // =============================================================
 
-console.log('✅ onboarding.js PRODUCTION chargé');
+console.log('✅ onboarding.js chargé');
 
-// -------------------------------------------------------------
-// VARIABLES GLOBALES
-// -------------------------------------------------------------
+// Créer l'instance Supabase
+const supabase = window.supabase.createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.KEY);
+
 const selectionUtilisateur = {
     avatarUrl: null,
     managerId: null,
@@ -21,11 +20,8 @@ const AVATARS_DISPONIBLES = [
     'parrot.png', 'sea-lion.png', 'tiger.png', 'woman (1).png', 'woman (2).png'
 ];
 
-// -------------------------------------------------------------
-// FONCTIONS GLOBALES
-// -------------------------------------------------------------
-
-function allerEtape(numeroEtape) {
+// Fonction pour changer d'étape - DOIT ÊTRE GLOBALE
+window.allerEtape = function(numeroEtape) {
     document.querySelectorAll('.etape').forEach(e => e.classList.remove('active'));
     document.getElementById('etape-' + numeroEtape).classList.add('active');
     
@@ -33,41 +29,41 @@ function allerEtape(numeroEtape) {
         ind.classList.toggle('completed', i < numeroEtape);
         ind.classList.toggle('active', i + 1 === numeroEtape);
     });
-}
+};
 
-function validerAvatar() {
+window.validerAvatar = function() {
     if (!selectionUtilisateur.avatarUrl) {
         document.getElementById('erreur-avatar').textContent = '⚠️ Choisissez un avatar';
         document.getElementById('erreur-avatar').classList.add('visible');
         return;
     }
-    allerEtape(3);
-}
+    window.allerEtape(3);
+};
 
-function validerManager() {
+window.validerManager = function() {
     if (!selectionUtilisateur.managerId) {
         document.getElementById('erreur-manager').textContent = '⚠️ Choisissez un manager';
         document.getElementById('erreur-manager').classList.add('visible');
         return;
     }
-    allerEtape(4);
-}
+    window.allerEtape(4);
+};
 
-function selectionnerAvatar(filename) {
+window.selectionnerAvatar = function(filename) {
     document.querySelectorAll('.avatar-option').forEach(d => d.classList.remove('selected'));
     event.currentTarget.classList.add('selected');
     selectionUtilisateur.avatarUrl = 'assets/' + filename;
     document.getElementById('erreur-avatar').classList.remove('visible');
-}
+};
 
-function selectionnerCellule(celluleNom) {
+window.selectionnerCellule = function(celluleNom) {
     document.querySelectorAll('.cellule-carte').forEach(d => d.classList.remove('selected'));
     event.currentTarget.classList.add('selected');
     selectionUtilisateur.cellule = celluleNom;
     document.getElementById('erreur-cellule').classList.remove('visible');
-}
+};
 
-async function terminerOnboarding() {
+window.terminerOnboarding = async function() {
     if (!selectionUtilisateur.cellule) {
         document.getElementById('erreur-cellule').textContent = '⚠️ Choisissez une cellule';
         document.getElementById('erreur-cellule').classList.add('visible');
@@ -101,11 +97,9 @@ async function terminerOnboarding() {
         btn.disabled = false;
         btn.textContent = '✅ Terminer';
     }
-}
+};
 
-// -------------------------------------------------------------
-// INITIALISATION
-// -------------------------------------------------------------
+// Initialisation
 document.addEventListener('DOMContentLoaded', async function() {
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -136,7 +130,7 @@ function chargerAvatars() {
     AVATARS_DISPONIBLES.forEach(filename => {
         const div = document.createElement('div');
         div.className = 'avatar-option';
-        div.onclick = () => selectionnerAvatar(filename);
+        div.onclick = () => window.selectionnerAvatar(filename);
         
         const img = document.createElement('img');
         img.src = 'assets/' + filename;
@@ -186,3 +180,5 @@ async function chargerManagersReels() {
         alert('❌ Erreur chargement managers');
     }
 }
+
+console.log('✅ onboarding.js initialisé');
