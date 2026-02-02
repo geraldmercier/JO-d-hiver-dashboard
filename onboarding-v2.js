@@ -55,9 +55,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         AVATARS_DISPONIBLES.forEach(filename => {
             const div = document.createElement('div');
-            div.className = 'avatar-option';
+            div.className = 'avatar-item';
             div.onclick = function() {
-                document.querySelectorAll('.avatar-option').forEach(d => d.classList.remove('selected'));
+                document.querySelectorAll('.avatar-item').forEach(d => d.classList.remove('selected'));
                 div.classList.add('selected');
                 selectionUtilisateur.avatarUrl = 'assets/' + filename;
                 document.getElementById('erreur-avatar').classList.remove('visible');
@@ -79,23 +79,44 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (!select) return;
 
         try {
-            const { data: managers, error } = await supabase
+            console.log('🔄 Chargement des managers...');
+            
+            // Récupérer l'utilisateur connecté
+            const { data: { user: currentUser } } = await supabase.auth.getUser();
+            const { data: currentUserData } = await supabase
                 .from('users')
-                .select('id, nom, prenom, equipe_id, equipes(nom, drapeau)')
-                .eq('role', 'manager')
-                .order('nom');
+                .select('role')
+                .eq('id', currentUser.id)
+                .single();
+            
+            // Si c'est un admin, inclure aussi les admins dans la liste
+            let query = supabase
+                .from('users')
+                .select('id, nom, prenom, equipe_id, equipes(nom, drapeau_emoji)');
+            
+            if (currentUserData?.role === 'admin') {
+                // Admin : voir les managers ET les autres admins
+                query = query.in('role', ['manager', 'admin']);
+            } else {
+                // Utilisateur normal : voir seulement les managers
+                query = query.eq('role', 'manager');
+            }
+            
+            const { data: managers, error } = await query.order('nom');
 
             if (error) throw error;
+
+            console.log('📋 Managers reçus de Supabase:', managers);
 
             select.innerHTML = '<option value="">-- Choisissez votre manager --</option>';
 
             managers.forEach(m => {
                 const opt = document.createElement('option');
                 opt.value = m.id;
-                opt.textContent = `${m.prenom} ${m.nom} (Équipe ${m.equipes.nom} ${m.equipes.drapeau})`;
+                opt.textContent = `${m.prenom} ${m.nom} (Équipe ${m.equipes.nom} ${m.equipes.drapeau_emoji})`;
                 opt.dataset.equipeId = m.equipe_id;
                 opt.dataset.equipeNom = m.equipes.nom;
-                opt.dataset.equipeDrapeau = m.equipes.drapeau;
+                opt.dataset.equipeDrapeau = m.equipes.drapeau_emoji;
                 select.appendChild(opt);
             });
 
@@ -114,7 +135,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             
             console.log('✅ Managers chargés');
         } catch (error) {
-            console.error('❌ Erreur managers:', error);
+            console.error('❌ Erreur managers:', error.message);
+            console.error('Détail erreur:', error);
         }
     }
 

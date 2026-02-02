@@ -50,7 +50,7 @@ window.validerManager = function() {
 };
 
 window.selectionnerAvatar = function(filename) {
-    document.querySelectorAll('.avatar-option').forEach(d => d.classList.remove('selected'));
+    document.querySelectorAll('.avatar-item').forEach(d => d.classList.remove('selected'));
     event.currentTarget.classList.add('selected');
     selectionUtilisateur.avatarUrl = 'assets/' + filename;
     document.getElementById('erreur-avatar').classList.remove('visible');
@@ -129,7 +129,7 @@ function chargerAvatars() {
 
     AVATARS_DISPONIBLES.forEach(filename => {
         const div = document.createElement('div');
-        div.className = 'avatar-option';
+        div.className = 'avatar-item';
         div.onclick = () => window.selectionnerAvatar(filename);
         
         const img = document.createElement('img');
@@ -151,6 +151,8 @@ async function chargerManagersReels() {
             .order('nom');
 
         if (error) throw error;
+
+        console.log('📋 Managers reçus de Supabase:', managers);
 
         select.innerHTML = '<option value="">-- Choisissez votre manager --</option>';
 
