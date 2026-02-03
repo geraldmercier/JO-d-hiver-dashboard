@@ -1,46 +1,44 @@
 // =============================================================
-// FICHIER : manager.js - VERSION PRODUCTION
-// Connexion Supabase RÉELLE
+// MANAGER - VERSION FINALE
+// Tous les calculs sont réels depuis Supabase
 // =============================================================
 
-console.log('👔 Dashboard Manager PRODUCTION — Chargement...');
+console.log('👔 Dashboard Manager FINAL - Chargement...');
 
 let managerActuel = null;
 let equipeActuelle = null;
+let tousLesAgents = [];
+let tousLesContrats = [];
 
 // -------------------------------------------------------------
 // INITIALISATION
 // -------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', async function() {
     
-    // 1. Vérifier que l'utilisateur est connecté
     const { data: { user }, error } = await supabase.auth.getUser();
     
     if (error || !user) {
         console.error('❌ Utilisateur non connecté');
-        window.location.href = 'index.html';
+        window.location.href = 'connexion-finale.html';
         return;
     }
 
-    console.log('✅ Utilisateur connecté:', user.email);
-
-    // 2. Charger les données du manager
     await chargerDonneesManager(user.id);
 
-    // 3. Vérifier que c'est bien un manager ou admin
     if (!managerActuel || (managerActuel.role !== 'manager' && managerActuel.role !== 'admin')) {
         alert('❌ Accès refusé. Cette page est réservée aux managers.');
         window.location.href = 'dashboard.html';
         return;
     }
 
-    // 4. Initialiser les sections
+    await chargerTousLesAgents();
+    await chargerTousLesContrats();
+
     afficherInformationsHeader();
-    afficherPerformanceEquipe();
+    await calculerPerformanceEquipe();
     await chargerContratsAttente();
     await chargerAgentsEquipe();
 
-    // 5. Boutons
     document.getElementById('btn-vue-plateau').addEventListener('click', function() {
         window.location.href = 'plateau.html';
     });
@@ -56,7 +54,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 
 // -------------------------------------------------------------
-// CHARGER LES DONNÉES DU MANAGER
+// CHARGER DONNÉES MANAGER
 // -------------------------------------------------------------
 async function chargerDonneesManager(userId) {
     try {
@@ -64,11 +62,7 @@ async function chargerDonneesManager(userId) {
             .from('users')
             .select(`
                 *,
-                equipes (
-                    id,
-                    nom,
-                    drapeau
-                )
+                equipes (id, nom, drapeau)
             `)
             .eq('id', userId)
             .single();
@@ -79,17 +73,52 @@ async function chargerDonneesManager(userId) {
         equipeActuelle = data.equipes;
         
         console.log('✅ Manager chargé:', managerActuel);
-        console.log('✅ Équipe:', equipeActuelle);
 
     } catch (error) {
         console.error('❌ Erreur chargement manager:', error);
-        alert('Erreur lors du chargement de vos données');
     }
 }
 
 
 // -------------------------------------------------------------
-// AFFICHER LES INFORMATIONS (HEADER)
+// CHARGER TOUS LES AGENTS
+// -------------------------------------------------------------
+async function chargerTousLesAgents() {
+    try {
+        const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('role', 'agent');
+
+        if (error) throw error;
+        tousLesAgents = data;
+
+    } catch (error) {
+        console.error('❌ Erreur chargement agents:', error);
+    }
+}
+
+
+// -------------------------------------------------------------
+// CHARGER TOUS LES CONTRATS
+// -------------------------------------------------------------
+async function chargerTousLesContrats() {
+    try {
+        const { data, error } = await supabase
+            .from('contrats')
+            .select('*');
+
+        if (error) throw error;
+        tousLesContrats = data;
+
+    } catch (error) {
+        console.error('❌ Erreur chargement contrats:', error);
+    }
+}
+
+
+// -------------------------------------------------------------
+// AFFICHER HEADER
 // -------------------------------------------------------------
 function afficherInformationsHeader() {
     if (!managerActuel) return;
@@ -104,61 +133,76 @@ function afficherInformationsHeader() {
 
 
 // -------------------------------------------------------------
-// AFFICHER PERFORMANCE ÉQUIPE
+// CALCULER PERFORMANCE ÉQUIPE
 // -------------------------------------------------------------
-function afficherPerformanceEquipe() {
+async function calculerPerformanceEquipe() {
     if (!equipeActuelle) return;
+
+    // Agents de l'équipe
+    const agentsEquipe = tousLesAgents.filter(a => a.equipe_id === equipeActuelle.id);
+    
+    // Contrats validés de l'équipe
+    const contratsEquipe = tousLesContrats.filter(c => 
+        c.statut === 'valide' && 
+        agentsEquipe.find(a => a.id === c.agent_id)
+    );
+
+    const scoreTotal = contratsEquipe.length * 10;
+    const nbContratsValides = contratsEquipe.length;
 
     document.getElementById('nom-equipe').textContent = 
         'Équipe ' + equipeActuelle.nom + ' ' + equipeActuelle.drapeau;
     
-    // TODO: Calculer les vrais scores
-    document.getElementById('score-equipe-total').textContent = '1,247 pts';
-    document.getElementById('position-equipe').textContent = '2ème/5';
-    document.getElementById('contrats-valides').textContent = '127';
+    document.getElementById('score-equipe-total').textContent = 
+        scoreTotal.toLocaleString() + ' pts';
+    
+    document.getElementById('contrats-valides').textContent = nbContratsValides;
+
+    // Calculer position équipe
+    const { data: equipes } = await supabase.from('equipes').select('*');
+    const scoresEquipes = await Promise.all(equipes.map(async (eq) => {
+        const agentsEq = tousLesAgents.filter(a => a.equipe_id === eq.id);
+        const contratsEq = tousLesContrats.filter(c => 
+            c.statut === 'valide' && 
+            agentsEq.find(a => a.id === c.agent_id)
+        );
+        return { equipeId: eq.id, score: contratsEq.length * 10 };
+    }));
+
+    scoresEquipes.sort((a, b) => b.score - a.score);
+    const position = scoresEquipes.findIndex(s => s.equipeId === equipeActuelle.id) + 1;
+    
+    document.getElementById('position-equipe').textContent = `${position}ème/${equipes.length}`;
 }
 
 
 // -------------------------------------------------------------
-// CHARGER LES CONTRATS EN ATTENTE
+// CHARGER CONTRATS EN ATTENTE
 // -------------------------------------------------------------
 async function chargerContratsAttente() {
     try {
-        const { data: contrats, error } = await supabase
-            .from('contrats')
-            .select(`
-                *,
-                users (
-                    nom,
-                    prenom,
-                    cellule
-                )
-            `)
-            .eq('statut', 'en_attente')
-            .in('agent_id', 
-                supabase
-                    .from('users')
-                    .select('id')
-                    .eq('equipe_id', equipeActuelle.id)
-            )
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
+        const agentsEquipe = tousLesAgents.filter(a => a.equipe_id === equipeActuelle.id);
+        const contratsAttente = tousLesContrats.filter(c => 
+            c.statut === 'en_attente' && 
+            agentsEquipe.find(a => a.id === c.agent_id)
+        );
 
         const liste = document.getElementById('contrats-attente-liste');
         
-        if (!contrats || contrats.length === 0) {
+        if (contratsAttente.length === 0) {
             liste.innerHTML = '<div class="aucun-contrat">✅ Aucun contrat en attente</div>';
             document.getElementById('badge-attente').style.display = 'none';
             return;
         }
 
-        // Afficher le badge avec le nombre
-        document.getElementById('badge-attente').textContent = contrats.length;
+        document.getElementById('badge-attente').textContent = contratsAttente.length;
         document.getElementById('badge-attente').style.display = 'inline-block';
 
         liste.innerHTML = '';
-        contrats.forEach(contrat => {
+        contratsAttente.forEach(contrat => {
+            const agent = agentsEquipe.find(a => a.id === contrat.agent_id);
+            if (!agent) return;
+
             const div = document.createElement('div');
             div.className = 'contrat-attente-item';
             
@@ -177,8 +221,8 @@ async function chargerContratsAttente() {
             div.innerHTML = `
                 <div class="contrat-attente-info">
                     <div class="contrat-attente-agent">
-                        <strong>${contrat.users.prenom} ${contrat.users.nom}</strong>
-                        <span class="cellule-badge">${contrat.users.cellule}</span>
+                        <strong>${agent.prenom} ${agent.nom}</strong>
+                        <span class="cellule-badge">${agent.cellule}</span>
                     </div>
                     <div class="contrat-attente-details">
                         ${icone} ${contrat.type_contrat} • ${dateText}
@@ -194,8 +238,6 @@ async function chargerContratsAttente() {
             liste.appendChild(div);
         });
 
-        console.log('✅ Contrats en attente chargés:', contrats.length);
-
     } catch (error) {
         console.error('❌ Erreur chargement contrats:', error);
     }
@@ -203,7 +245,7 @@ async function chargerContratsAttente() {
 
 
 // -------------------------------------------------------------
-// VALIDER UN CONTRAT
+// VALIDER CONTRAT
 // -------------------------------------------------------------
 async function validerContrat(contratId) {
     try {
@@ -218,9 +260,6 @@ async function validerContrat(contratId) {
 
         if (error) throw error;
 
-        console.log('✅ Contrat validé');
-        
-        // Afficher un message temporaire
         const msg = document.createElement('div');
         msg.className = 'notification-succes';
         msg.textContent = '✅ Contrat validé !';
@@ -228,7 +267,9 @@ async function validerContrat(contratId) {
         
         setTimeout(() => msg.remove(), 2000);
 
-        // Recharger la liste
+        // Recharger
+        await chargerTousLesContrats();
+        await calculerPerformanceEquipe();
         await chargerContratsAttente();
         await chargerAgentsEquipe();
 
@@ -240,12 +281,12 @@ async function validerContrat(contratId) {
 
 
 // -------------------------------------------------------------
-// REJETER UN CONTRAT
+// REJETER CONTRAT
 // -------------------------------------------------------------
 async function rejeterContrat(contratId) {
     const raison = prompt('⚠️ Raison du rejet (optionnel) :');
     
-    if (raison === null) return; // Annulé
+    if (raison === null) return;
 
     try {
         const { error } = await supabase
@@ -260,8 +301,6 @@ async function rejeterContrat(contratId) {
 
         if (error) throw error;
 
-        console.log('✅ Contrat rejeté');
-        
         const msg = document.createElement('div');
         msg.className = 'notification-erreur';
         msg.textContent = '❌ Contrat rejeté';
@@ -269,7 +308,8 @@ async function rejeterContrat(contratId) {
         
         setTimeout(() => msg.remove(), 2000);
 
-        // Recharger la liste
+        await chargerTousLesContrats();
+        await calculerPerformanceEquipe();
         await chargerContratsAttente();
         await chargerAgentsEquipe();
 
@@ -281,50 +321,37 @@ async function rejeterContrat(contratId) {
 
 
 // -------------------------------------------------------------
-// CHARGER LES AGENTS DE L'ÉQUIPE
+// CHARGER AGENTS ÉQUIPE
 // -------------------------------------------------------------
 async function chargerAgentsEquipe() {
     try {
-        // Charger les agents de l'équipe
-        const { data: agents, error: agentsError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('equipe_id', equipeActuelle.id)
-            .eq('role', 'agent')
-            .order('nom');
+        const agentsEquipe = tousLesAgents.filter(a => a.equipe_id === equipeActuelle.id);
 
-        if (agentsError) throw agentsError;
-
-        // Charger les contrats validés de chaque agent
-        const { data: contrats, error: contratsError } = await supabase
-            .from('contrats')
-            .select('agent_id, id')
-            .eq('statut', 'valide')
-            .in('agent_id', agents.map(a => a.id));
-
-        if (contratsError) throw contratsError;
-
-        // Compter les contrats par agent
-        const contratsParAgent = {};
-        contrats.forEach(c => {
-            contratsParAgent[c.agent_id] = (contratsParAgent[c.agent_id] || 0) + 1;
+        // Calculer scores
+        const agentsAvecScores = agentsEquipe.map(agent => {
+            const contratsAgent = tousLesContrats.filter(c => 
+                c.agent_id === agent.id && c.statut === 'valide'
+            );
+            return {
+                ...agent,
+                nbContrats: contratsAgent.length,
+                score: contratsAgent.length * 10
+            };
         });
 
-        // Afficher le tableau
+        agentsAvecScores.sort((a, b) => b.score - a.score);
+
         const tbody = document.getElementById('tableau-agents-body');
         tbody.innerHTML = '';
 
-        agents.forEach((agent, index) => {
-            const nbContrats = contratsParAgent[agent.id] || 0;
-            const score = nbContrats * 10; // Simplifié : 10 pts par contrat
-
+        agentsAvecScores.forEach((agent, index) => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${index + 1}</td>
                 <td>${agent.prenom} ${agent.nom}</td>
                 <td><span class="cellule-badge">${agent.cellule}</span></td>
-                <td class="score-cell">${score} pts</td>
-                <td>${nbContrats}</td>
+                <td class="score-cell">${agent.score} pts</td>
+                <td>${agent.nbContrats}</td>
                 <td>—</td>
                 <td>
                     <button class="btn-actions" onclick="voirDetailsAgent('${agent.id}')">👁️</button>
@@ -332,8 +359,6 @@ async function chargerAgentsEquipe() {
             `;
             tbody.appendChild(tr);
         });
-
-        console.log('✅ Agents chargés:', agents.length);
 
     } catch (error) {
         console.error('❌ Erreur chargement agents:', error);
@@ -345,7 +370,6 @@ async function chargerAgentsEquipe() {
 // VOIR DÉTAILS AGENT
 // -------------------------------------------------------------
 function voirDetailsAgent(agentId) {
-    // TODO: Ouvrir un modal avec les détails
     alert('Détails de l\'agent (à implémenter)');
 }
 
@@ -356,7 +380,6 @@ function voirDetailsAgent(agentId) {
 function initialiserMenuEquipes() {
     document.getElementById('dropdown-equipes-admin').style.display = 'block';
 
-    // Charger les équipes
     supabase
         .from('equipes')
         .select('*')
@@ -369,14 +392,10 @@ function initialiserMenuEquipes() {
                 const div = document.createElement('div');
                 div.className = 'dropdown-item';
                 div.textContent = `${equipe.drapeau} Équipe ${equipe.nom}`;
-                div.onclick = () => changerEquipe(equipe.id);
+                div.onclick = () => window.location.href = `manager.html?equipe=${equipe.id}`;
                 menu.appendChild(div);
             });
         });
-}
-
-function changerEquipe(equipeId) {
-    window.location.href = `manager.html?equipe=${equipeId}`;
 }
 
 
@@ -386,8 +405,8 @@ function changerEquipe(equipeId) {
 async function deconnexion() {
     if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
         await supabase.auth.signOut();
-        window.location.href = 'index.html';
+        window.location.href = 'connexion-finale.html';
     }
 }
 
-console.log('✅ manager.js PRODUCTION chargé');
+console.log('✅ manager_FINAL.js chargé');

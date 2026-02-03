@@ -324,7 +324,259 @@
                         </div>
                     </div>
                 </section>
+<!-- =============================================================
+     SECTION CHALLENGES FLASH
+     À ajouter dans dashboard.html
+     ============================================================= -->
 
+<section class="dashboard-section">
+    <div class="section-header">
+        <h2>⚡ Challenges Flash</h2>
+        <span class="badge-info" id="badge-challenges-actifs">0</span>
+    </div>
+    
+    <div id="challenges-container">
+        <!-- Les challenges seront insérés ici par JavaScript -->
+    </div>
+</section>
+
+<!-- Styles pour les challenges -->
+<style>
+.challenges-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.challenge-card {
+    background: linear-gradient(135deg, #FFB300 0%, #FF6F00 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(255, 179, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.challenge-card::before {
+    content: '⚡';
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    font-size: 120px;
+    opacity: 0.1;
+}
+
+.challenge-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.challenge-titre {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.challenge-timer {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.challenge-description {
+    margin: 8px 0 16px 0;
+    opacity: 0.95;
+    font-size: 15px;
+}
+
+.challenge-progression {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.challenge-progression-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.challenge-barre {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.challenge-barre-remplie {
+    height: 100%;
+    background: white;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.challenge-info-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+}
+
+.challenge-points {
+    font-weight: 700;
+    font-size: 18px;
+}
+
+.challenge-termine {
+    background: linear-gradient(135deg, #66BB6A 0%, #43A047 100%);
+}
+
+.challenge-expire {
+    background: linear-gradient(135deg, #757575 0%, #616161 100%);
+    opacity: 0.7;
+}
+
+.aucun-challenge {
+    text-align: center;
+    padding: 40px;
+    color: #757575;
+    font-style: italic;
+}
+</style>
+
+<!-- Script pour afficher les challenges -->
+<script>
+// Fonction pour charger et afficher les challenges actifs
+async function chargerChallengesActifs() {
+    try {
+        const maintenant = new Date().toISOString();
+        
+        // Récupérer les challenges actifs
+        const { data: challenges, error } = await supabase
+            .from('challenges_flash')
+            .select('*')
+            .eq('statut', 'actif')
+            .lte('date_debut', maintenant)
+            .gte('date_fin', maintenant)
+            .order('date_debut', { ascending: false });
+        
+        if (error) throw error;
+        
+        const container = document.getElementById('challenges-container');
+        const badge = document.getElementById('badge-challenges-actifs');
+        
+        // Filtrer les challenges selon la cible
+        const challengesPourMoi = challenges.filter(ch => {
+            if (ch.cible === 'tous') return true;
+            if (ch.cible === 'equipe' && ch.equipe_id === utilisateurActuel.equipe_id) return true;
+            if (ch.cible === 'cellule' && ch.cellule_cible === utilisateurActuel.cellule) return true;
+            return false;
+        });
+        
+        if (challengesPourMoi.length === 0) {
+            container.innerHTML = '<div class="aucun-challenge">Aucun challenge actif pour le moment 🎯</div>';
+            badge.textContent = '0';
+            badge.style.display = 'none';
+            return;
+        }
+        
+        badge.textContent = challengesPourMoi.length;
+        badge.style.display = 'inline-block';
+        
+        container.innerHTML = '';
+        
+        for (const challenge of challengesPourMoi) {
+            // Calculer ma progression
+            const mesContrats = tousLesContrats.filter(c => 
+                c.agent_id === utilisateurActuel.id &&
+                c.statut === 'valide' &&
+                c.created_at >= challenge.date_debut &&
+                c.created_at <= challenge.date_fin
+            );
+            
+            const progression = mesContrats.length;
+            const objectif = challenge.objectif || 1;
+            const pourcentage = Math.min((progression / objectif) * 100, 100);
+            const estComplete = progression >= objectif;
+            
+            // Calculer temps restant
+            const fin = new Date(challenge.date_fin);
+            const diffMs = fin - new Date();
+            const diffMin = Math.floor(diffMs / 60000);
+            let tempsRestant = '';
+            
+            if (diffMin < 0) {
+                tempsRestant = 'Terminé';
+            } else if (diffMin < 60) {
+                tempsRestant = diffMin + ' min';
+            } else {
+                const heures = Math.floor(diffMin / 60);
+                tempsRestant = heures + 'h ' + (diffMin % 60) + 'min';
+            }
+            
+            // Créer la carte
+            const div = document.createElement('div');
+            div.className = 'challenge-card' + (estComplete ? ' challenge-termine' : '');
+            div.innerHTML = `
+                <div class="challenge-header">
+                    <h3 class="challenge-titre">${challenge.titre}</h3>
+                    <div class="challenge-timer">${tempsRestant}</div>
+                </div>
+                
+                <p class="challenge-description">${challenge.description}</p>
+                
+                <div class="challenge-progression">
+                    <div class="challenge-progression-label">
+                        <span>Progression</span>
+                        <span>${progression} / ${objectif}</span>
+                    </div>
+                    <div class="challenge-barre">
+                        <div class="challenge-barre-remplie" style="width: ${pourcentage}%"></div>
+                    </div>
+                </div>
+                
+                <div class="challenge-info-footer">
+                    <div>
+                        <strong>${challenge.type_challenge}</strong>
+                    </div>
+                    <div class="challenge-points">
+                        ${estComplete ? '✅ ' : ''}+${challenge.points_attribues} pts
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(div);
+        }
+        
+        console.log('✅ Challenges actifs chargés:', challengesPourMoi.length);
+        
+    } catch (error) {
+        console.error('❌ Erreur chargement challenges:', error);
+    }
+}
+
+// Charger les challenges au démarrage
+document.addEventListener('DOMContentLoaded', function() {
+    // Attendre que utilisateurActuel soit chargé
+    setTimeout(() => {
+        if (utilisateurActuel) {
+            chargerChallengesActifs();
+            
+            // Recharger toutes les 30 secondes
+            setInterval(chargerChallengesActifs, 30000);
+        }
+    }, 1000);
+});
+</script>
                 <!-- 7. CALENDRIER 12 JOURS -->
                 <section class="carte carte-calendrier">
                     <h3 class="carte-titre">📅 Calendrier du Challenge</h3>

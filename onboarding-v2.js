@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 query = query.in('role', ['manager', 'admin']);
             } else {
                 // Utilisateur normal : voir seulement les managers
-                query = query.eq('role', 'manager');
+                query = query.in('role', ['manager', 'admin']);
             }
             
             const { data: managers, error } = await query.order('nom');
