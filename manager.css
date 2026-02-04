@@ -35,9 +35,8 @@
     gap: 24px;
 }
 
-
 /* -------------------------------------------------------------
-   2. HEADER MANAGER
+   2. HEADER MANAGER (Refonte Clean)
    ------------------------------------------------------------- */
 .manager-header {
     position: fixed;
@@ -47,18 +46,42 @@
     height: 100px;
     background: var(--blanc);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-    z-index: 100;
+    /* On met le header au-dessus de tout le reste de la page */
+    z-index: 5000; 
 }
 
+/* Conteneur principal qui gère l'espacement Gauche/Droite */
+.header-container {
+    max-width: 1400px;
+    width: 100%;
+    height: 100%;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Logo à gauche, Reste à droite */
+}
+
+.header-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    /* Sécurité pour ne pas qu'il s'étende sur les boutons */
+    flex-shrink: 0; 
+}
+
+/* Bloc de droite contenant : Avatar, Info, Stats, BOUTONS */
 .header-manager {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 24px; /* Espace aéré entre les éléments */
+    height: 100%;
 }
 
 .manager-avatar {
-    width: 60px;
-    height: 60px;
+    width: 50px;
+    height: 50px;
+    flex-shrink: 0;
 }
 
 .manager-avatar img {
@@ -66,17 +89,23 @@
     height: 100%;
     border-radius: 50%;
     border: 3px solid var(--bleu-sombre);
+    object-fit: cover;
+}
+
+.manager-info {
+    display: flex;
+    flex-direction: column;
 }
 
 .manager-info h2 {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
     color: var(--bleu-tres-sombre);
-    margin: 0 0 4px 0;
+    margin: 0;
 }
 
 .manager-info p {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--gris-texte);
     margin: 0;
 }
@@ -84,26 +113,66 @@
 .manager-stats {
     padding: 0 20px;
     border-left: 1px solid var(--argent);
-}
-
-.stat-equipe {
+    border-right: 1px solid var(--argent); /* Séparateur visuel */
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
 .stat-valeur {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 700;
     color: var(--bleu-sombre);
     line-height: 1;
 }
 
 .stat-label {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--gris-texte);
     text-transform: uppercase;
 }
+
+/* --- STYLES SPÉCIFIQUES POUR LES BOUTONS --- */
+
+/* Conteneur optionnel si vous avez mis les boutons dans une div */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Style forcé pour tous les boutons dans le header */
+.header-manager button,
+.header-manager a,
+.btn-vue-plateau {
+    position: relative;
+    z-index: 5001;        /* Un cran au-dessus du header */
+    cursor: pointer;      /* Force le curseur "main" */
+    pointer-events: auto; /* Force la réactivité au clic */
+    user-select: none;    /* Empêche de sélectionner le texte du bouton */
+}
+
+/* Styles visuels des boutons (récupérés de votre ancien fichier) */
+.btn-vue-plateau {
+    padding: 10px 20px;
+    background: var(--bleu-sombre);
+    color: var(--blanc);
+    border: none;
+    border-radius: var(--arrondi-petit);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none; /* Si c'est un lien <a> */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.btn-vue-plateau:hover {
+    background: var(--bleu-tres-sombre);
+    transform: translateY(-2px);
+}
+
 
 
 /* -------------------------------------------------------------

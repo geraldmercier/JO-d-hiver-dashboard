@@ -1,10 +1,12 @@
 // =============================================================
-// ONBOARDING V2 - VERSION CORRIGÉE
+// ONBOARDING V2 - VERSION FINALE (Compatible sb & drapeau_emoji)
 // =============================================================
 
 console.log('✅ Onboarding - Chargement...');
 
-const supabase = window.supabase.createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.KEY);
+// 1. Utilisation de 'sb' comme dans les autres fichiers
+const { createClient } = window.supabase;
+const sb = createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.KEY);
 
 const selectionUtilisateur = {
     avatarUrl: null,
@@ -15,31 +17,44 @@ const selectionUtilisateur = {
 
 document.addEventListener('DOMContentLoaded', async function() {
     
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { window.location.href = 'index.html'; return; }
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { window.location.href = 'connexion-finale.html'; return; }
 
     // Vérifier si déjà onboardé
-    const { data } = await supabase.from('users').select('onboarding_complete').eq('id', user.id).maybeSingle();
-    if (data?.onboarding_complete) { window.location.href = 'dashboard.html'; return; }
+    const { data } = await sb.from('users').select('onboarding_complete').eq('id', user.id).maybeSingle();
+    
+    if (data?.onboarding_complete) { 
+        window.location.href = 'dashboard.html'; 
+        return; 
+    }
 
     chargerAvatars();
-    chargerManagers();
+    await chargerManagers();
 
     // Attacher l'événement final
-    document.getElementById('btn-terminer').addEventListener('click', terminerOnboarding);
+    const btnTerminer = document.getElementById('btn-terminer');
+    if(btnTerminer) btnTerminer.addEventListener('click', terminerOnboarding);
 });
 
 // -------------------------------------------------------------
-// FONCTIONS GLOBALES (Pour les onclick HTML)
+// FONCTIONS GLOBALES (Accessibles via onclick HTML)
 // -------------------------------------------------------------
 window.allerEtape = function(num) {
     document.querySelectorAll('.etape').forEach(e => e.classList.remove('active'));
     document.getElementById('etape-' + num).classList.add('active');
     
     document.querySelectorAll('.indicateur-etape').forEach((ind, i) => {
-        ind.classList.toggle('completed', i < num);
-        ind.classList.toggle('active', i + 1 === num);
+        // Logique optionnelle si tu as des barres de progression
+        if(ind) {
+            ind.classList.toggle('completed', i < num);
+            ind.classList.toggle('active', i + 1 === num);
+        }
     });
+
+    // Mise à jour de la barre latérale (si présente dans ton HTML)
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    const step = document.querySelector(`.step[data-step="${num}"]`);
+    if(step) step.classList.add('active');
 };
 
 window.validerAvatar = function() {
@@ -59,21 +74,17 @@ window.validerManager = function() {
 };
 
 window.selectionnerCellule = function(celluleNom) {
+    // Retirer la classe selected de toutes les cartes
     document.querySelectorAll('.cellule-carte').forEach(d => d.classList.remove('selected'));
-    // L'élément cliqué est passé via event.currentTarget dans le onclick HTML, 
-    // ou on peut le retrouver si on utilisait addEventListener.
-    // Ici on suppose que le HTML fait: onclick="selectionnerCellule('Mover')"
-    // Il faut ajouter "this" dans le HTML: onclick="selectionnerCellule('Mover', this)"
-    // Ou plus simple, on cherche par texte ou on refait la logique JS:
     
-    // Hack rapide compatible avec ton HTML actuel :
-    const cartes = document.querySelectorAll('.cellule-carte');
-    cartes.forEach(c => {
-        if(c.textContent.includes(celluleNom)) c.classList.add('selected');
-    });
+    // Ajouter la classe selected à la carte cliquée (hack visuel simple)
+    // On cherche l'élément qui contient le data-cellule correspondant
+    const carte = document.querySelector(`.cellule-carte[data-cellule="${celluleNom}"]`);
+    if(carte) carte.classList.add('selected');
 
     selectionUtilisateur.cellule = celluleNom;
-    document.getElementById('erreur-cellule').classList.remove('visible');
+    const err = document.getElementById('erreur-cellule');
+    if(err) err.classList.remove('visible');
 };
 
 // -------------------------------------------------------------
@@ -81,57 +92,93 @@ window.selectionnerCellule = function(celluleNom) {
 // -------------------------------------------------------------
 function afficherErreur(id, msg) {
     const el = document.getElementById(id);
-    el.textContent = msg;
-    el.classList.add('visible');
+    if(el) {
+        el.textContent = msg;
+        el.classList.add('visible');
+    }
 }
 
 function chargerAvatars() {
     const grid = document.getElementById('avatars-grid');
-    const avatars = ['chicken.png', 'woman.png', 'man.png', 'lion.png', 'tiger.png']; // Liste raccourcie pour l'exemple
+    if(!grid) return;
+
+    // Liste EXACTE basée sur votre capture d'écran Windows
+    const mesImages = [
+        'man1.png', 'man2.png', 'man3.png', 'man4.png', 'man5.png',
+        'woman.png', 'woman1.png', 'woman2.png',
+        'chicken.png', 'lion.png', 'panda.png', 'parrot.png',
+        'tiger.png', 'sea-lion.png'
+    ];
     
     grid.innerHTML = '';
-    avatars.forEach(file => {
+    
+    mesImages.forEach(nomImage => {
+        const cheminComplet = `assets/${nomImage}`;
+        
         const div = document.createElement('div');
         div.className = 'avatar-item';
+        div.innerHTML = `<img src="${cheminComplet}" alt="Avatar">`;
+        
         div.onclick = () => {
             document.querySelectorAll('.avatar-item').forEach(d => d.classList.remove('selected'));
             div.classList.add('selected');
-            selectionUtilisateur.avatarUrl = 'assets/' + file;
-            document.getElementById('erreur-avatar').classList.remove('visible');
+            selectionUtilisateur.avatarUrl = nomImage; // On garde le nom propre
+            
+            const err = document.getElementById('erreur-avatar');
+            if(err) err.classList.remove('visible');
         };
-        div.innerHTML = `<img src="assets/${file}" alt="Avatar">`;
         grid.appendChild(div);
     });
 }
 
 async function chargerManagers() {
     const select = document.getElementById('select-manager');
-    const { data: managers } = await supabase
-        .from('users')
-        .select('id, nom, prenom, equipe_id, role, equipes(nom, drapeau_emoji)')
-        .in('role', ['manager', 'admin'])
-        .order('nom');
+    if(!select) return;
 
-    managers.forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m.id;
-        opt.textContent = `${m.prenom} ${m.nom}`;
-        opt.dataset.eid = m.equipe_id;
-        opt.dataset.enom = m.equipes?.nom;
-        opt.dataset.edrapeau = m.equipes?.drapeau_emoji;
-        select.appendChild(opt);
-    });
+    try {
+        // CORRECTION : On utilise bien drapeau_emoji
+        const { data: managers, error } = await sb
+            .from('users')
+            .select('id, nom, prenom, equipe_id, role, equipes(nom, drapeau_emoji)')
+            .in('role', ['manager', 'admin'])
+            .order('nom');
 
-    select.onchange = function() {
-        const opt = this.options[this.selectedIndex];
-        if (opt.value) {
-            selectionUtilisateur.managerId = opt.value;
-            selectionUtilisateur.equipeId = opt.dataset.eid;
-            document.getElementById('nom-equipe-affectee').textContent = opt.dataset.enom;
-            document.getElementById('drapeau-equipe-affectee').textContent = opt.dataset.edrapeau;
-            document.getElementById('info-equipe').style.display = 'flex';
-        }
-    };
+        if(error) throw error;
+
+        managers.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.id;
+            opt.textContent = `${m.prenom} ${m.nom}`;
+            
+            // Stockage des données d'équipe dans les attributs data
+            opt.dataset.eid = m.equipe_id;
+            opt.dataset.enom = m.equipes ? m.equipes.nom : 'Sans équipe';
+            opt.dataset.edrapeau = m.equipes ? (m.equipes.drapeau_emoji || '🚩') : '';
+            
+            select.appendChild(opt);
+        });
+
+        select.onchange = function() {
+            const opt = this.options[this.selectedIndex];
+            if (opt.value) {
+                selectionUtilisateur.managerId = opt.value;
+                selectionUtilisateur.equipeId = opt.dataset.eid;
+                
+                const elNom = document.getElementById('nom-equipe-affectee');
+                const elDrap = document.getElementById('drapeau-equipe-affectee');
+                const elInfo = document.getElementById('info-equipe');
+
+                if(elNom) elNom.textContent = opt.dataset.enom;
+                if(elDrap) elDrap.textContent = opt.dataset.edrapeau;
+                if(elInfo) elInfo.style.display = 'flex';
+                
+                const err = document.getElementById('erreur-manager');
+                if(err) err.classList.remove('visible');
+            }
+        };
+    } catch (e) {
+        console.error("Erreur chargement managers", e);
+    }
 }
 
 async function terminerOnboarding() {
@@ -140,18 +187,34 @@ async function terminerOnboarding() {
         return;
     }
     
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await sb.auth.getUser();
+    
     const btn = document.getElementById('btn-terminer');
-    btn.textContent = '⏳ ...';
+    const txt = document.getElementById('btn-terminer-texte');
+    const spin = document.getElementById('spinner-terminer');
+    
+    if(btn) btn.disabled = true;
+    if(txt) txt.textContent = 'Configuration...';
+    if(spin) spin.style.display = 'inline-block';
 
-    const { error } = await supabase.from('users').update({
-        avatar_url: selectionUtilisateur.avatarUrl,
-        manager_id: selectionUtilisateur.managerId,
-        equipe_id: selectionUtilisateur.equipeId,
-        cellule: selectionUtilisateur.cellule,
-        onboarding_complete: true
-    }).eq('id', user.id);
+    try {
+        const { error } = await sb.from('users').update({
+            avatar_url: selectionUtilisateur.avatarUrl,
+            manager_id: selectionUtilisateur.managerId,
+            equipe_id: selectionUtilisateur.equipeId,
+            cellule: selectionUtilisateur.cellule,
+            onboarding_complete: true
+        }).eq('id', user.id);
 
-    if (!error) window.location.href = 'dashboard.html';
-    else alert(error.message);
+        if (error) throw error;
+
+        // Redirection vers le dashboard
+        window.location.href = 'dashboard.html';
+
+    } catch (error) {
+        alert('Erreur: ' + error.message);
+        if(btn) btn.disabled = false;
+        if(txt) txt.textContent = 'Terminer →';
+        if(spin) spin.style.display = 'none';
+    }
 }

@@ -140,6 +140,11 @@
             color: #1565C0;
             margin-bottom: 24px;
         }
+        /* Ajout pour l'alignement Prénom/Nom */
+        .ligne-double {
+            display: flex;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
@@ -158,7 +163,6 @@
 
         <div class="login-separateur"></div>
 
-        <!-- CONNEXION -->
         <div id="zone-connexion">
             <h3>Connexion</h3>
             
@@ -183,10 +187,20 @@
             <div class="message-erreur" id="erreur-login"></div>
         </div>
 
-        <!-- INSCRIPTION -->
         <div id="zone-inscription" style="display: none;">
             <h3>Créer mon compte</h3>
             
+            <div class="ligne-double">
+                <div class="groupe-champ">
+                    <label>👤 Prénom</label>
+                    <input type="text" id="prenom-signup" placeholder="Ex: Thomas">
+                </div>
+                <div class="groupe-champ">
+                    <label>👤 Nom</label>
+                    <input type="text" id="nom-signup" placeholder="Ex: Durand">
+                </div>
+            </div>
+
             <div class="groupe-champ">
                 <label>📧 Email</label>
                 <input type="email" id="email-signup" placeholder="prenom.nom@papernest.com">
@@ -218,9 +232,7 @@
         </div>
     </div>
 
-    
-        <script src="config.js"></script>
-    
+    <script src="config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const sb = window.supabase.createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.KEY);
@@ -228,11 +240,14 @@
         function afficherInscription() {
             document.getElementById('zone-connexion').style.display = 'none';
             document.getElementById('zone-inscription').style.display = 'block';
+            // Reset des erreurs
+            document.getElementById('erreur-signup').classList.remove('visible');
         }
 
         function afficherConnexion() {
             document.getElementById('zone-connexion').style.display = 'block';
             document.getElementById('zone-inscription').style.display = 'none';
+            document.getElementById('erreur-login').classList.remove('visible');
         }
 
         async function connexion() {
@@ -244,25 +259,16 @@
                 return;
             }
 
-            if (!email.endsWith('@papernest.com')) {
-                afficherErreur('erreur-login', 'Email doit finir par @papernest.com');
-                return;
-            }
-
             const btn = document.getElementById('btn-login');
             btn.textContent = 'Connexion...';
             btn.disabled = true;
 
             try {
+                // 1. Connexion Auth
                 const result = await sb.auth.signInWithPassword({ email, password });
+                if (result.error) throw result.error;
 
-                if (result.error) {
-                    afficherErreur('erreur-login', 'Email ou mot de passe incorrect');
-                    btn.textContent = 'Se Connecter →';
-                    btn.disabled = false;
-                    return;
-                }
-
+                // 2. Vérification Profil
                 const user = await sb.from('users').select('*').eq('id', result.data.user.id).single();
 
                 if (!user.data || !user.data.onboarding_complete) {
@@ -274,29 +280,33 @@
                 }
 
             } catch (error) {
-                afficherErreur('erreur-login', error.message);
+                afficherErreur('erreur-login', "Erreur : " + error.message);
                 btn.textContent = 'Se Connecter →';
                 btn.disabled = false;
             }
         }
 
         async function inscription() {
+            // Récupération des valeurs
+            const prenom = document.getElementById('prenom-signup').value.trim();
+            const nom = document.getElementById('nom-signup').value.trim();
             const email = document.getElementById('email-signup').value.trim();
             const password = document.getElementById('pass-signup').value;
             const confirm = document.getElementById('pass-confirm').value;
 
-            if (!email || !password || !confirm) {
-                afficherErreur('erreur-signup', 'Remplissez tous les champs');
+            // Vérifications
+            if (!prenom || !nom || !email || !password || !confirm) {
+                afficherErreur('erreur-signup', 'Merci de remplir tous les champs !');
                 return;
             }
 
             if (!email.endsWith('@papernest.com')) {
-                afficherErreur('erreur-signup', 'Email doit finir par @papernest.com');
+                afficherErreur('erreur-signup', 'L\'email doit finir par @papernest.com');
                 return;
             }
 
-            if (password.length < 8) {
-                afficherErreur('erreur-signup', 'Mot de passe minimum 8 caractères');
+            if (password.length < 6) {
+                afficherErreur('erreur-signup', 'Mot de passe trop court (min 6)');
                 return;
             }
 
@@ -306,35 +316,46 @@
             }
 
             const btn = document.getElementById('btn-signup');
-            btn.textContent = 'Création...';
+            btn.textContent = 'Création en cours...';
             btn.disabled = true;
 
             try {
-                const authResult = await sb.auth.signUp({ email, password });
+                // ÉTAPE 1 : Créer l'accès Auth
+                const authResult = await sb.auth.signUp({ 
+                    email, 
+                    password,
+                    options: {
+                        data: { prenom: prenom, nom: nom } // On sauve aussi dans les métadonnées
+                    }
+                });
 
-                if (authResult.error) {
-                    afficherErreur('erreur-signup', authResult.error.message);
-                    btn.textContent = 'Créer mon compte';
-                    btn.disabled = false;
-                    return;
+                if (authResult.error) throw authResult.error;
+                
+                // Si l'utilisateur existe déjà côté Auth mais pas Base, on continue
+                if (authResult.data?.user?.identities?.length === 0) {
+                     throw new Error("Cet email est déjà utilisé.");
                 }
 
-                const parts = email.split('@')[0].split('.');
-                const prenom = parts[0] ? parts[0].charAt(0).toUpperCase() + parts[0].slice(1) : '';
-                const nom = parts[1] ? parts[1].toUpperCase() : '';
-
-                await sb.from('users').insert({
-                    id: authResult.data.user.id,
+                // ÉTAPE 2 : Créer la fiche dans la table 'users'
+                // C'est ici que ça plantait avant. Maintenant on envoie tout propre.
+                const { error: insertError } = await sb.from('users').insert({
+                    id: authResult.data.user.id, // Le lien CRUCIAL
                     email: email,
                     prenom: prenom,
-                    nom: nom,
+                    nom: nom, // Maintenant on l'a !
                     role: 'agent',
+                    equipe_id: 1, // Équipe par défaut (pour éviter l'erreur foreign key)
                     onboarding_complete: false
                 });
 
+                if (insertError) throw insertError;
+
+                // Succès !
+                alert("🎉 Compte créé ! Redirection...");
                 window.location.href = 'onboarding.html';
 
             } catch (error) {
+                console.error(error);
                 afficherErreur('erreur-signup', error.message);
                 btn.textContent = 'Créer mon compte';
                 btn.disabled = false;
@@ -346,16 +367,6 @@
             elem.textContent = texte;
             elem.classList.add('visible');
         }
-
-        document.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                if (document.getElementById('zone-connexion').style.display !== 'none') {
-                    connexion();
-                } else {
-                    inscription();
-                }
-            }
-        });
     </script>
 </body>
 </html>
