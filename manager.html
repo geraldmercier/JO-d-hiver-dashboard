@@ -6,6 +6,7 @@
     PAGE    : Dashboard Manager (vue équipe)
     =============================================================
 -->
+
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -21,6 +22,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Bibliothèques essentielles -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
 </head>
 <!-- =============================================================
      MODAL CRÉATION CHALLENGE FLASH
@@ -290,113 +295,113 @@
 
 <!-- Script pour gérer le modal -->
 <script>
-// Ouvrir le modal
-function ouvrirModalChallenge() {
-    document.getElementById('modal-challenge').classList.add('actif');
-    
-    // Définir date/heure par défaut (maintenant + 1h pour fin)
-    const maintenant = new Date();
-    const dans1h = new Date(maintenant.getTime() + 60 * 60 * 1000);
-    
-    document.getElementById('challenge-debut').value = maintenant.toISOString().slice(0, 16);
-    document.getElementById('challenge-fin').value = dans1h.toISOString().slice(0, 16);
-}
+(function() {
+    // Récupérer le client Supabase
+    const supabase = window.supabaseClient || window.supabase.createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.KEY);
 
-// Fermer le modal
-function fermerModalChallenge() {
-    document.getElementById('modal-challenge').classList.remove('actif');
-    document.getElementById('form-challenge').reset();
-    document.getElementById('message-challenge-succes').style.display = 'none';
-    document.getElementById('message-challenge-erreur').style.display = 'none';
-}
+    // Fonctions exportées vers window pour être accessibles depuis le HTML
+    window.ouvrirModalChallenge = function() {
+        document.getElementById('modal-challenge').classList.add('actif');
+        
+        const maintenant = new Date();
+        const dans1h = new Date(maintenant.getTime() + 60 * 60 * 1000);
+        
+        document.getElementById('challenge-debut').value = maintenant.toISOString().slice(0, 16);
+        document.getElementById('challenge-fin').value = dans1h.toISOString().slice(0, 16);
+    };
 
-// Afficher/masquer champ cellule
-document.getElementById('challenge-cible').addEventListener('change', function() {
-    const groupeCellule = document.getElementById('groupe-cellule');
-    groupeCellule.style.display = this.value === 'cellule' ? 'block' : 'none';
-});
+    window.fermerModalChallenge = function() {
+        document.getElementById('modal-challenge').classList.remove('actif');
+        document.getElementById('form-challenge').reset();
+        document.getElementById('message-challenge-succes').style.display = 'none';
+        document.getElementById('message-challenge-erreur').style.display = 'none';
+    };
 
-// Créer le challenge
-async function creerChallenge(event) {
-    event.preventDefault();
-    
-    const btn = document.getElementById('btn-creer-challenge');
-    btn.disabled = true;
-    btn.textContent = '⏳ Création...';
-    
-    try {
-        const titre = document.getElementById('challenge-titre').value;
-        const description = document.getElementById('challenge-description').value;
-        const type = document.getElementById('challenge-type').value;
-        const points = parseInt(document.getElementById('challenge-points').value);
-        const dateDebut = document.getElementById('challenge-debut').value;
-        const dateFin = document.getElementById('challenge-fin').value;
-        const objectif = parseInt(document.getElementById('challenge-objectif').value);
-        const cible = document.getElementById('challenge-cible').value;
-        const cellule = document.getElementById('challenge-cellule').value;
+    window.creerChallenge = async function(event) {
+        event.preventDefault();
         
-        // Validation
-        if (new Date(dateDebut) >= new Date(dateFin)) {
-            throw new Error('La date de fin doit être après la date de début');
-        }
+        const btn = document.getElementById('btn-creer-challenge');
+        btn.disabled = true;
+        btn.textContent = '⏳ Création...';
         
-        // Insérer dans Supabase
-        const { data, error } = await supabase
-            .from('challenges_flash')
-            .insert({
-                titre: titre,
-                description: description,
-                type_challenge: type,
-                date_debut: dateDebut,
-                date_fin: dateFin,
-                points_attribues: points,
-                objectif: objectif,
-                cible: cible,
-                cellule_cible: cible === 'cellule' ? cellule : null,
-                equipe_id: cible === 'equipe' ? managerActuel.equipe_id : null,
-                createur_id: managerActuel.id,
-                statut: 'actif'
-            })
-            .select();
-        
-        if (error) throw error;
-        
-        console.log('✅ Challenge créé:', data);
-        
-        // Afficher message succès
-        const msgSucces = document.getElementById('message-challenge-succes');
-        msgSucces.textContent = '✅ Challenge créé avec succès !';
-        msgSucces.style.display = 'block';
-        
-        // Fermer après 2 secondes
-        setTimeout(() => {
-            fermerModalChallenge();
-            // Recharger les challenges
-            if (typeof chargerChallengesActifs === 'function') {
-                chargerChallengesActifs();
+        try {
+            const titre = document.getElementById('challenge-titre').value;
+            const description = document.getElementById('challenge-description').value;
+            const type = document.getElementById('challenge-type').value;
+            const points = parseInt(document.getElementById('challenge-points').value);
+            const dateDebut = document.getElementById('challenge-debut').value;
+            const dateFin = document.getElementById('challenge-fin').value;
+            const objectif = parseInt(document.getElementById('challenge-objectif').value);
+            const cible = document.getElementById('challenge-cible').value;
+            const cellule = document.getElementById('challenge-cellule').value;
+            
+            if (new Date(dateDebut) >= new Date(dateFin)) {
+                throw new Error('La date de fin doit être après la date de début');
             }
-        }, 2000);
-        
-    } catch (error) {
-        console.error('❌ Erreur création challenge:', error);
-        const msgErreur = document.getElementById('message-challenge-erreur');
-        msgErreur.textContent = '❌ Erreur : ' + error.message;
-        msgErreur.style.display = 'block';
-        
-        btn.disabled = false;
-        btn.textContent = '✅ Créer le Challenge';
-    }
-}
-
-// Ajouter le bouton "Créer Challenge" dans le header manager
-document.addEventListener('DOMContentLoaded', function() {
-    if (managerActuel && (managerActuel.role === 'manager' || managerActuel.role === 'admin')) {
-        const btnCreer = document.getElementById('btn-creer-challenge');
-        if (btnCreer) {
-            btnCreer.addEventListener('click', ouvrirModalChallenge);
+            
+            const { data, error } = await supabase
+                .from('challenges_flash')
+                .insert({
+                    titre: titre,
+                    description: description,
+                    type_challenge: type,
+                    date_debut: dateDebut,
+                    date_fin: dateFin,
+                    points_attribues: points,
+                    objectif: objectif,
+                    cible: cible,
+                    cellule_cible: cible === 'cellule' ? cellule : null,
+                    equipe_id: cible === 'equipe' ? window.managerActuel?.equipe_id : null,
+                    createur_id: window.managerActuel?.id,
+                    statut: 'actif'
+                })
+                .select();
+            
+            if (error) throw error;
+            
+            const msgSucces = document.getElementById('message-challenge-succes');
+            msgSucces.textContent = '✅ Challenge créé avec succès !';
+            msgSucces.style.display = 'block';
+            
+            setTimeout(() => {
+                window.fermerModalChallenge();
+                if (typeof chargerChallengesActifs === 'function') {
+                    chargerChallengesActifs();
+                }
+            }, 2000);
+            
+        } catch (error) {
+            console.error('❌ Erreur création challenge:', error);
+            const msgErreur = document.getElementById('message-challenge-erreur');
+            msgErreur.textContent = '❌ Erreur : ' + error.message;
+            msgErreur.style.display = 'block';
+            
+            btn.disabled = false;
+            btn.textContent = '✅ Créer le Challenge';
         }
-    }
-});
+    };
+
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', function() {
+        const cibleSelect = document.getElementById('challenge-cible');
+        if (cibleSelect) {
+            cibleSelect.addEventListener('change', function() {
+                const groupeCellule = document.getElementById('groupe-cellule');
+                if (groupeCellule) groupeCellule.style.display = this.value === 'cellule' ? 'block' : 'none';
+            });
+        }
+
+        setTimeout(() => {
+            const m = window.managerActuel;
+            if (m && (m.role === 'manager' || m.role === 'admin')) {
+                const btnCreer = document.getElementById('btn-creer-challenge');
+                if (btnCreer) {
+                    btnCreer.addEventListener('click', window.ouvrirModalChallenge);
+                }
+            }
+        }, 1000);
+    });
+})();
 </script>
 <body class="manager-body">
 
