@@ -1,37 +1,19 @@
 <!DOCTYPE html>
-<!--
-    =============================================================
-    FICHIER : dashboard.html
-    PROJET  : JO d'Hiver — Dashboard Commercial
-    PAGE    : Dashboard Agent (vue principale)
-    =============================================================
--->
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
     <title>🏔️ Dashboard Agent — JO d'Hiver</title>
-
-    <!-- Les fichiers CSS -->
-    <link rel="stylesheet" href="styles.css">      <!-- Styles communs (variables, reset) -->
-    <link rel="stylesheet" href="dashboard.css">   <!-- Styles spécifiques au dashboard -->
     
-    <!-- Google Fonts - Police moderne pour les titres -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="dashboard.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body class="dashboard-body">
 
-    <!-- =============================================================
-         HEADER - En-tête avec profil de l'agent
-         ============================================================= -->
     <header class="dashboard-header">
         <div class="header-container">
-            
-            <!-- Logo + Titre du projet -->
             <div class="header-logo">
                 <span class="logo-icon">🏔️</span>
                 <div class="logo-text">
@@ -40,593 +22,150 @@
                 </div>
             </div>
 
-            <!-- Profil de l'agent -->
             <div class="header-profil">
-                <!-- Avatar + Drapeau de l'équipe -->
                 <div class="profil-avatar">
-                    <img src="https://ui-avatars.com/api/?name=Gerald+Mercier&background=1565C0&color=fff&size=80" 
-                         alt="Avatar" id="avatar-agent">
-                    <span class="profil-drapeau" id="drapeau-equipe">🇫🇷</span>
+                    <img src="" alt="Avatar" id="avatar-agent">
+                    <span class="profil-drapeau" id="drapeau-equipe"></span>
                 </div>
-
-                <!-- Nom + Équipe -->
                 <div class="profil-info">
-                    <h2 class="profil-nom" id="nom-agent">Gerald Mercier</h2>
-                    <p class="profil-equipe" id="nom-equipe">Équipe France</p>
+                    <h2 class="profil-nom" id="nom-agent">Chargement...</h2>
+                    <p class="profil-equipe" id="nom-equipe">...</p>
                 </div>
-
-                <!-- Score total + Médaille -->
                 <div class="profil-score">
-                    <div class="score-valeur" id="score-total">245</div>
+                    <div class="score-valeur" id="score-total">0</div>
                     <div class="score-label">points</div>
-                    <div class="medaille-container" id="medaille-container">
-                        <!-- La médaille apparaît ici si top 3 -->
-                    </div>
                 </div>
-
-                <!-- Notifications + Déconnexion -->
                 <div class="header-actions">
-                    <button class="btn-notif" id="btn-notifications" title="Notifications">
-                        🔔
-                        <span class="notif-badge">3</span>
-                    </button>
-                    <button class="btn-deconnexion" id="btn-deconnexion" title="Se déconnecter">
-                        🚪 Déconnexion
-                    </button>
+                    <button class="btn-deconnexion" id="btn-deconnexion">🚪 Déconnexion</button>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- =============================================================
-         CONTENU PRINCIPAL - Layout en 2 colonnes
-         ============================================================= -->
     <main class="dashboard-main">
         <div class="dashboard-container">
 
-            <!-- COLONNE GAUCHE -->
             <div class="colonne-gauche">
 
-                <!-- 1. POSITION ACTUELLE -->
                 <section class="carte carte-position">
                     <h3 class="carte-titre">📊 Votre Position</h3>
-                    
                     <div class="position-grid">
-                        <!-- Rang global -->
                         <div class="position-item">
-                            <div class="position-label">Classement Global</div>
-                            <div class="position-valeur" id="rang-global">12ème/50</div>
-                            <div class="position-evolution" id="evolution-global">
-                                <span class="fleche">↑</span> +3 places
-                            </div>
+                            <div class="position-label">Global</div>
+                            <div class="position-valeur" id="rang-global">-</div>
                         </div>
-
-                        <!-- Rang dans l'équipe -->
                         <div class="position-item">
-                            <div class="position-label">Dans Votre Équipe</div>
-                            <div class="position-valeur" id="rang-equipe">3ème/10</div>
-                            <div class="position-manquant" id="points-manquants">
-                                15 pts pour la 2ème place
-                            </div>
+                            <div class="position-label">Équipe</div>
+                            <div class="position-valeur" id="rang-equipe">-</div>
                         </div>
                     </div>
                 </section>
 
-                <!-- NOUVEAU : PODIUM DU JOUR -->
-                <section class="carte carte-podium-jour">
-                    <h3 class="carte-titre">🏆 Podium du Jour (Actualisé en temps réel)</h3>
-                    
-                    <div class="podium-mini">
-                        <!-- Place 2 -->
-                        <div class="podium-place-mini place-2">
-                            <div class="podium-avatar-mini" id="podium-jour-2-avatar">🐯</div>
-                            <div class="podium-nom-mini" id="podium-jour-2-nom">Tom J.</div>
-                            <div class="podium-score-mini" id="podium-jour-2-score">28 pts</div>
-                            <div class="podium-medaille-mini">🥈</div>
-                        </div>
-                        
-                        <!-- Place 1 (plus haute) -->
-                        <div class="podium-place-mini place-1">
-                            <div class="podium-avatar-mini" id="podium-jour-1-avatar">🦁</div>
-                            <div class="podium-nom-mini" id="podium-jour-1-nom">Anna K.</div>
-                            <div class="podium-score-mini" id="podium-jour-1-score">32 pts</div>
-                            <div class="podium-medaille-mini">🥇</div>
-                        </div>
-                        
-                        <!-- Place 3 -->
-                        <div class="podium-place-mini place-3">
-                            <div class="podium-avatar-mini" id="podium-jour-3-avatar">🐼</div>
-                            <div class="podium-nom-mini" id="podium-jour-3-nom">Sophie M.</div>
-                            <div class="podium-score-mini" id="podium-jour-3-score">24 pts</div>
-                            <div class="podium-medaille-mini">🥉</div>
-                        </div>
-                    </div>
-
-                    <div class="podium-info">
-                        <p id="podium-position-agent">Vous êtes actuellement <strong id="position-agent-jour">5ème</strong> avec <strong id="score-agent-jour">18 pts</strong></p>
-                        <p class="podium-encouragement" id="podium-encouragement">💪 Plus que 6 pts pour le podium !</p>
-                    </div>
-                </section>
-
-                <!-- 2. SKI DE FOND (Fil Rouge) -->
                 <section class="carte carte-ski-fond">
                     <h3 class="carte-titre">⛷️ Ski de Fond — Fil Rouge</h3>
-                    
                     <div class="ski-fond-info">
-                        <div class="ski-fond-categorie">
-                            <span class="badge-categorie">Mover</span>
-                            Votre catégorie
-                        </div>
                         <div class="ski-fond-kpi">
-                            <div class="kpi-label">Taux de Rétention (TR)</div>
-                            <div class="kpi-valeur" id="ski-fond-valeur">67%</div>
-                            <div class="kpi-objectif">Objectif : 75%</div>
+                            <div class="kpi-label">Volume</div>
+                            <div class="kpi-valeur" id="ski-fond-valeur">0</div>
                         </div>
-                    </div>
-
-                    <!-- Graphique de progression -->
-                    <div class="graphique-container">
-                        <canvas id="graphique-ski-fond"></canvas>
                     </div>
                 </section>
 
-                <!-- 3. PERFORMANCE DU JOUR -->
                 <section class="carte carte-performance-jour">
-                    <h3 class="carte-titre">🎯 Épreuve du Jour</h3>
-                    
+                    <h3 class="carte-titre">🎯 Aujourd'hui</h3>
                     <div class="epreuve-info">
-                        <div class="epreuve-nom" id="nom-epreuve">Sprint Biathlon</div>
-                        <div class="epreuve-date" id="date-epreuve">Vendredi 9 Février 2026</div>
+                        <div class="epreuve-date" id="date-epreuve">...</div>
                     </div>
-
                     <div class="performance-grid">
                         <div class="perf-item">
-                            <div class="perf-label">KPI à maximiser</div>
-                            <div class="perf-valeur" id="kpi-jour">Telco (Movers)</div>
+                            <div class="perf-label">Score Jour</div>
+                            <div class="perf-valeur score-actuel" id="score-jour">0 pts</div>
                         </div>
-                        <div class="perf-item">
-                            <div class="perf-label">Votre score</div>
-                            <div class="perf-valeur score-actuel" id="score-jour">18 pts</div>
-                        </div>
-                        <div class="perf-item">
-                            <div class="perf-label">Classement du jour</div>
-                            <div class="perf-valeur" id="classement-jour">5ème</div>
-                        </div>
-                    </div>
-
-                    <!-- Indicateur de médaille potentielle -->
-                    <div class="medaille-potentielle" id="medaille-potentielle">
-                        🥉 Vous êtes à 2 contrats de la médaille de bronze !
                     </div>
                 </section>
 
-                <!-- 4. VUE ÉQUIPE -->
                 <section class="carte carte-equipe">
-                    <h3 class="carte-titre">🇫🇷 Votre Équipe — France</h3>
-                    
+                    <h3 class="carte-titre">🚩 Votre Équipe</h3>
                     <div class="equipe-classement">
-                        <div class="equipe-position">
-                            <span class="position-rang">2ème</span>
-                            <span class="position-label">position sur 5 équipes</span>
-                        </div>
-                        <div class="equipe-score" id="score-equipe">1,247 pts</div>
+                        <div class="equipe-score" id="score-equipe">0 pts</div>
                     </div>
-
-                    <!-- Top 3 de l'équipe -->
                     <div class="equipe-top3">
-                        <h4>🏆 Top 3 de l'équipe</h4>
+                        <h4>🏆 Top 3 Équipe</h4>
                         <ol class="top3-liste" id="top3-equipe">
-                            <li>
-                                <span class="top3-nom">Sophie Martin</span>
-                                <span class="top3-score">298 pts</span>
-                            </li>
-                            <li>
-                                <span class="top3-nom">Pierre Dubois</span>
-                                <span class="top3-score">267 pts</span>
-                            </li>
-                            <li class="vous">
-                                <span class="top3-nom">Vous (Gerald)</span>
-                                <span class="top3-score">245 pts</span>
-                            </li>
-                        </ol>
+                            </ol>
+                    </div>
+                </section>
+
+                <section class="carte">
+                    <div class="section-header">
+                        <h3 class="carte-titre">⚡ Challenges Flash</h3>
+                        <span class="badge-info" id="badge-challenges-actifs" style="display:none">0</span>
+                    </div>
+                    <div id="challenges-container" class="challenges-container">
+                        <div class="chargement">Recherche de challenges...</div>
                     </div>
                 </section>
 
             </div>
-            <!-- FIN COLONNE GAUCHE -->
 
-
-            <!-- COLONNE DROITE -->
             <div class="colonne-droite">
 
-                <!-- 5. FORMULAIRE SAISIE RAPIDE -->
                 <section class="carte carte-formulaire">
                     <h3 class="carte-titre">✅ Enregistrer un Contrat</h3>
-                    
                     <form id="formulaire-contrat" class="form-contrat">
-                        <!-- Type de contrat -->
                         <div class="form-groupe">
-                            <label for="type-contrat">Type de contrat</label>
+                            <label>Type de contrat</label>
                             <select id="type-contrat" required>
                                 <option value="">-- Sélectionnez --</option>
                                 <option value="Telco">Telco (Movers S1)</option>
                                 <option value="Mobile">Mobile (Switchers S1)</option>
                                 <option value="MRH">MRH (Movers S2)</option>
-                                <option value="Compensation Carbone">Compensation Carbone (Switchers S2)</option>
+                                <option value="Compensation Carbone">Compensation Carbone</option>
                                 <option value="Premium">Premium (Coachs)</option>
                                 <option value="Autre">Autre</option>
                             </select>
                         </div>
-
-                        <!-- Lien vers la piste -->
                         <div class="form-groupe">
-                            <label for="lien-piste">Lien vers la piste Salesforce</label>
-                            <input 
-                                type="url" 
-                                id="lien-piste" 
-                                placeholder="https://salesforce.com/piste/..."
-                                required
-                            >
+                            <label>Lien Salesforce</label>
+                            <input type="url" id="lien-piste" placeholder="https://..." required>
                         </div>
-
-                        <!-- NOUVEAU : Case à cocher ApiApp -->
                         <div class="form-groupe checkbox-groupe">
                             <label class="checkbox-label">
                                 <input type="checkbox" id="contrat-apiapp">
                                 <span class="checkbox-text">📱 Contrat ApiApp</span>
                             </label>
-                            <p class="checkbox-hint">Cochez si ce contrat provient de l'application mobile</p>
                         </div>
-
-                        <!-- Bouton d'envoi -->
                         <button type="submit" class="btn-enregistrer" id="btn-enregistrer">
                             <span id="btn-texte">✅ Enregistrer</span>
-                            <div class="spinner-small" id="spinner-form"></div>
                         </button>
-
-                        <!-- Message de confirmation -->
-                        <div class="message-succes" id="message-succes"></div>
-                        <div class="message-erreur-form" id="message-erreur-form"></div>
                     </form>
                 </section>
 
-                <!-- 6. LISTE DES CONTRATS DU JOUR -->
                 <section class="carte carte-contrats-jour">
-                    <h3 class="carte-titre">📝 Vos Contrats Aujourd'hui</h3>
-                    
+                    <h3 class="carte-titre">📝 Vos Contrats du Jour</h3>
                     <div class="contrats-liste" id="contrats-liste">
-                        <!-- Les contrats apparaissent ici dynamiquement -->
-                        <div class="contrat-item">
-                            <span class="contrat-icone">📞</span>
-                            <div class="contrat-info">
-                                <span class="contrat-type">Telco</span>
-                                <span class="contrat-heure">14:32</span>
-                                <span class="badge-apiapp">📱 ApiApp</span>
-                            </div>
-                            <div class="contrat-actions">
-                                <a href="#" class="contrat-lien" target="_blank" title="Voir la piste">🔗</a>
-                                <button class="btn-supprimer-contrat" onclick="supprimerContrat('c1')" title="Supprimer">🗑️</button>
-                            </div>
-                        </div>
-                        <div class="contrat-item">
-                            <span class="contrat-icone">📱</span>
-                            <div class="contrat-info">
-                                <span class="contrat-type">Mobile</span>
-                                <span class="contrat-heure">11:15</span>
-                            </div>
-                            <div class="contrat-actions">
-                                <a href="#" class="contrat-lien" target="_blank" title="Voir la piste">🔗</a>
-                                <button class="btn-supprimer-contrat" onclick="supprimerContrat('c2')" title="Supprimer">🗑️</button>
-                            </div>
-                        </div>
-                        <div class="contrat-vide">
-                            Aucun contrat enregistré pour aujourd'hui
-                        </div>
-                    </div>
-                </section>
-<!-- =============================================================
-     SECTION CHALLENGES FLASH
-     À ajouter dans dashboard.html
-     ============================================================= -->
-
-<section class="dashboard-section">
-    <div class="section-header">
-        <h2>⚡ Challenges Flash</h2>
-        <span class="badge-info" id="badge-challenges-actifs">0</span>
-    </div>
-    
-    <div id="challenges-container">
-        <!-- Les challenges seront insérés ici par JavaScript -->
-    </div>
-</section>
-
-<!-- Styles pour les challenges -->
-<style>
-.challenges-container {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.challenge-card {
-    background: linear-gradient(135deg, #FFB300 0%, #FF6F00 100%);
-    color: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(255, 179, 0, 0.3);
-    position: relative;
-    overflow: hidden;
-}
-
-.challenge-card::before {
-    content: '⚡';
-    position: absolute;
-    top: -20px;
-    right: -20px;
-    font-size: 120px;
-    opacity: 0.1;
-}
-
-.challenge-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 12px;
-}
-
-.challenge-titre {
-    font-size: 20px;
-    font-weight: 700;
-    margin: 0;
-}
-
-.challenge-timer {
-    background: rgba(255, 255, 255, 0.2);
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.challenge-description {
-    margin: 8px 0 16px 0;
-    opacity: 0.95;
-    font-size: 15px;
-}
-
-.challenge-progression {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    padding: 12px;
-    margin-bottom: 12px;
-}
-
-.challenge-progression-label {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 8px;
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.challenge-barre {
-    width: 100%;
-    height: 8px;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.challenge-barre-remplie {
-    height: 100%;
-    background: white;
-    border-radius: 4px;
-    transition: width 0.3s ease;
-}
-
-.challenge-info-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 14px;
-}
-
-.challenge-points {
-    font-weight: 700;
-    font-size: 18px;
-}
-
-.challenge-termine {
-    background: linear-gradient(135deg, #66BB6A 0%, #43A047 100%);
-}
-
-.challenge-expire {
-    background: linear-gradient(135deg, #757575 0%, #616161 100%);
-    opacity: 0.7;
-}
-
-.aucun-challenge {
-    text-align: center;
-    padding: 40px;
-    color: #757575;
-    font-style: italic;
-}
-</style>
-
-<!-- Script pour afficher les challenges -->
-<script>
-// Fonction pour charger et afficher les challenges actifs
-async function chargerChallengesActifs() {
-    try {
-        const maintenant = new Date().toISOString();
-        
-        // Récupérer les challenges actifs
-        const { data: challenges, error } = await supabase
-            .from('challenges_flash')
-            .select('*')
-            .eq('statut', 'actif')
-            .lte('date_debut', maintenant)
-            .gte('date_fin', maintenant)
-            .order('date_debut', { ascending: false });
-        
-        if (error) throw error;
-        
-        const container = document.getElementById('challenges-container');
-        const badge = document.getElementById('badge-challenges-actifs');
-        
-        // Filtrer les challenges selon la cible
-        const challengesPourMoi = challenges.filter(ch => {
-            if (ch.cible === 'tous') return true;
-            if (ch.cible === 'equipe' && ch.equipe_id === utilisateurActuel.equipe_id) return true;
-            if (ch.cible === 'cellule' && ch.cellule_cible === utilisateurActuel.cellule) return true;
-            return false;
-        });
-        
-        if (challengesPourMoi.length === 0) {
-            container.innerHTML = '<div class="aucun-challenge">Aucun challenge actif pour le moment 🎯</div>';
-            badge.textContent = '0';
-            badge.style.display = 'none';
-            return;
-        }
-        
-        badge.textContent = challengesPourMoi.length;
-        badge.style.display = 'inline-block';
-        
-        container.innerHTML = '';
-        
-        for (const challenge of challengesPourMoi) {
-            // Calculer ma progression
-            const mesContrats = tousLesContrats.filter(c => 
-                c.agent_id === utilisateurActuel.id &&
-                c.statut === 'valide' &&
-                c.created_at >= challenge.date_debut &&
-                c.created_at <= challenge.date_fin
-            );
-            
-            const progression = mesContrats.length;
-            const objectif = challenge.objectif || 1;
-            const pourcentage = Math.min((progression / objectif) * 100, 100);
-            const estComplete = progression >= objectif;
-            
-            // Calculer temps restant
-            const fin = new Date(challenge.date_fin);
-            const diffMs = fin - new Date();
-            const diffMin = Math.floor(diffMs / 60000);
-            let tempsRestant = '';
-            
-            if (diffMin < 0) {
-                tempsRestant = 'Terminé';
-            } else if (diffMin < 60) {
-                tempsRestant = diffMin + ' min';
-            } else {
-                const heures = Math.floor(diffMin / 60);
-                tempsRestant = heures + 'h ' + (diffMin % 60) + 'min';
-            }
-            
-            // Créer la carte
-            const div = document.createElement('div');
-            div.className = 'challenge-card' + (estComplete ? ' challenge-termine' : '');
-            div.innerHTML = `
-                <div class="challenge-header">
-                    <h3 class="challenge-titre">${challenge.titre}</h3>
-                    <div class="challenge-timer">${tempsRestant}</div>
-                </div>
-                
-                <p class="challenge-description">${challenge.description}</p>
-                
-                <div class="challenge-progression">
-                    <div class="challenge-progression-label">
-                        <span>Progression</span>
-                        <span>${progression} / ${objectif}</span>
-                    </div>
-                    <div class="challenge-barre">
-                        <div class="challenge-barre-remplie" style="width: ${pourcentage}%"></div>
-                    </div>
-                </div>
-                
-                <div class="challenge-info-footer">
-                    <div>
-                        <strong>${challenge.type_challenge}</strong>
-                    </div>
-                    <div class="challenge-points">
-                        ${estComplete ? '✅ ' : ''}+${challenge.points_attribues} pts
-                    </div>
-                </div>
-            `;
-            
-            container.appendChild(div);
-        }
-        
-        console.log('✅ Challenges actifs chargés:', challengesPourMoi.length);
-        
-    } catch (error) {
-        console.error('❌ Erreur chargement challenges:', error);
-    }
-}
-
-// Charger les challenges au démarrage
-document.addEventListener('DOMContentLoaded', function() {
-    // Attendre que utilisateurActuel soit chargé
-    setTimeout(() => {
-        if (utilisateurActuel) {
-            chargerChallengesActifs();
-            
-            // Recharger toutes les 30 secondes
-            setInterval(chargerChallengesActifs, 30000);
-        }
-    }, 1000);
-});
-</script>
-                <!-- 7. CALENDRIER 12 JOURS -->
-                <section class="carte carte-calendrier">
-                    <h3 class="carte-titre">📅 Calendrier du Challenge</h3>
-                    
-                    <div class="calendrier-grid" id="calendrier-grid">
-                        <!-- Les 12 jours apparaissent ici -->
-                    </div>
-                </section>
-
-                <!-- 8. BADGES DÉBLOQUÉS -->
-                <section class="carte carte-badges">
-                    <h3 class="carte-titre">🏅 Vos Badges</h3>
-                    
-                    <div class="badges-grid" id="badges-grid">
-                        <!-- Les badges apparaissent ici -->
-                        <div class="badge-item deblocque" title="Premier Contrat !">
-                            <span class="badge-icone">🎯</span>
-                            <span class="badge-nom">Premier Contrat</span>
-                        </div>
-                        <div class="badge-item deblocque" title="Série de 5 jours">
-                            <span class="badge-icone">🔥</span>
-                            <span class="badge-nom">Série de 5</span>
-                        </div>
-                        <div class="badge-item verroui" title="Top 3 Global - À débloquer">
-                            <span class="badge-icone">🔒</span>
-                            <span class="badge-nom">Top 3 Global</span>
-                        </div>
+                        <div class="chargement">Chargement...</div>
                     </div>
                 </section>
 
             </div>
-            <!-- FIN COLONNE DROITE -->
-
         </div>
     </main>
 
-    <!-- =============================================================
-         SCRIPTS JAVASCRIPT
-         ============================================================= -->
-    
-    <!-- Bibliothèque Chart.js pour les graphiques -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-    
-    <!-- Bibliothèque Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <!-- Notre configuration -->
+    <style>
+        .challenges-container { display: flex; flex-direction: column; gap: 15px; margin-top: 15px; }
+        .challenge-card { background: linear-gradient(135deg, #FFB300 0%, #FF6F00 100%); color: white; padding: 15px; border-radius: 10px; position: relative; }
+        .challenge-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .challenge-titre { font-weight: bold; font-size: 1.1em; margin: 0; }
+        .challenge-points { background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px; font-weight: bold; }
+        .challenge-description { font-size: 0.9em; opacity: 0.9; margin-bottom: 10px; }
+        .challenge-barre { background: rgba(0,0,0,0.2); height: 8px; border-radius: 4px; overflow: hidden; }
+        .challenge-barre-remplie { background: white; height: 100%; }
+        .aucun-challenge { text-align: center; color: #aaa; font-style: italic; padding: 20px; }
+    </style>
+
     <script src="config.js"></script>
-    
-    <!-- Notre logique dashboard -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="dashboard.js"></script>
 
 </body>

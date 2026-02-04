@@ -1,11 +1,11 @@
 // =============================================================
-// DASHBOARD AGENT - VERSION CORRIGÉE
+// DASHBOARD AGENT - VERSION FINALE (Nettoyée & Intégrée)
 // =============================================================
 
-console.log('🏔️ Dashboard Agent - Chargement...');
+console.log('🏔️ Dashboard Agent FINAL - Chargement...');
 
-// Initialisation sécurisée
-const supabase = window.supabase.createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.KEY);
+const { createClient } = window.supabase;
+const sb = createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.KEY);
 
 let utilisateurActuel = null;
 let tousLesAgents = [];
@@ -16,7 +16,7 @@ let tousLesContrats = [];
 // -------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', async function() {
     
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const { data: { user }, error } = await sb.auth.getUser();
     
     if (error || !user) {
         console.error('❌ Utilisateur non connecté');
@@ -26,253 +26,382 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     console.log('✅ Utilisateur connecté:', user.email);
 
-    // Charger les données
+    // 1. Charger l'utilisateur
     await chargerDonneesUtilisateur(user.id);
+    if (!utilisateurActuel) return; // Stop si échec
+
+    // 2. Charger les données globales
     await chargerTousLesAgents();
     await chargerTousLesContrats();
 
-    // Afficher toutes les sections
+    // 3. Afficher l'interface
     afficherInformationsHeader();
     await calculerEtAfficherClassement();
     await calculerEtAfficherSkiFond();
     await calculerEtAfficherPerformanceJour();
     await calculerEtAfficherEquipe();
     await chargerContratsJour();
-    await afficherCalendrierReel();
-    await afficherBadgesReels();
+    await chargerChallengesActifs(); // Nouvelle fonction intégrée ici
+    
+    // Placeholders pour le futur
+    afficherCalendrierReel();
+    afficherBadgesReels();
 
-    // Event Listeners
-    const form = document.getElementById('formulaire-contrat');
-    if(form) form.addEventListener('submit', enregistrerContrat);
+    // 4. Events
+    const formContrat = document.getElementById('formulaire-contrat');
+    if (formContrat) formContrat.addEventListener('submit', enregistrerContrat);
     
     const btnDeco = document.getElementById('btn-deconnexion');
-    if(btnDeco) btnDeco.addEventListener('click', deconnexion);
+    if (btnDeco) btnDeco.addEventListener('click', deconnexion);
 
-    console.log('✅ Dashboard initialisé');
+    console.log('✅ Dashboard entièrement chargé');
 });
 
+
 // -------------------------------------------------------------
-// CHARGEMENT DES DONNÉES
+// CHARGEMENT DONNÉES
 // -------------------------------------------------------------
 async function chargerDonneesUtilisateur(userId) {
-    const { data, error } = await supabase
-        .from('users')
-        .select(`*, equipes (nom, drapeau)`)
-        .eq('id', userId)
-        .single();
+    try {
+        const { data, error } = await sb
+            .from('users')
+            .select(`*, equipes (nom, drapeau_emoji)`)
+            .eq('id', userId)
+            .single();
 
-    if (error) console.error(error);
-    else utilisateurActuel = data;
+        if (error) throw error;
+        utilisateurActuel = data;
+    } catch (error) {
+        console.error('❌ Erreur utilisateur:', error);
+    }
 }
 
 async function chargerTousLesAgents() {
-    const { data } = await supabase
-        .from('users')
-        .select(`*, equipes (nom, drapeau)`)
-        .eq('role', 'agent');
+    const { data } = await sb.from('users').select(`*, equipes (nom, drapeau_emoji)`).eq('role', 'agent');
     tousLesAgents = data || [];
 }
 
 async function chargerTousLesContrats() {
-    const { data } = await supabase
-        .from('contrats')
-        .select('*')
-        .eq('statut', 'valide');
+    const { data } = await sb.from('contrats').select('*').eq('statut', 'valide');
     tousLesContrats = data || [];
 }
+
 
 // -------------------------------------------------------------
 // AFFICHAGE HEADER
 // -------------------------------------------------------------
 function afficherInformationsHeader() {
     if (!utilisateurActuel) return;
-    document.getElementById('nom-agent').textContent = utilisateurActuel.prenom + ' ' + utilisateurActuel.nom;
-    document.getElementById('equipe-agent').textContent = 'Équipe ' + utilisateurActuel.equipes.nom + ' ' + utilisateurActuel.equipes.drapeau;
-    document.getElementById('cellule-agent').textContent = utilisateurActuel.cellule;
-    if (utilisateurActuel.avatar_url) document.getElementById('avatar-agent').src = utilisateurActuel.avatar_url;
-}
 
-// -------------------------------------------------------------
-// CALCULS & KPI
-// -------------------------------------------------------------
-async function calculerEtAfficherClassement() {
-    const agentsAvecScores = tousLesAgents.map(agent => {
-        const contratsAgent = tousLesContrats.filter(c => c.agent_id === agent.id);
-        return { ...agent, score: contratsAgent.length * 10 };
-    });
+    // Nom
+    const elNom = document.getElementById('nom-agent');
+    if(elNom) elNom.textContent = utilisateurActuel.prenom + ' ' + utilisateurActuel.nom;
+    
+    // Équipe
+    const elEquipe = document.getElementById('equipe-agent');
+    const elNomEquipeProfil = document.getElementById('nom-equipe');
+    const elDrapeau = document.getElementById('drapeau-equipe');
 
-    agentsAvecScores.sort((a, b) => b.score - a.score);
-
-    const maPositionGlobale = agentsAvecScores.findIndex(a => a.id === utilisateurActuel.id) + 1;
-    document.getElementById('rang-global').textContent = `${maPositionGlobale}ème/${agentsAvecScores.length}`;
-
-    const agentsMonEquipe = agentsAvecScores.filter(a => a.equipe_id === utilisateurActuel.equipe_id);
-    const maPositionEquipe = agentsMonEquipe.findIndex(a => a.id === utilisateurActuel.id) + 1;
-    document.getElementById('rang-equipe').textContent = `${maPositionEquipe}ème/${agentsMonEquipe.length}`;
-
-    // Points manquants
-    if (maPositionGlobale > 1) {
-        const agentDevant = agentsAvecScores[maPositionGlobale - 2];
-        const monScore = agentsAvecScores[maPositionGlobale - 1].score;
-        const pointsManquants = agentDevant.score - monScore + 10; // +1 contrat
-        document.getElementById('points-manquants').textContent = `${pointsManquants} pts pour monter`;
+    if (utilisateurActuel.equipes) {
+        const drapeau = utilisateurActuel.equipes.drapeau_emoji || '🏳️';
+        const nomEquipe = utilisateurActuel.equipes.nom;
+        
+        if(elEquipe) elEquipe.textContent = `Équipe ${nomEquipe} ${drapeau}`;
+        if(elNomEquipeProfil) elNomEquipeProfil.textContent = `Équipe ${nomEquipe}`;
+        if(elDrapeau) elDrapeau.textContent = drapeau;
     } else {
-        document.getElementById('points-manquants').textContent = '🥇 Vous êtes 1er !';
+        if(elEquipe) elEquipe.textContent = 'Sans équipe';
+    }
+    
+    // Cellule
+    const elCellule = document.getElementById('cellule-agent');
+    if(elCellule) elCellule.textContent = utilisateurActuel.cellule || 'Non assigné';
+
+    // Avatar
+    const avatar = document.getElementById('avatar-agent');
+    if (avatar && utilisateurActuel.avatar_url) {
+        avatar.src = utilisateurActuel.avatar_url;
     }
 }
 
+
+// -------------------------------------------------------------
+// CLASSEMENTS
+// -------------------------------------------------------------
+async function calculerEtAfficherClassement() {
+    if (!tousLesAgents.length) return;
+
+    const agentsScores = tousLesAgents.map(agent => {
+        const contrats = tousLesContrats.filter(c => c.agent_id === agent.id);
+        return { ...agent, score: contrats.length * 10 };
+    }).sort((a, b) => b.score - a.score);
+
+    // Score total header
+    const moi = agentsScores.find(a => a.id === utilisateurActuel.id);
+    const elScoreTotal = document.getElementById('score-total');
+    if(elScoreTotal && moi) elScoreTotal.textContent = moi.score;
+
+    // Rang Global
+    const maPosition = agentsScores.findIndex(a => a.id === utilisateurActuel.id) + 1;
+    const elRang = document.getElementById('rang-global');
+    if(elRang) elRang.textContent = `${maPosition}ème/${agentsScores.length}`;
+
+    // Rang Équipe
+    if (utilisateurActuel.equipe_id) {
+        const teamAgents = agentsScores.filter(a => a.equipe_id === utilisateurActuel.equipe_id);
+        const maPosTeam = teamAgents.findIndex(a => a.id === utilisateurActuel.id) + 1;
+        const elRangTeam = document.getElementById('rang-equipe');
+        if(elRangTeam) elRangTeam.textContent = `${maPosTeam}ème/${teamAgents.length}`;
+    }
+}
+
+
+// -------------------------------------------------------------
+// KPI & SKI DE FOND
+// -------------------------------------------------------------
 async function calculerEtAfficherSkiFond() {
     const cellule = utilisateurActuel.cellule;
     let kpi = 'Volume', valeur = '0';
-    const mesContrats = tousLesContrats.filter(c => c.agent_id === utilisateurActuel.id);
+    const mesC = tousLesContrats.filter(c => c.agent_id === utilisateurActuel.id);
 
     if (cellule === 'Mover') {
-        kpi = 'Taux de Rétention';
-        const contratsRetention = mesContrats.filter(c => ['Telco', 'MRH'].includes(c.type_contrat));
-        valeur = mesContrats.length > 0 ? Math.round((contratsRetention.length / mesContrats.length) * 100) + '%' : '0%';
+        kpi = 'Taux Rétention';
+        const ret = mesC.filter(c => ['Telco', 'MRH'].includes(c.type_contrat));
+        valeur = mesC.length > 0 ? Math.round((ret.length/mesC.length)*100) + '%' : '0%';
     } else if (cellule === 'Switcher') {
-        kpi = 'Volume Homeserve';
-        valeur = mesContrats.filter(c => ['Mobile', 'Compensation Carbone'].includes(c.type_contrat)).length;
+        kpi = 'Vol. Homeserve';
+        valeur = mesC.filter(c => ['Mobile', 'Compensation Carbone'].includes(c.type_contrat)).length;
     } else if (cellule === 'Coach') {
-        kpi = 'Volume Premium';
-        valeur = mesContrats.filter(c => c.type_contrat === 'Premium').length;
+        kpi = 'Vol. Premium';
+        valeur = mesC.filter(c => c.type_contrat === 'Premium').length;
     } else {
-        kpi = 'Contrats Total';
-        valeur = mesContrats.length;
+        valeur = mesC.length;
     }
-    
-    document.querySelector('.kpi-label').textContent = kpi;
-    document.getElementById('ski-fond-valeur').textContent = valeur;
+
+    const elLabel = document.querySelector('.kpi-label');
+    const elVal = document.getElementById('ski-fond-valeur');
+    if(elLabel) elLabel.textContent = kpi;
+    if(elVal) elVal.textContent = valeur;
 }
 
-async function calculerEtAfficherPerformanceJour() {
-    const aujourdhui = window.getAujourdhui(); // Utilisation de la date corrigée
-
-    const mesContratsJour = tousLesContrats.filter(c => c.agent_id === utilisateurActuel.id && c.created_at.startsWith(aujourdhui));
-    const monScoreJour = mesContratsJour.length * 10;
-
-    // Classement jour
-    const scoresJour = tousLesAgents.map(agent => {
-        const contratsJour = tousLesContrats.filter(c => c.agent_id === agent.id && c.created_at.startsWith(aujourdhui));
-        return { id: agent.id, score: contratsJour.length * 10 };
-    });
-    scoresJour.sort((a, b) => b.score - a.score);
-    const maPositionJour = scoresJour.findIndex(s => s.id === utilisateurActuel.id) + 1;
-
-    document.getElementById('score-jour').textContent = monScoreJour + ' pts';
-    document.getElementById('classement-jour').textContent = maPositionJour + 'ème';
-}
-
-async function calculerEtAfficherEquipe() {
-    const agentsEquipe = tousLesAgents.filter(a => a.equipe_id === utilisateurActuel.equipe_id);
-    
-    // Score équipe total
-    let scoreEquipe = 0;
-    agentsEquipe.forEach(agent => {
-        const nb = tousLesContrats.filter(c => c.agent_id === agent.id).length;
-        scoreEquipe += (nb * 10);
-    });
-    document.getElementById('score-equipe').textContent = scoreEquipe.toLocaleString() + ' pts';
-
-    // Top 3 Équipe
-    const classementEquipe = agentsEquipe.map(agent => ({
-        ...agent,
-        score: tousLesContrats.filter(c => c.agent_id === agent.id).length * 10
-    })).sort((a, b) => b.score - a.score).slice(0, 3);
-
-    const top3Html = classementEquipe.map(agent => `
-        <li ${agent.id === utilisateurActuel.id ? 'class="vous"' : ''}>
-            <span class="top3-nom">${agent.id === utilisateurActuel.id ? 'Vous' : agent.prenom}</span>
-            <span class="top3-score">${agent.score} pts</span>
-        </li>
-    `).join('');
-    document.getElementById('top3-equipe').innerHTML = top3Html;
-}
 
 // -------------------------------------------------------------
-// GESTION CONTRATS
+// PERF JOUR
+// -------------------------------------------------------------
+async function calculerEtAfficherPerformanceJour() {
+    const ajd = window.getAujourdhui ? window.getAujourdhui() : new Date().toLocaleDateString('fr-CA');
+    
+    // Filtre contrats du jour
+    const mesC_Jour = tousLesContrats.filter(c => c.agent_id === utilisateurActuel.id && c.created_at.startsWith(ajd));
+    
+    const elScoreJ = document.getElementById('score-jour');
+    if(elScoreJ) elScoreJ.textContent = (mesC_Jour.length * 10) + ' pts';
+
+    const elDate = document.getElementById('date-epreuve');
+    if(elDate) elDate.textContent = new Date().toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long'});
+}
+
+
+// -------------------------------------------------------------
+// ÉQUIPE TOP 3
+// -------------------------------------------------------------
+async function calculerEtAfficherEquipe() {
+    if (!utilisateurActuel.equipe_id) return;
+
+    // Score global équipe
+    const agentsTeam = tousLesAgents.filter(a => a.equipe_id === utilisateurActuel.equipe_id);
+    const contratsTeam = tousLesContrats.filter(c => agentsTeam.find(a => a.id === c.agent_id));
+    const scoreTeam = contratsTeam.length * 10;
+
+    const elScoreEq = document.getElementById('score-equipe');
+    if(elScoreEq) elScoreEq.textContent = scoreTeam.toLocaleString() + ' pts';
+
+    // Top 3
+    const classements = agentsTeam.map(a => ({
+        ...a, score: tousLesContrats.filter(c => c.agent_id === a.id).length * 10
+    })).sort((a,b) => b.score - a.score).slice(0, 3);
+
+    const elTop3 = document.getElementById('top3-equipe');
+    if(elTop3) {
+        elTop3.innerHTML = classements.map(a => `
+            <li ${a.id === utilisateurActuel.id ? 'class="vous"' : ''}>
+                <span class="top3-nom">${a.prenom}</span>
+                <span class="top3-score">${a.score} pts</span>
+            </li>
+        `).join('');
+    }
+}
+
+
+// -------------------------------------------------------------
+// CONTRATS DU JOUR (Liste)
 // -------------------------------------------------------------
 async function chargerContratsJour() {
-    const aujourdhui = window.getAujourdhui();
-    
-    // Note: On charge aussi les "en_attente" pour l'affichage personnel
-    const { data: contrats } = await supabase
-        .from('contrats')
-        .select('*')
-        .eq('agent_id', utilisateurActuel.id)
-        .gte('created_at', aujourdhui + 'T00:00:00')
-        .order('created_at', { ascending: false });
+    try {
+        const ajd = window.getAujourdhui();
+        const { data: contrats } = await sb
+            .from('contrats')
+            .select('*')
+            .eq('agent_id', utilisateurActuel.id)
+            .gte('created_at', ajd + 'T00:00:00')
+            .order('created_at', { ascending: false });
 
-    const liste = document.getElementById('contrats-liste');
-    liste.innerHTML = '';
-    
-    if (!contrats || contrats.length === 0) {
-        liste.innerHTML = '<div class="contrat-vide">Aucun contrat aujourd\'hui</div>';
-        return;
-    }
+        const liste = document.getElementById('contrats-liste');
+        if (!liste) return;
 
-    contrats.forEach(contrat => {
-        const div = document.createElement('div');
-        div.className = 'contrat-item';
-        const icone = {'Telco':'📞','Mobile':'📱','MRH':'🏠','Premium':'⭐'}[contrat.type_contrat] || '📄';
-        const statut = contrat.statut === 'valide' ? '✅' : '⏳';
-        
-        div.innerHTML = `
-            <span class="contrat-icone">${icone}</span>
-            <div class="contrat-info">
-                <span class="contrat-type">${contrat.type_contrat} ${contrat.api_app ? '(APP)' : ''}</span>
-                <span class="contrat-heure">${new Date(contrat.created_at).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}</span>
-            </div>
-            <div class="contrat-actions">
-                <span>${statut}</span>
-                ${contrat.statut === 'en_attente' ? `<button onclick="supprimerContrat('${contrat.id}')">🗑️</button>` : ''}
-            </div>
-        `;
-        liste.appendChild(div);
-    });
+        if (!contrats || contrats.length === 0) {
+            liste.innerHTML = '<div class="contrat-vide">Aucun contrat aujourd\'hui</div>';
+            return;
+        }
+
+        liste.innerHTML = '';
+        contrats.forEach(c => {
+            const div = document.createElement('div');
+            div.className = 'contrat-item';
+            
+            const heure = new Date(c.created_at).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+            const icones = {'Telco':'📞', 'Mobile':'📱', 'MRH':'🏠', 'Premium':'⭐', 'Compensation Carbone':'🌱'};
+            
+            // Badge statut
+            let badge = '<span class="badge-attente">⏳ En attente</span>';
+            if(c.statut === 'valide') badge = '<span class="badge-valide">✅ Validé</span>';
+            if(c.statut === 'rejete') badge = '<span class="badge-rejete">❌ Rejeté</span>';
+
+            div.innerHTML = `
+                <span class="contrat-icone">${icones[c.type_contrat] || '📄'}</span>
+                <div class="contrat-info">
+                    <span class="contrat-type">${c.type_contrat}</span>
+                    <span class="contrat-heure">${heure}</span>
+                    ${c.api_app ? '<span class="badge-apiapp">📱 APP</span>' : ''}
+                    ${badge}
+                </div>
+                <div class="contrat-actions">
+                    ${c.statut === 'en_attente' ? `<button class="btn-supprimer-contrat" onclick="supprimerContrat('${c.id}')">🗑️</button>` : ''}
+                </div>
+            `;
+            liste.appendChild(div);
+        });
+    } catch (e) { console.error(e); }
 }
 
-async function enregistrerContrat(event) {
-    event.preventDefault();
+
+// -------------------------------------------------------------
+// CHALLENGES FLASH (Nouveau - Intégré)
+// -------------------------------------------------------------
+async function chargerChallengesActifs() {
+    try {
+        const now = new Date().toISOString();
+        const { data: challenges } = await sb
+            .from('challenges_flash')
+            .select('*')
+            .eq('statut', 'actif')
+            .lte('date_debut', now)
+            .gte('date_fin', now);
+
+        const container = document.getElementById('challenges-container');
+        const badge = document.getElementById('badge-challenges-actifs');
+        if(!container) return;
+
+        // Filtrer pour mon équipe/cellule
+        const mesChallenges = (challenges || []).filter(ch => {
+            if(ch.cible === 'tous') return true;
+            if(ch.cible === 'equipe' && ch.equipe_id === utilisateurActuel.equipe_id) return true;
+            return false;
+        });
+
+        if (mesChallenges.length === 0) {
+            container.innerHTML = '<div class="aucun-challenge">Aucun challenge actif 💤</div>';
+            if(badge) badge.style.display = 'none';
+            return;
+        }
+
+        if(badge) {
+            badge.textContent = mesChallenges.length;
+            badge.style.display = 'inline-block';
+        }
+
+        container.innerHTML = '';
+        mesChallenges.forEach(ch => {
+            // Calculer progression (Contrats validés pendant la période)
+            const contratsPeriode = tousLesContrats.filter(c => 
+                c.agent_id === utilisateurActuel.id &&
+                c.created_at >= ch.date_debut &&
+                c.created_at <= ch.date_fin
+            );
+            
+            const prog = contratsPeriode.length;
+            const obj = ch.objectif || 10; // Valeur par défaut si non définie
+            const pct = Math.min((prog/obj)*100, 100);
+
+            const div = document.createElement('div');
+            div.className = 'challenge-card';
+            div.innerHTML = `
+                <div class="challenge-header">
+                    <h3 class="challenge-titre">${ch.titre}</h3>
+                    <div class="challenge-points">+${ch.points_attribues} pts</div>
+                </div>
+                <p class="challenge-description">${ch.description}</p>
+                <div class="challenge-progression">
+                    <div class="challenge-barre"><div class="challenge-barre-remplie" style="width:${pct}%"></div></div>
+                    <div class="challenge-text">${prog} / ${obj} contrats</div>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+
+    } catch (e) { console.error('Erreur challenges', e); }
+}
+
+
+// -------------------------------------------------------------
+// ACTIONS (Enregistrer / Supprimer / Déco)
+// -------------------------------------------------------------
+async function enregistrerContrat(e) {
+    e.preventDefault();
     const btn = document.getElementById('btn-enregistrer');
     btn.disabled = true;
-    document.getElementById('btn-texte').textContent = 'Enregistrement...';
 
     try {
-        const { error } = await supabase.from('contrats').insert({
+        const { error } = await sb.from('contrats').insert({
             agent_id: utilisateurActuel.id,
             type_contrat: document.getElementById('type-contrat').value,
             lien_piste: document.getElementById('lien-piste').value,
             api_app: document.getElementById('contrat-apiapp').checked,
-            statut: 'en_attente' // Toujours en attente par défaut
+            statut: 'en_attente',
+            created_at: new Date().toISOString()
         });
 
         if (error) throw error;
-
-        document.getElementById('formulaire-contrat').reset();
-        document.getElementById('message-succes').style.display = 'block';
-        setTimeout(() => document.getElementById('message-succes').style.display = 'none', 3000);
         
-        await chargerContratsJour(); // Rafraichir la liste
-    } catch (error) {
-        alert('Erreur: ' + error.message);
+        // Refresh
+        document.getElementById('formulaire-contrat').reset();
+        await Promise.all([
+            chargerTousLesContrats(),
+            chargerContratsJour(),
+            calculerEtAfficherClassement(),
+            chargerChallengesActifs()
+        ]);
+        alert('✅ Contrat enregistré !');
+
+    } catch (err) {
+        alert('Erreur: ' + err.message);
     } finally {
         btn.disabled = false;
-        document.getElementById('btn-texte').textContent = '✅ Enregistrer';
     }
 }
 
-// Fonction globale pour le onclick
 window.supprimerContrat = async function(id) {
-    if(!confirm('Supprimer ce contrat ?')) return;
-    await supabase.from('contrats').delete().eq('id', id);
+    if(!confirm('Supprimer ?')) return;
+    await sb.from('contrats').delete().eq('id', id);
+    await chargerTousLesContrats();
     await chargerContratsJour();
 };
 
 async function deconnexion() {
-    await supabase.auth.signOut();
+    await sb.auth.signOut();
     window.location.href = 'connexion-finale.html';
 }
 
-// NOTE: Le code de calcul automatique "verifierEtAttribuerChallenges" a été supprimé.
-// Cette logique doit être dans une Edge Function Supabase, pas ici.
+// Fonctions vides pour éviter les erreurs si appelées
+function afficherCalendrierReel() {}
+function afficherBadgesReels() {}
