@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="dashboard.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body class="dashboard-body">
@@ -94,19 +95,12 @@
                     <p id="podium-encouragement" class="podium-message">Accrochez-vous !</p>
                 </section>
 
-                <section class="carte carte-ski-fond">
-                    <h3 class="carte-titre">⛷️ Ski de Fond — Fil Rouge</h3>
-                    <div class="ski-fond-info">
-                        <div class="ski-fond-kpi">
-                            <div class="kpi-label">Volume</div>
-                            <div class="kpi-valeur" id="ski-fond-valeur">0</div>
-                        </div>
-                    </div>
-                    <div class="progress-container" style="margin-top:10px; background:#eee; height:10px; border-radius:5px; overflow:hidden;">
-                        <div id="ski-progress-bar" style="width:0%; height:100%; background:#1976D2; transition:width 1s;"></div>
-                    </div>
-                    <div id="ski-text" style="font-size:12px; color:#666; margin-top:5px; text-align:right;"></div>
-                </section>
+               <section class="carte carte-fil-rouge" style="margin-top:20px;">
+    <h3 class="carte-titre">📈 Fil Rouge - Objectif Équipe</h3>
+    <div style="height: 300px; position: relative;">
+        <canvas id="graphiqueFilRouge"></canvas>
+    </div>
+</section>
 
                 <section class="carte carte-performance-jour">
                     <h3 class="carte-titre">🎯 Aujourd'hui</h3>

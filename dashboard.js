@@ -47,7 +47,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     await Promise.all([
         chargerTousLesAgents(),
         chargerTousLesContrats(),
-        chargerToutesLesReussites() // <--- C'est ici qu'on change !
+        chargerToutesLesReussites(),
+        chargerFilRouge() // 👈 AJOUTEZ CETTE LIGNE ICI
     ]);
 
     // 4. Calculs initiaux
@@ -788,3 +789,68 @@ async function enregistrerContrat(e) {
 }
 
 console.log('✅ Dashboard COMPLET chargé avec succès');
+
+
+// =============================================================
+// 📈 GRAPHIQUE FIL ROUGE (AGENT)
+// =============================================================
+
+async function chargerFilRouge() {
+    // 1. Vérification basique
+    if (!utilisateurActuel || !utilisateurActuel.equipe_id || !utilisateurActuel.cellule) return;
+
+    // 2. Récupérer les données KPI
+    const { data: kpis } = await sb.from('kpi_equipe_journalier')
+        .select('*')
+        .eq('equipe_id', utilisateurActuel.equipe_id)
+        .eq('cellule', utilisateurActuel.cellule)
+        .order('date_kpi', { ascending: true });
+
+    if (!kpis || kpis.length === 0) return;
+
+    // 3. Préparer les données
+    const labels = kpis.map(k => {
+        const d = new Date(k.date_kpi);
+        return `${d.getDate()}/${d.getMonth()+1}`;
+    });
+    const donneesJour = kpis.map(k => k.valeur_jour);
+    const donneesCumul = kpis.map(k => k.valeur_cumul);
+
+    let labelUnit = ['Mover', 'Switcher'].includes(utilisateurActuel.cellule) ? '%' : ' Contrats';
+
+    // 4. Dessiner le graphique
+    const ctx = document.getElementById('graphiqueFilRouge');
+    if(ctx) {
+        new Chart(ctx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Quotidien',
+                        data: donneesJour,
+                        borderColor: '#FF9800',
+                        backgroundColor: 'rgba(255, 152, 0, 0.5)',
+                        type: 'bar',
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Global / Cumul',
+                        data: donneesCumul,
+                        borderColor: '#1976D2',
+                        backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.3,
+                        yAxisID: 'y'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, title: { display: true, text: labelUnit } } }
+            }
+        });
+    }
+}

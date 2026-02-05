@@ -644,3 +644,64 @@ window.creerChallenge = async function(e) {
 };
 
 console.log('✅ Manager COMPLET chargé');
+// =============================================================
+// 📈 GESTION FIL ROUGE (SAISIE)
+// =============================================================
+
+window.ouvrirModalFilRouge = function() {
+    const modal = document.getElementById('modal-fil-rouge');
+    if (modal) {
+        modal.style.display = 'flex';
+        // Date par défaut : Hier
+        const hier = new Date();
+        hier.setDate(hier.getDate() - 1);
+        document.getElementById('date-fil-rouge').value = hier.toISOString().split('T')[0];
+    }
+};
+
+window.sauvegarderFilRouge = async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-save-fil-rouge');
+    btn.textContent = 'Enregistrement...';
+    btn.disabled = true;
+
+    const date = document.getElementById('date-fil-rouge').value;
+    const cellules = ['Mover', 'Switcher', 'Coach', 'Pépinière'];
+    const inserts = [];
+
+    // On prépare les données pour chaque cellule
+    cellules.forEach(cell => {
+        const valJour = document.getElementById(`val-jour-${cell}`).value;
+        const valCumul = document.getElementById(`val-cumul-${cell}`).value;
+
+        // On n'enregistre que si au moins une valeur est remplie
+        if (valJour || valCumul) {
+            inserts.push({
+                equipe_id: equipeActuelle.id,
+                date_kpi: date,
+                cellule: cell,
+                valeur_jour: valJour || 0,
+                valeur_cumul: valCumul || 0
+            });
+        }
+    });
+
+    try {
+        if (inserts.length > 0) {
+            const { error } = await sb.from('kpi_equipe_journalier').insert(inserts);
+            if (error) throw error;
+            afficherNotification('📈 Données Fil Rouge enregistrées !', 'success');
+            document.getElementById('modal-fil-rouge').style.display = 'none';
+            // Vider les champs
+            document.querySelectorAll('#modal-fil-rouge input[type=number]').forEach(i => i.value = '');
+        } else {
+            alert("Veuillez remplir au moins une valeur.");
+        }
+    } catch (err) {
+        console.error(err);
+        afficherNotification('Erreur : ' + err.message, 'error');
+    } finally {
+        btn.textContent = 'Enregistrer';
+        btn.disabled = false;
+    }
+};
