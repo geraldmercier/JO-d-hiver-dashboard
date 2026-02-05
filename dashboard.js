@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     await Promise.all([
         chargerTousLesAgents(),
         chargerTousLesContrats(),
-        chargerMesChallengesReussis()
+        chargerToutesLesReussites() // <--- C'est ici qu'on change !
     ]);
 
     // 4. Calculs initiaux
@@ -110,6 +110,13 @@ async function chargerTousLesAgents() {
 async function chargerTousLesContrats() {
    const { data } = await sb.from('contrats').select('*').in('statut', ['valide', 'en_attente']);
     tousLesContrats = data || [];
+}
+
+async function chargerToutesLesReussites() {
+    // On charge TOUT sans filtrer par utilisateur
+    const { data } = await sb.from('challenge_reussites').select('*');
+    // On stocke dans une variable globale pour que le calcul la trouve
+    window.toutesLesReussites = data || [];
 }
 
 async function chargerMesChallengesReussis() {
