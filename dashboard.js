@@ -135,6 +135,20 @@ function calculerScoresComplets() {
         }
     });
 
+            // 3. Intégration des points Challenges
+    if (typeof toutesLesReussites !== 'undefined') {
+        toutesLesReussites.forEach(reussite => {
+            // On ne compte que les challenges validés
+            if (reussite.statut === 'valide') {
+                const agent = tousLesAgents.find(a => a.id === reussite.agent_id);
+                if (agent) {
+                    // On ajoute les points (par défaut 10 si non précisé)
+                    agent.scoreTotal += (reussite.points_gagnes || 0);
+                }
+            }
+        });
+    }
+    
     // 2. Bonus Médailles (Podiums quotidiens)
     const ajd = new Date().toISOString().split('T')[0];
     let dateCurseur = new Date(DATE_DEBUT);
