@@ -3,213 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>👔 Dashboard Manager — JO d'Hiver</title>
-    
+    <title>👔 Espace Manager — JO d'Hiver</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="manager.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
-
 <body class="manager-body">
 
-    <header class="manager-header">
+    <header class="dashboard-header">
         <div class="header-container">
             <div class="header-logo">
-                <span class="logo-icon">🏔️</span>
+                <span class="logo-icon">👔</span>
                 <div class="logo-text">
-                    <h1>JO d'Hiver 2026</h1>
-                    <p>Dashboard Manager</p>
+                    <h1>Espace Manager</h1>
+                    <p id="nom-equipe-header">Chargement...</p>
                 </div>
             </div>
 
-            <div class="header-manager">
-                <div class="manager-avatar">
-                    <img src="" alt="Avatar" id="avatar-manager">
+            <div class="header-profil">
+                <div id="dropdown-equipes-admin" style="display:none; margin-right:20px;">
+                    <select id="select-equipe-admin" class="select-admin"></select>
                 </div>
-                <div class="manager-info">
-                    <h2 id="nom-manager">Chargement...</h2>
-                    <p id="equipe-manager">Chargement...</p>
-                </div>
-                <div class="manager-stats">
-                    <div class="stat-equipe">
-                        <span class="stat-valeur" id="score-equipe-total">0</span>
-                        <span class="stat-label">pts équipe</span>
-                    </div>
-                </div>
-                <div class="header-actions">
-                    <a href="plateau.html" class="btn-vue-plateau" style="text-decoration: none;">📊 Vue Plateau</a>
+                
+                <button class="btn-action" onclick="ouvrirModalChallenge()" style="margin-right:15px; background:#FF9800;">⚡ Créer Challenge</button>
 
-                    <div class="dropdown-equipes" id="dropdown-equipes-admin" style="display: none;">
-                        <button class="btn-changer-equipe">Changer équipe ▼</button>
-                        <div class="dropdown-menu" id="menu-equipes-admin"></div>
-                    </div>
-
-                    <a href="index.html" class="btn-deconnexion" style="text-decoration: none;">🚪 Déconnexion</a>
+                <div class="profil-info">
+                    <h2 class="profil-nom" id="nom-manager">Chargement...</h2>
+                    <p class="profil-equipe" id="role-manager">Manager</p>
                 </div>
+                <button class="btn-deconnexion" id="btn-deconnexion">Logout</button>
             </div>
         </div>
     </header>
 
     <main class="manager-main">
-        <div class="manager-container">
-
-            <section class="section-validation">
-                <div class="section-header">
-                    <h2 class="section-titre">⚠️ Contrats en attente</h2>
-                    <span class="badge-count" id="badge-attente" style="display:none">0</span>
-                </div>
-                <div class="contrats-validation-liste" id="contrats-attente-liste">
-                    <div class="chargement">Chargement des contrats...</div>
-                </div>
-            </section>
-
-            <section class="section-stats">
-                <div class="stats-grid">
-                    <div class="stat-carte">
-                        <div class="stat-icone">🏆</div>
-                        <div class="stat-contenu">
-                            <div class="stat-label">Position</div>
-                            <div class="stat-valeur" id="position-equipe">-</div>
-                        </div>
+        <div class="dashboard-container">
+            
+            <section class="stats-grid">
+                <div class="carte-stat">
+                    <span class="stat-icon">📄</span>
+                    <div class="stat-data">
+                        <div class="stat-valeur" id="stats-contrats-semaine">0</div>
+                        <div class="stat-label">Contrats (7j)</div>
                     </div>
-                    <div class="stat-carte">
-                        <div class="stat-icone">✅</div>
-                        <div class="stat-contenu">
-                            <div class="stat-label">Contrats</div>
-                            <div class="stat-valeur" id="contrats-valides">0</div>
-                        </div>
+                </div>
+                <div class="carte-stat">
+                    <span class="stat-icon">🏆</span>
+                    <div class="stat-data">
+                        <div class="stat-valeur" id="stats-points-equipe">0</div>
+                        <div class="stat-label">Points Équipe</div>
+                    </div>
+                </div>
+                <div class="carte-stat">
+                    <span class="stat-icon">📱</span>
+                    <div class="stat-data">
+                        <div class="stat-valeur" id="stats-taux-apiapp">0%</div>
+                        <div class="stat-label">Taux ApiApp</div>
                     </div>
                 </div>
             </section>
 
-            <section class="section-agents">
-                <div class="section-header">
-                    <h2 class="section-titre">📋 Agents de l'Équipe</h2>
-                </div>
-                <div class="tableau-container">
-                    <table class="tableau-agents" id="tableau-agents">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Agent</th>
-                                <th>Cellule</th>
-                                <th>Score</th>
-                                <th>Contrats</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableau-agents-body"></tbody>
-                    </table>
-                </div>
-            </section>
+            <div class="manager-content-layout">
+                <div class="colonne-validations">
+                    <section class="carte">
+                        <div class="section-header">
+                            <h3 class="carte-titre">⏳ Contrats à valider</h3>
+                            <span class="badge-count" id="count-contrats">0</span>
+                        </div>
+                        <div id="liste-contrats-attente" class="liste-validation">
+                            <div class="chargement">Recherche...</div>
+                        </div>
+                    </section>
 
-            <section class="section-actions-rapides">
-                <h2 class="section-titre">⚡ Actions Rapides</h2>
-                <div class="actions-grid">
-                    <button class="action-btn" onclick="ouvrirModalChallenge()">
-                        <span class="action-icone">⚡</span>
-                        <span class="action-texte">Créer un Challenge Flash</span>
-                    </button>
+                    <section class="carte">
+                        <div class="section-header">
+                            <h3 class="carte-titre">⚡ Challenges à valider</h3>
+                            <span class="badge-count" id="count-challenges">0</span>
+                        </div>
+                        <div id="liste-challenges-attente" class="liste-validation"></div>
+                    </section>
                 </div>
-            </section>
 
+                <div class="colonne-equipe">
+                    <section class="carte">
+                        <h3 class="carte-titre">👥 Mon Équipe</h3>
+                        <div id="liste-agents-equipe" class="liste-membres"></div>
+                    </section>
+                </div>
+            </div>
         </div>
     </main>
 
-    <div class="modal" id="modal-challenge" style="display:none;">
-        <div class="modal-overlay" onclick="fermerModalChallenge()"></div>
-        <div class="modal-contenu">
-            <div class="modal-header">
-                <h2>⚡ Créer un Challenge</h2>
-                <button class="modal-close" onclick="fermerModalChallenge()">×</button>
+    <div id="modal-challenge" class="modal">
+        <div class="modal-content" style="text-align: left; max-width: 500px;">
+            <h3>🚀 Nouveau Challenge Flash</h3>
+            <div class="form-groupe">
+                <label>Titre</label>
+                <input type="text" id="challenge-titre" placeholder="Ex: Sprint de l'après-midi">
             </div>
-            <form id="form-challenge" onsubmit="creerChallenge(event)">
-                <div class="form-group">
-                    <label>Titre</label>
-                    <input type="text" id="challenge-titre" required>
-                </div>
-                <div class="form-group">
-                    <label>Description</label>
-                    <textarea id="challenge-description" required></textarea>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Points</label>
-                        <input type="number" id="challenge-points" value="50">
-                    </div>
-                    <div class="form-group">
-                        <label>Type</label>
-                        <select id="challenge-type">
-                            <option value="Nombre de contrats">Volume</option>
-                            <option value="Premier à X contrats">Course</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Début</label>
-                        <input type="datetime-local" id="challenge-debut" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Fin</label>
-                        <input type="datetime-local" id="challenge-fin" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Cible</label>
-                    <select id="challenge-cible">
-                        <option value="tous">Tous</option>
-                        <option value="equipe">Mon équipe</option>
-                    </select>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary" onclick="fermerModalChallenge()">Annuler</button>
-                    <button type="submit" class="btn-primary" id="btn-submit-challenge">Créer</button>
-                </div>
-                <div id="message-challenge-succes" class="message-succes"></div>
-            </form>
+            <div class="form-groupe">
+                <label>Points</label>
+                <input type="number" id="challenge-points" value="10">
+            </div>
+            <div class="modal-actions">
+                <button onclick="fermerModalChallenge()" class="btn-secondaire">Annuler</button>
+                <button id="btn-submit-challenge" class="btn-primaire">Créer le défi</button>
+            </div>
         </div>
     </div>
 
+    <div id="modal-confirmation" class="modal">
+        <div class="modal-content">
+            <h3 id="modal-titre">Validation</h3>
+            <p id="modal-message">Confirmer cette action ?</p>
+            <div class="modal-actions">
+                <button id="btn-modal-annuler" class="btn-secondaire">Non</button>
+                <button id="btn-modal-confirmer" class="btn-primaire">Oui, Valider</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .manager-content-layout { display: grid; grid-template-columns: 1fr 350px; gap: 20px; margin-top: 20px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .carte-stat { background: white; padding: 20px; border-radius: 12px; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .stat-valeur { font-size: 24px; font-weight: bold; color: #1976D2; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 15px; width: 90%; }
+        .form-groupe { margin-bottom: 15px; }
+        .form-groupe label { display: block; margin-bottom: 5px; font-weight: 600; }
+        .form-groupe input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; }
+        .liste-validation { display: flex; flex-direction: column; gap: 10px; }
+    </style>
+
     <script src="config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="manager.js"></script>
-
-    <script>
-        window.ouvrirModalChallenge = function() {
-            document.getElementById('modal-challenge').style.display = 'flex';
-            const now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            document.getElementById('challenge-debut').value = now.toISOString().slice(0,16);
-        };
-        window.fermerModalChallenge = function() {
-            document.getElementById('modal-challenge').style.display = 'none';
-        };
-        window.creerChallenge = async function(e) {
-            e.preventDefault();
-            // Ici on recrée une instance locale, c'est sans danger car c'est dans une fonction
-            const sbLocal = window.supabase.createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.KEY);
-            const btn = document.getElementById('btn-submit-challenge');
-            
-            btn.disabled = true; btn.textContent = '...';
-            try {
-                const { error } = await sbLocal.from('challenges_flash').insert({
-                    titre: document.getElementById('challenge-titre').value,
-                    description: document.getElementById('challenge-description').value,
-                    type_challenge: document.getElementById('challenge-type').value,
-                    points_attribues: document.getElementById('challenge-points').value,
-                    date_debut: document.getElementById('challenge-debut').value,
-                    date_fin: document.getElementById('challenge-fin').value,
-                    cible: document.getElementById('challenge-cible').value,
-                    statut: 'actif'
-                });
-                if(error) throw error;
-                document.getElementById('message-challenge-succes').textContent = '✅ Créé !';
-                setTimeout(() => { fermerModalChallenge(); document.getElementById('message-challenge-succes').textContent = ''; }, 1000);
-            } catch(err) { alert(err.message); } 
-            finally { btn.disabled = false; btn.textContent = 'Créer'; }
-        };
+    <script src="manager.js"></script> <script>
+        // Petites fonctions pour gérer l'ouverture de la fenêtre de challenge
+        function ouvrirModalChallenge() { document.getElementById('modal-challenge').style.display = 'flex'; }
+        function fermerModalChallenge() { document.getElementById('modal-challenge').style.display = 'none'; }
     </script>
-
 </body>
 </html>
