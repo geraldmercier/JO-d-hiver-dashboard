@@ -1,53 +1,44 @@
 // =============================================================
-// PLATEAU V2 - Leaderboard Complet (Code Corrigé)
+// PLATEAU V3 - Leaderboard & Cellules (Fonctionnel)
 // =============================================================
 
-console.log('🏔️ Plateau V2 - Démarrage du script...');
+console.log('🏔️ Plateau V3 - Démarrage...');
 
-// On attend que la page soit totalement chargée pour éviter les erreurs
+// VARIABLES GLOBALES (Pour que les boutons puissent y accéder)
+let donneesGlobales = {
+    agents: [],
+    contrats: []
+};
+
 document.addEventListener('DOMContentLoaded', async function() {
 
-    // 1. VÉRIFICATION DE SÉCURITÉ : Supabase est-il là ?
+    // 1. Vérification Supabase
     if (typeof supabase === 'undefined') {
-        console.error("ERREUR CRITIQUE : La librairie Supabase n'est pas chargée.");
-        alert("Erreur technique : Supabase non chargé. Vérifiez votre connexion.");
+        console.error("ERREUR : Supabase non chargé.");
         return;
     }
 
-    // 2. CONNEXION À LA BASE DE DONNÉES
-    // On utilise "window.sbClient" pour éviter les conflits de noms avec d'autres fichiers
     const sb = supabase.createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.KEY);
 
-    // 3. VÉRIFICATION DE L'UTILISATEUR
+    // 2. Vérification Auth
     const { data: { user } } = await sb.auth.getUser();
+    if (!user) { window.location.href = 'index.html'; return; }
 
-    // Si pas connecté -> retour à l'accueil
-    if (!user) { 
-        console.log("Utilisateur non connecté, redirection...");
-        window.location.href = 'index.html'; 
-        return; 
-    }
-
-    // 4. MISE À JOUR DU HEADER (Afficher le nom de l'utilisateur)
-    // C'était manquant dans votre version précédente !
+    // 3. Mise à jour Header
     const nomElement = document.getElementById('nom-utilisateur');
     const roleElement = document.getElementById('role-utilisateur');
-    
     if (nomElement) nomElement.textContent = `${user.user_metadata.prenom || ''} ${user.user_metadata.nom || ''}`;
     if (roleElement) roleElement.textContent = `Rôle : ${user.user_metadata.role || 'Agent'}`;
 
-    // 5. CHARGEMENT DES DONNÉES
-    console.log('Chargement des données du plateau...');
-    
-    try {
-        await chargerEtCalculer(sb);
-        
-        // 6. GESTION DES ONGLETS (Clics)
-        activerGestionOnglets();
-        
-    } catch (erreur) {
-        console.error("Erreur lors du chargement des données :", erreur);
-        if (nomElement) nomElement.textContent = "Erreur de chargement";
+    // 4. Chargement des données
+    await chargerEtCalculer(sb);
+
+    // 5. Gestion des onglets principaux (Global / Équipes / Cellules)
+    activerGestionOnglets();
+
+    // 6. Initialisation de la vue "Par Cellule" (Mover par défaut)
+    if (window.changerCellule) {
+        window.changerCellule('Mover');
     }
 });
 
@@ -56,74 +47,60 @@ document.addEventListener('DOMContentLoaded', async function() {
 // -------------------------------------------------------------
 
 async function chargerEtCalculer(sb) {
-    // A. Récupération des données depuis Supabase
+    // Récupération
     const { data: agents } = await sb.from('users').select(`*, equipes (nom, drapeau_emoji)`).eq('role', 'agent');
     const { data: contrats } = await sb.from('contrats').select('*').in('statut', ['valide', 'en_attente']);
-const { data: reussites } = await sb.from('challenge_reussites').select('*').in('statut', ['valide', 'en_attente']);
+    const { data: reussites } = await sb.from('challenge_reussites').select('*').eq('statut', 'valide');
     const { data: equipes } = await sb.from('equipes').select('*');
 
-    const listeAgents = agents || [];
-    const listeContrats = contrats || [];
-    const listeReussites = reussites || [];
-    const listeEquipes = equipes || [];
+    // Stockage Global
+    donneesGlobales.agents = agents || [];
+    donneesGlobales.contrats = contrats || [];
 
-    // B. Calcul des scores (Même logique que le Dashboard)
-    listeAgents.forEach(agent => {
-        agent.scoreTotal = 0; // On remet à zéro
+    // Calcul des scores
+    donneesGlobales.agents.forEach(agent => {
+        agent.scoreTotal = 0;
 
-        // Points Contrats (10pts ou 20pts le vendredi)
-        const contratsAgent = listeContrats.filter(c => c.agent_id === agent.id);
+        // Points Contrats
+        const contratsAgent = donneesGlobales.contrats.filter(c => c.agent_id === agent.id);
         contratsAgent.forEach(c => {
-            const isFri = c.created_at.includes('2026-02-20'); // Date exemple du vendredi
+            const isFri = c.created_at.includes('2026-02-20');
             agent.scoreTotal += isFri ? 20 : 10;
         });
 
         // Points Challenges
-        const challengesAgent = listeReussites.filter(r => r.agent_id === agent.id);
+        const challengesAgent = (reussites || []).filter(r => r.agent_id === agent.id);
         challengesAgent.forEach(r => {
             agent.scoreTotal += (r.points_gagnes || 0);
         });
     });
 
-    // C. Affichage
-    afficherPodium(listeAgents);
-    afficherTableauGlobal(listeAgents, listeContrats);
-    afficherClassementEquipes(listeEquipes, listeAgents);
-    
-    // Si vous avez les fonctions pour "Par Cellule" et "Records", elles iront ici
+    // Affichage Initial
+    afficherPodium(donneesGlobales.agents);
+    afficherTableauGlobal(donneesGlobales.agents, donneesGlobales.contrats);
+    afficherClassementEquipes(equipes || [], donneesGlobales.agents);
 }
 
-function afficherPodium(agents) {
-    // On trie les agents par score décroissant (du plus grand au plus petit)
-    const top3 = [...agents].sort((a, b) => b.scoreTotal - a.scoreTotal).slice(0, 3);
+// -------------------------------------------------------------
+// FONCTIONS D'AFFICHAGE (GLOBAL & PODIUM)
+// -------------------------------------------------------------
 
-    // Mise à jour du podium HTML
-    // 1er (Au centre)
+function afficherPodium(agents) {
+    const top3 = [...agents].sort((a, b) => b.scoreTotal - a.scoreTotal).slice(0, 3);
     updatePodiumSlot(1, top3[0]);
-    // 2ème (À gauche)
     updatePodiumSlot(2, top3[1]);
-    // 3ème (À droite)
     updatePodiumSlot(3, top3[2]);
 }
 
 function updatePodiumSlot(rang, agent) {
-    if (!agent) return; // Si moins de 3 agents, on ne fait rien
-    
-    // On met à jour l'avatar, le nom, l'équipe et le score
-    const avatarDiv = document.getElementById(`podium-${rang}-avatar`);
-    if (avatarDiv) {
-        // Si l'agent a une photo/avatar on pourrait la mettre, sinon on garde la médaille
-        // avatarDiv.textContent = agent.prenom[0]; // Exemple : Initiale
-    }
-    
+    if (!agent) return;
     const nomDiv = document.getElementById(`podium-${rang}-nom`);
-    if (nomDiv) nomDiv.textContent = `${agent.prenom} ${agent.nom}`;
-
-    const equipeDiv = document.getElementById(`podium-${rang}-equipe`);
-    if (equipeDiv) equipeDiv.textContent = agent.equipes?.nom || '';
-
     const scoreDiv = document.getElementById(`podium-${rang}-score`);
+    const equipeDiv = document.getElementById(`podium-${rang}-equipe`);
+    
+    if (nomDiv) nomDiv.textContent = `${agent.prenom} ${agent.nom}`;
     if (scoreDiv) scoreDiv.textContent = `${agent.scoreTotal} pts`;
+    if (equipeDiv) equipeDiv.textContent = agent.equipes?.nom || '';
 }
 
 function afficherTableauGlobal(agents, contrats) {
@@ -133,24 +110,17 @@ function afficherTableauGlobal(agents, contrats) {
     const classe = [...agents].sort((a, b) => b.scoreTotal - a.scoreTotal);
 
     tbody.innerHTML = classe.map((agent, index) => {
-        // Compter les contrats de cet agent
         const nbContrats = contrats.filter(c => c.agent_id === agent.id).length;
-        
-        // Déterminer la médaille pour les 3 premiers
         let medaille = '';
-        if (index === 0) medaille = '🥇';
-        if (index === 1) medaille = '🥈';
-        if (index === 2) medaille = '🥉';
+        if (index === 0) medaille = '🥇'; else if (index === 1) medaille = '🥈'; else if (index === 2) medaille = '🥉';
 
         return `
             <tr>
                 <td style="font-weight:bold;">${index + 1}</td>
-                <td>
-                    <div style="font-weight:600;">${agent.prenom} ${agent.nom}</div>
-                </td>
-                <td>${agent.equipes?.drapeau_emoji || '🏳️'} ${agent.equipes?.nom || ''}</td>
+                <td><strong>${agent.prenom} ${agent.nom}</strong></td>
+                <td>${agent.equipes?.drapeau_emoji || ''} ${agent.equipes?.nom || ''}</td>
                 <td><span class="badge-cellule">${agent.cellule || '-'}</span></td>
-                <td style="color:#FF9F1C; font-weight:bold; font-size:1.1em;">${agent.scoreTotal} pts</td>
+                <td style="color:#FF9F1C; font-weight:bold;">${agent.scoreTotal} pts</td>
                 <td>${nbContrats}</td>
                 <td>${medaille}</td>
             </tr>
@@ -162,12 +132,10 @@ function afficherClassementEquipes(equipes, agents) {
     const container = document.getElementById('equipes-classement');
     if (!container) return;
 
-    // Calculer le score total de chaque équipe
     const scoreEquipes = equipes.map(eq => {
-        const agentsDeLequipe = agents.filter(a => a.equipe_id === eq.id);
-        const totalPoints = agentsDeLequipe.reduce((somme, a) => somme + a.scoreTotal, 0);
-        return { ...eq, totalPoints };
-    }).sort((a, b) => b.totalPoints - a.totalPoints); // Trier du plus grand au plus petit
+        const total = agents.filter(a => a.equipe_id === eq.id).reduce((sum, a) => sum + a.scoreTotal, 0);
+        return { ...eq, totalPoints: total };
+    }).sort((a, b) => b.totalPoints - a.totalPoints);
 
     container.innerHTML = scoreEquipes.map((eq, index) => `
         <div class="equipe-card" style="display:flex; justify-content:space-between; padding:15px; background:white; margin-bottom:10px; border-radius:10px; box-shadow:0 2px 4px rgba(0,0,0,0.05); align-items:center;">
@@ -181,20 +149,81 @@ function afficherClassementEquipes(equipes, agents) {
     `).join('');
 }
 
+// -------------------------------------------------------------
+// ✨ NOUVEAU : GESTION DES CELLULES (Ce qui manquait)
+// -------------------------------------------------------------
+
+// Cette fonction est attachée à "window" pour être accessible depuis le HTML onclick="..."
+window.changerCellule = function(nomCellule) {
+    console.log("Changement de cellule :", nomCellule);
+
+    // 1. Mise à jour visuelle des boutons
+    const boutons = document.querySelectorAll('.cellule-tab-btn');
+    boutons.forEach(btn => {
+        btn.classList.remove('active');
+        // On vérifie si le texte du bouton contient le nom de la cellule (ex: "Top Movers")
+        if (btn.innerText.includes(nomCellule) || btn.getAttribute('onclick').includes(nomCellule)) {
+            btn.classList.add('active');
+        }
+    });
+
+    // 2. Mise à jour du titre
+    const titre = document.getElementById('titre-top-cellule');
+    if (titre) titre.textContent = `📞 Top ${nomCellule}s`;
+
+    // 3. Filtrage des agents
+    const agentsFiltres = donneesGlobales.agents.filter(a => a.cellule === nomCellule);
+
+    // 4. Affichage du tableau
+    afficherTableauCellule(agentsFiltres, donneesGlobales.contrats);
+};
+
+function afficherTableauCellule(agents, contrats) {
+    const tbody = document.getElementById('tableau-cellule-body');
+    if (!tbody) return;
+
+    // Classement par score
+    const classe = [...agents].sort((a, b) => b.scoreTotal - a.scoreTotal);
+
+    if (classe.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Aucun agent dans cette cellule</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = classe.map((agent, index) => {
+        const nbContrats = contrats.filter(c => c.agent_id === agent.id).length;
+        
+        let medaille = '';
+        if (index === 0) medaille = '🥇';
+        if (index === 1) medaille = '🥈';
+        if (index === 2) medaille = '🥉';
+
+        return `
+            <tr>
+                <td style="font-weight:bold;">${index + 1} ${medaille}</td>
+                <td><strong>${agent.prenom} ${agent.nom}</strong></td>
+                <td>${agent.equipes?.nom || ''}</td>
+                <td style="font-weight:bold; color:#1976D2;">${agent.scoreTotal} pts</td>
+                <td>${nbContrats}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// -------------------------------------------------------------
+// UTILITAIRES
+// -------------------------------------------------------------
+
 function activerGestionOnglets() {
     const btns = document.querySelectorAll('.tab-btn');
     const contents = document.querySelectorAll('.tab-content');
 
     btns.forEach(btn => {
         btn.addEventListener('click', () => {
-            // 1. On retire la classe 'active' de partout
             btns.forEach(b => b.classList.remove('active'));
             contents.forEach(c => c.classList.remove('active'));
-
-            // 2. On l'ajoute sur l'élément cliqué
-            btn.classList.add('active');
             
-            // 3. On affiche le bon contenu
+            btn.classList.add('active');
             const tabId = btn.getAttribute('data-tab');
             const targetContent = document.getElementById(`tab-${tabId}`);
             if (targetContent) targetContent.classList.add('active');
