@@ -398,6 +398,14 @@ img {
     padding: 20px;
     transition: box-shadow 0.2s ease;
 }
+
+/* Nouveau style pour l'icône logo en image */
+.logo-icon-img {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+    vertical-align: middle;
+}
 .carte:hover {
     box-shadow: var(--ombre-carte-hover);
 }

@@ -1,52 +1,115 @@
 // =============================================================
-// PLATEAU V3 - Leaderboard & Cellules (Fonctionnel)
+// PLATEAU V4 - FUSION COMPLÈTE (Stable & Sécurisé)
 // =============================================================
 
-console.log('🏔️ Plateau V3 - Démarrage...');
+console.log('🏔️ Plateau V4 (Fusion) - Démarrage...');
 
-// VARIABLES GLOBALES (Pour que les boutons puissent y accéder)
+// VARIABLES GLOBALES (Crucial pour le filtrage par cellule)
 let donneesGlobales = {
     agents: [],
-    contrats: []
+    contrats: [],
+    utilisateur: null // Pour stocker les infos du manager connecté
 };
 
+const sb = window.supabase.createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.KEY);
+
+// =============================================================
+// 🏁 INITIALISATION
+// =============================================================
 document.addEventListener('DOMContentLoaded', async function() {
 
-    // 1. Vérification Supabase
-    if (typeof supabase === 'undefined') {
-        console.error("ERREUR : Supabase non chargé.");
-        return;
-    }
-
-    const sb = supabase.createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.KEY);
-
-    // 2. Vérification Auth
+    // 1. Vérification Auth (Sécurité)
     const { data: { user } } = await sb.auth.getUser();
     if (!user) { window.location.href = 'index.html'; return; }
 
-    // 3. Mise à jour Header
-    const nomElement = document.getElementById('nom-utilisateur');
-    const roleElement = document.getElementById('role-utilisateur');
-    if (nomElement) nomElement.textContent = `${user.user_metadata.prenom || ''} ${user.user_metadata.nom || ''}`;
-    if (roleElement) roleElement.textContent = `Rôle : ${user.user_metadata.role || 'Agent'}`;
+    // 2. Chargement du profil Manager/Admin
+    await chargerProfilManager(user.id);
 
-    // 4. Chargement des données
-    await chargerEtCalculer(sb);
+    // 3. VÉRIFICATION DES DROITS (Sécurité stricte)
+    if (!donneesGlobales.utilisateur || 
+       (donneesGlobales.utilisateur.role !== 'manager' && donneesGlobales.utilisateur.role !== 'admin')) {
+        alert("⛔ Accès réservé aux Managers et Admins.");
+        window.location.href = 'dashboard.html';
+        return;
+    }
 
-    // 5. Gestion des onglets principaux (Global / Équipes / Cellules)
+    // 4. Mise à jour Header & Boutons
+    afficherHeaderEtBoutons();
+
+    // 5. Chargement des données du plateau
+    await chargerEtCalculer();
+
+    // 6. Charger la liste VISUELLE des challenges (Info-bulle)
+    await chargerChallengesActifsVisuels();
+
+    // 7. Gestion des onglets (Global / Équipes / Cellules)
     activerGestionOnglets();
 
-    // 6. Initialisation de la vue "Par Cellule" (Mover par défaut)
-    if (window.changerCellule) {
-        window.changerCellule('Mover');
+    // 8. Initialisation de la vue "Par Cellule" (Mover par défaut)
+    if (window.changerCellule) window.changerCellule('Mover');
+
+    // 9. Menu Équipes (Si Admin)
+    if (donneesGlobales.utilisateur.role === 'admin') {
+        initialiserMenuEquipes();
     }
+
+    console.log("✅ Plateau V4 initialisé avec succès");
 });
 
-// -------------------------------------------------------------
-// FONCTIONS DE LOGIQUE
-// -------------------------------------------------------------
+// =============================================================
+// 🔐 GESTION UTILISATEUR & SÉCURITÉ
+// =============================================================
 
-async function chargerEtCalculer(sb) {
+async function chargerProfilManager(userId) {
+    const { data } = await sb.from('users').select('*').eq('id', userId).single();
+    donneesGlobales.utilisateur = data;
+}
+
+function afficherHeaderEtBoutons() {
+    const u = donneesGlobales.utilisateur;
+    if (!u) return;
+
+    // Infos Header
+    const elNom = document.getElementById('nom-utilisateur');
+    const elRole = document.getElementById('role-utilisateur');
+    if (elNom) elNom.textContent = `${u.prenom} ${u.nom}`;
+    if (elRole) elRole.textContent = u.role === 'admin' ? 'Administrateur' : 'Manager';
+
+    // Boutons d'action
+    const btnRetour = document.getElementById('btn-retour-manager');
+    if (btnRetour) {
+        btnRetour.style.display = 'inline-block'; // On s'assure qu'il est visible
+        btnRetour.addEventListener('click', () => window.location.href = 'manager.html');
+    }
+
+    const btnDeconnexion = document.getElementById('btn-deconnexion');
+    if (btnDeconnexion) {
+        btnDeconnexion.addEventListener('click', async () => {
+            if (confirm("Se déconnecter ?")) {
+                await sb.auth.signOut();
+                window.location.href = 'index.html';
+            }
+        });
+    }
+
+    // Admin : Bouton Créer Challenge et Menu Équipes
+    const btnCreer = document.getElementById('btn-creer-challenge');
+    const menuEquipes = document.getElementById('dropdown-equipes-admin');
+    
+    if (u.role === 'admin') {
+        if (btnCreer) {
+            btnCreer.style.display = 'inline-block';
+            btnCreer.addEventListener('click', () => window.location.href = 'manager.html'); // Ou ouvrir modal
+        }
+        if (menuEquipes) menuEquipes.style.display = 'block';
+    }
+}
+
+// =============================================================
+// 🧠 MOTEUR DE DONNÉES (Le cœur du V3)
+// =============================================================
+
+async function chargerEtCalculer() {
     // Récupération
     const { data: agents } = await sb.from('users').select(`*, equipes (nom, drapeau_emoji)`).eq('role', 'agent');
     const { data: contrats } = await sb.from('contrats').select('*').in('statut', ['valide', 'en_attente']);
@@ -75,15 +138,57 @@ async function chargerEtCalculer(sb) {
         });
     });
 
-    // Affichage Initial
+    // Affichage Initial des Tableaux
     afficherPodium(donneesGlobales.agents);
     afficherTableauGlobal(donneesGlobales.agents, donneesGlobales.contrats);
     afficherClassementEquipes(equipes || [], donneesGlobales.agents);
 }
 
-// -------------------------------------------------------------
-// FONCTIONS D'AFFICHAGE (GLOBAL & PODIUM)
-// -------------------------------------------------------------
+// =============================================================
+// ⚡ CHALLENGES VISUELS (Le manque du V3 comblé)
+// =============================================================
+
+async function chargerChallengesActifsVisuels() {
+    try {
+        const { data: challenges } = await sb.from('challenges_flash')
+            .select('*')
+            .eq('statut', 'actif')
+            .order('date_debut', { ascending: false });
+
+        const liste = document.getElementById('challenges-actifs-liste');
+        if (!liste) return; // Si l'élément n'existe pas dans le HTML, on ignore
+
+        if (!challenges || challenges.length === 0) {
+            liste.innerHTML = '<div class="aucun-challenge">Aucun challenge actif 😴</div>';
+            return;
+        }
+
+        liste.innerHTML = '';
+        challenges.forEach(ch => {
+            const fin = new Date(ch.date_fin).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+            
+            const div = document.createElement('div');
+            div.className = 'challenge-item'; // Assurez-vous d'avoir du CSS pour ça
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee;">
+                    <div>
+                        <strong>⚡ ${ch.titre}</strong><br>
+                        <small style="color:#666;">${ch.type_challenge} • Fin à ${fin}</small>
+                    </div>
+                    <div style="background:#FF9800; color:white; padding:2px 8px; border-radius:10px; font-weight:bold;">
+                        ${ch.points_attribues} pts
+                    </div>
+                </div>
+            `;
+            liste.appendChild(div);
+        });
+
+    } catch (e) { console.error("Erreur challenges visuels", e); }
+}
+
+// =============================================================
+// 📊 AFFICHAGE TABLEAUX & PODIUM
+// =============================================================
 
 function afficherPodium(agents) {
     const top3 = [...agents].sort((a, b) => b.scoreTotal - a.scoreTotal).slice(0, 3);
@@ -97,10 +202,12 @@ function updatePodiumSlot(rang, agent) {
     const nomDiv = document.getElementById(`podium-${rang}-nom`);
     const scoreDiv = document.getElementById(`podium-${rang}-score`);
     const equipeDiv = document.getElementById(`podium-${rang}-equipe`);
+    const avatarDiv = document.getElementById(`podium-${rang}-avatar`); // Ajout avatar
     
     if (nomDiv) nomDiv.textContent = `${agent.prenom} ${agent.nom}`;
     if (scoreDiv) scoreDiv.textContent = `${agent.scoreTotal} pts`;
     if (equipeDiv) equipeDiv.textContent = agent.equipes?.nom || '';
+    if (avatarDiv) avatarDiv.textContent = agent.avatar_url ? '👤' : '🏃';
 }
 
 function afficherTableauGlobal(agents, contrats) {
@@ -141,7 +248,7 @@ function afficherClassementEquipes(equipes, agents) {
         <div class="equipe-card" style="display:flex; justify-content:space-between; padding:15px; background:white; margin-bottom:10px; border-radius:10px; box-shadow:0 2px 4px rgba(0,0,0,0.05); align-items:center;">
             <div style="display:flex; align-items:center; gap:15px;">
                 <div style="font-size:1.5em; font-weight:bold; color:#ccc; width:30px;">#${index + 1}</div>
-                <div style="font-size:2em;">${eq.drapeau_emoji}</div>
+                <div style="font-size:2em;">${eq.drapeau_emoji || '🏳️'}</div>
                 <div style="font-weight:bold; font-size:1.1em;">${eq.nom}</div>
             </div>
             <div style="font-size:1.5em; font-weight:bold; color:#FF9F1C;">${eq.totalPoints} pts</div>
@@ -149,19 +256,15 @@ function afficherClassementEquipes(equipes, agents) {
     `).join('');
 }
 
-// -------------------------------------------------------------
-// ✨ NOUVEAU : GESTION DES CELLULES (Ce qui manquait)
-// -------------------------------------------------------------
+// =============================================================
+// 📞 GESTION DES CELLULES (Le système dynamique)
+// =============================================================
 
-// Cette fonction est attachée à "window" pour être accessible depuis le HTML onclick="..."
 window.changerCellule = function(nomCellule) {
-    console.log("Changement de cellule :", nomCellule);
-
     // 1. Mise à jour visuelle des boutons
     const boutons = document.querySelectorAll('.cellule-tab-btn');
     boutons.forEach(btn => {
         btn.classList.remove('active');
-        // On vérifie si le texte du bouton contient le nom de la cellule (ex: "Top Movers")
         if (btn.innerText.includes(nomCellule) || btn.getAttribute('onclick').includes(nomCellule)) {
             btn.classList.add('active');
         }
@@ -182,7 +285,6 @@ function afficherTableauCellule(agents, contrats) {
     const tbody = document.getElementById('tableau-cellule-body');
     if (!tbody) return;
 
-    // Classement par score
     const classe = [...agents].sort((a, b) => b.scoreTotal - a.scoreTotal);
 
     if (classe.length === 0) {
@@ -192,11 +294,8 @@ function afficherTableauCellule(agents, contrats) {
 
     tbody.innerHTML = classe.map((agent, index) => {
         const nbContrats = contrats.filter(c => c.agent_id === agent.id).length;
-        
         let medaille = '';
-        if (index === 0) medaille = '🥇';
-        if (index === 1) medaille = '🥈';
-        if (index === 2) medaille = '🥉';
+        if (index === 0) medaille = '🥇'; else if (index === 1) medaille = '🥈'; else if (index === 2) medaille = '🥉';
 
         return `
             <tr>
@@ -210,9 +309,9 @@ function afficherTableauCellule(agents, contrats) {
     }).join('');
 }
 
-// -------------------------------------------------------------
-// UTILITAIRES
-// -------------------------------------------------------------
+// =============================================================
+// 🛠 UTILITAIRES & MENU ADMIN
+// =============================================================
 
 function activerGestionOnglets() {
     const btns = document.querySelectorAll('.tab-btn');
@@ -229,4 +328,21 @@ function activerGestionOnglets() {
             if (targetContent) targetContent.classList.add('active');
         });
     });
+}
+
+function initialiserMenuEquipes() {
+    sb.from('equipes').select('*').order('id')
+      .then(({ data: equipes }) => {
+            const menu = document.getElementById('menu-equipes-admin');
+            if(!menu) return;
+            
+            menu.innerHTML = '';
+            equipes.forEach(equipe => {
+                const div = document.createElement('div');
+                div.className = 'dropdown-item';
+                div.textContent = `${equipe.drapeau_emoji || '🏳️'} Équipe ${equipe.nom}`;
+                div.onclick = () => window.location.href = `manager.html?equipe=${equipe.id}`;
+                menu.appendChild(div);
+            });
+      });
 }
