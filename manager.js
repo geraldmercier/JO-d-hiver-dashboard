@@ -584,5 +584,63 @@ function initialiserMenuEquipes() {
         menu.appendChild(div);
     });
 }
+// =============================================================
+// ⚡ GESTION CRÉATION CHALLENGE (AJOUT)
+// =============================================================
+
+window.ouvrirModalChallenge = function() {
+    const modal = document.getElementById('modal-challenge');
+    if (modal) {
+        modal.style.display = 'flex';
+        // Pré-remplir la date de début à "maintenant"
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        const dateInput = document.getElementById('challenge-debut');
+        if (dateInput) dateInput.value = now.toISOString().slice(0, 16);
+    }
+};
+
+window.fermerModalChallenge = function() {
+    const modal = document.getElementById('modal-challenge');
+    if (modal) modal.style.display = 'none';
+};
+
+window.creerChallenge = async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-submit-challenge');
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Création...';
+    }
+
+    try {
+        const { error } = await sb.from('challenges_flash').insert({
+            titre: document.getElementById('challenge-titre').value,
+            description: document.getElementById('challenge-description').value,
+            type_challenge: document.getElementById('challenge-type').value,
+            points_attribues: document.getElementById('challenge-points').value,
+            date_debut: document.getElementById('challenge-debut').value,
+            date_fin: document.getElementById('challenge-fin').value,
+            equipe_id: equipeActuelle.id, // Lie le challenge à l'équipe du manager
+            cible: 'equipe', // Par défaut pour l'équipe
+            statut: 'actif'
+        });
+
+        if (error) throw error;
+
+        afficherNotification('✅ Challenge créé avec succès !', 'success');
+        fermerModalChallenge();
+        document.getElementById('form-challenge').reset();
+
+    } catch (err) {
+        console.error("Erreur création challenge :", err);
+        afficherNotification("❌ Erreur : " + err.message, 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Créer le défi';
+        }
+    }
+};
 
 console.log('✅ Manager COMPLET chargé');

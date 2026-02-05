@@ -10,12 +10,8 @@
 </head>
 <body class="manager-body">
 
-    <!-- =============================================================
-         HEADER
-         ============================================================= -->
     <header class="dashboard-header">
         <div class="header-container">
-            <!-- Logo -->
             <div class="header-logo">
                 <span class="logo-icon">👔</span>
                 <div class="logo-text">
@@ -24,60 +20,52 @@
                 </div>
             </div>
 
-            <!-- Profil Manager -->
             <div class="header-profil">
-                <!-- Avatar -->
                 <div class="profil-avatar">
-                    <img src="https://ui-avatars.com/api/?name=Manager&background=1565C0&color=fff&size=80" 
-                         alt="Avatar" id="avatar-manager">
+                    <img src="" alt="Avatar" id="avatar-manager">
                 </div>
 
-                <!-- Nom + Équipe -->
                 <div class="profil-info">
                     <h2 class="profil-nom" id="nom-manager">Chargement...</h2>
                     <p class="profil-equipe" id="equipe-manager">Manager</p>
                 </div>
 
-                <!-- Actions -->
                 <div class="header-actions">
-                    <!-- Menu équipes (Admin uniquement) -->
+                    
                     <div class="dropdown" id="dropdown-equipes-admin" style="display: none;">
                         <button class="btn-dropdown">📋 Équipes</button>
                         <div class="dropdown-menu" id="menu-equipes-admin">
-                            <!-- Rempli dynamiquement -->
-                        </div>
+                            </div>
                     </div>
 
-                    <!-- Bouton Vue Plateau -->
                     <button class="btn-action" id="btn-vue-plateau" title="Voir le plateau">
                         🏔️ Vue Plateau
                     </button>
 
-                    <!-- Déconnexion -->
+                    <button onclick="ouvrirModalChallenge()" class="btn-action" style="background: #FF9800; color: white; border: none;">
+                        ⚡ Créer Challenge
+                    </button>
+
                     <button class="btn-deconnexion" id="btn-deconnexion" title="Se déconnecter">
                         🚪 Déconnexion
                     </button>
+                    
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- =============================================================
-         CONTENU PRINCIPAL
-         ============================================================= -->
     <main class="manager-main">
         <div class="manager-container">
 
-            <!-- SECTION 1 : PERFORMANCE ÉQUIPE -->
             <section class="carte carte-performance-equipe">
                 <h3 class="carte-titre">📊 Performance de l'Équipe</h3>
                 
                 <div class="performance-header">
-                    <h2 class="equipe-nom" id="nom-equipe">Équipe France 🇫🇷</h2>
+                    <h2 class="equipe-nom" id="nom-equipe">Chargement de l'équipe...</h2>
                 </div>
 
                 <div class="stats-grid">
-                    <!-- Score Total -->
                     <div class="stat-card">
                         <div class="stat-icon">🏆</div>
                         <div class="stat-content">
@@ -86,7 +74,6 @@
                         </div>
                     </div>
 
-                    <!-- Position -->
                     <div class="stat-card">
                         <div class="stat-icon">📊</div>
                         <div class="stat-content">
@@ -95,7 +82,6 @@
                         </div>
                     </div>
 
-                    <!-- Contrats Validés -->
                     <div class="stat-card">
                         <div class="stat-icon">✅</div>
                         <div class="stat-content">
@@ -104,7 +90,6 @@
                         </div>
                     </div>
 
-                    <!-- Moyenne par Agent -->
                     <div class="stat-card">
                         <div class="stat-icon">📈</div>
                         <div class="stat-content">
@@ -113,7 +98,6 @@
                         </div>
                     </div>
 
-                    <!-- Nombre d'Agents -->
                     <div class="stat-card">
                         <div class="stat-icon">👥</div>
                         <div class="stat-content">
@@ -124,13 +108,10 @@
                 </div>
             </section>
 
-            <!-- LAYOUT 2 COLONNES -->
             <div class="manager-layout">
                 
-                <!-- COLONNE GAUCHE : VALIDATIONS -->
                 <div class="colonne-validations">
 
-                    <!-- SECTION 2 : CONTRATS EN ATTENTE -->
                     <section class="carte carte-contrats-attente">
                         <div class="section-header">
                             <h3 class="carte-titre">⏳ Contrats en Attente</h3>
@@ -138,11 +119,10 @@
                         </div>
                         
                         <div class="contrats-attente-container" id="contrats-attente-liste">
-                            <!-- Rempli dynamiquement -->
+                            <div style="padding: 20px; text-align: center; color: #999;">Chargement...</div>
                         </div>
                     </section>
 
-                    <!-- SECTION 3 : CHALLENGES EN ATTENTE -->
                     <section class="carte carte-challenges-attente" id="section-challenges-validation" style="display: none;">
                         <div class="section-header">
                             <h3 class="carte-titre">⚡ Challenges à Valider</h3>
@@ -150,16 +130,13 @@
                         </div>
                         
                         <div class="challenges-attente-container" id="challenges-attente-liste">
-                            <!-- Rempli dynamiquement -->
-                        </div>
+                            </div>
                     </section>
 
                 </div>
 
-                <!-- COLONNE DROITE : TABLEAU AGENTS -->
                 <div class="colonne-agents">
 
-                    <!-- SECTION 4 : TABLEAU DES AGENTS -->
                     <section class="carte carte-agents">
                         <h3 class="carte-titre">👥 Agents de l'Équipe</h3>
                         
@@ -177,7 +154,6 @@
                                     </tr>
                                 </thead>
                                 <tbody id="tableau-agents-body">
-                                    <!-- Rempli dynamiquement -->
                                     <tr>
                                         <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
                                             Chargement des agents...
@@ -195,9 +171,6 @@
         </div>
     </main>
 
-    <!-- =============================================================
-         STYLES ADDITIONNELS
-         ============================================================= -->
     <style>
         /* Layout principal */
         .manager-container {
@@ -230,20 +203,9 @@
         }
 
         /* Performance Équipe */
-        .carte-performance-equipe {
-            margin-bottom: 24px;
-        }
-
-        .performance-header {
-            margin-bottom: 20px;
-        }
-
-        .equipe-nom {
-            font-size: 24px;
-            font-weight: 700;
-            color: #1976D2;
-            margin: 0;
-        }
+        .carte-performance-equipe { margin-bottom: 24px; }
+        .performance-header { margin-bottom: 20px; }
+        .equipe-nom { font-size: 24px; font-weight: 700; color: #1976D2; margin: 0; }
 
         .stats-grid {
             display: grid;
@@ -261,47 +223,17 @@
             gap: 12px;
         }
 
-        .stat-icon {
-            font-size: 32px;
-        }
+        .stat-icon { font-size: 32px; }
+        .stat-content { flex: 1; }
+        .stat-label { font-size: 12px; color: #757575; font-weight: 500; text-transform: uppercase; }
+        .stat-value { font-size: 20px; font-weight: 700; color: #1976D2; margin-top: 4px; }
 
-        .stat-content {
-            flex: 1;
-        }
+        /* Section headers & Badges */
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .badge-count { background: #F44336; color: white; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: 700; }
 
-        .stat-label {
-            font-size: 12px;
-            color: #757575;
-            font-weight: 500;
-            text-transform: uppercase;
-        }
-
-        .stat-value {
-            font-size: 20px;
-            font-weight: 700;
-            color: #1976D2;
-            margin-top: 4px;
-        }
-
-        /* Section headers */
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .badge-count {
-            background: #F44336;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 700;
-        }
-
-        /* Contrats en attente */
-        .contrat-attente-item {
+        /* Items Contrat / Challenge */
+        .contrat-attente-item, .challenge-attente-item {
             background: #f9fafb;
             border: 1px solid #e0e0e0;
             border-left: 4px solid #1976D2;
@@ -313,304 +245,121 @@
             align-items: center;
             gap: 16px;
         }
+        .challenge-attente-item { background: #fff8e1; border-color: #ffe082; border-left-color: #FF9800; }
 
-        .contrat-attente-info {
-            flex: 1;
-        }
+        .contrat-attente-info, .challenge-attente-info { flex: 1; }
+        .contrat-attente-agent, .challenge-attente-agent { font-weight: 700; color: #212121; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        
+        .cellule-badge { background: #E3F2FD; color: #1976D2; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .badge-apiapp { background: #FFF3E0; color: #F57C00; padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+        .badge-points { background: #FF9800; color: white; padding: 3px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; }
 
-        .contrat-attente-agent {
-            font-weight: 700;
-            color: #212121;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .cellule-badge {
-            background: #E3F2FD;
-            color: #1976D2;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .contrat-attente-details {
-            font-size: 14px;
-            color: #616161;
-            margin-bottom: 4px;
-        }
-
-        .badge-apiapp {
-            background: #FFF3E0;
-            color: #F57C00;
-            padding: 3px 8px;
-            border-radius: 10px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .contrat-lien {
-            color: #1976D2;
-            text-decoration: none;
-            font-size: 14px;
-        }
-
-        .contrat-attente-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn-valider, .btn-rejeter {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-
-        .btn-valider {
-            background: #4CAF50;
-            color: white;
-        }
-
-        .btn-valider:hover {
-            background: #43A047;
-        }
-
-        .btn-rejeter {
-            background: #F44336;
-            color: white;
-        }
-
-        .btn-rejeter:hover {
-            background: #E53935;
-        }
-
-        .aucun-contrat {
-            text-align: center;
-            padding: 40px;
-            color: #9E9E9E;
-            font-style: italic;
-        }
-
-        /* Challenges en attente */
-        .challenge-attente-item {
-            background: #fff8e1;
-            border: 1px solid #ffe082;
-            border-left: 4px solid #FF9800;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .challenge-attente-info {
-            flex: 1;
-        }
-
-        .challenge-attente-agent {
-            font-weight: 700;
-            color: #212121;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .challenge-attente-details {
-            font-size: 14px;
-            color: #616161;
-            margin-bottom: 4px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .badge-points {
-            background: #FF9800;
-            color: white;
-            padding: 3px 8px;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .challenge-attente-description {
-            font-size: 13px;
-            color: #757575;
-            font-style: italic;
-        }
-
-        .challenge-attente-actions {
-            display: flex;
-            gap: 8px;
-        }
+        .btn-valider, .btn-rejeter { padding: 8px 16px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+        .btn-valider { background: #4CAF50; color: white; }
+        .btn-valider:hover { background: #43A047; }
+        .btn-rejeter { background: #F44336; color: white; }
+        .btn-rejeter:hover { background: #E53935; }
 
         /* Tableau agents */
-        .tableau-container {
-            overflow-x: auto;
-        }
+        .tableau-container { overflow-x: auto; }
+        .tableau-agents { width: 100%; border-collapse: collapse; }
+        .tableau-agents thead { background: #f5f5f5; }
+        .tableau-agents th { padding: 12px; text-align: left; font-size: 13px; font-weight: 600; color: #616161; text-transform: uppercase; border-bottom: 2px solid #e0e0e0; }
+        .tableau-agents td { padding: 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+        .tableau-agents tbody tr:hover { background: #f9fafb; }
+        .rang-cell { font-weight: 700; color: #1976D2; font-size: 16px; }
+        .score-cell { font-weight: 700; color: #1976D2; }
+        .badge-attente-mini { background: #FFF3E0; color: #F57C00; padding: 3px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; }
 
-        .tableau-agents {
-            width: 100%;
-            border-collapse: collapse;
-        }
+        /* Header Actions */
+        .header-actions { display: flex; align-items: center; gap: 12px; }
+        .btn-action { background: #1976D2; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; }
+        .btn-action:hover { opacity: 0.9; }
+        
+        /* Dropdown */
+        .dropdown { position: relative; }
+        .btn-dropdown { background: #616161; color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .dropdown-menu { display: none; position: absolute; top: 100%; left: 0; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 200px; margin-top: 4px; z-index: 1000; }
+        .dropdown:hover .dropdown-menu { display: block; }
+        .dropdown-item { padding: 12px 16px; cursor: pointer; transition: background 0.2s; }
+        .dropdown-item:hover { background: #f5f5f5; }
 
-        .tableau-agents thead {
-            background: #f5f5f5;
+        /* Modale */
+        .modal {
+            display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); align-items: center; justify-content: center;
         }
-
-        .tableau-agents th {
-            padding: 12px;
-            text-align: left;
-            font-size: 13px;
-            font-weight: 600;
-            color: #616161;
-            text-transform: uppercase;
-            border-bottom: 2px solid #e0e0e0;
-        }
-
-        .tableau-agents td {
-            padding: 12px;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 14px;
-        }
-
-        .tableau-agents tbody tr:hover {
-            background: #f9fafb;
-        }
-
-        .rang-cell {
-            font-weight: 700;
-            color: #1976D2;
-            font-size: 16px;
-        }
-
-        .agent-info-cell {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .score-cell {
-            font-weight: 700;
-            color: #1976D2;
-        }
-
-        .badge-attente-mini {
-            background: #FFF3E0;
-            color: #F57C00;
-            padding: 3px 8px;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .btn-details {
-            background: #E3F2FD;
-            color: #1976D2;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .btn-details:hover {
-            background: #BBDEFB;
-        }
-
-        /* Actions header */
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .btn-action {
-            background: #1976D2;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .btn-action:hover {
-            background: #1565C0;
-        }
-
-        /* Dropdown équipes */
-        .dropdown {
-            position: relative;
-        }
-
-        .btn-dropdown {
-            background: #616161;
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .dropdown-menu {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            min-width: 200px;
-            margin-top: 4px;
-            z-index: 1000;
-        }
-
-        .dropdown:hover .dropdown-menu {
-            display: block;
-        }
-
-        .dropdown-item {
-            padding: 12px 16px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .dropdown-item:hover {
-            background: #f5f5f5;
+        .modal-content {
+            background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 500px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         }
 
         /* Responsive */
         @media (max-width: 1200px) {
-            .manager-layout {
-                grid-template-columns: 1fr;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+            .manager-layout { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(3, 1fr); }
         }
     </style>
 
-    <!-- =============================================================
-         SCRIPTS
-         ============================================================= -->
+    <div id="modal-challenge" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:#1976D2;">🚀 Nouveau Challenge Flash</h3>
+            <form id="form-challenge" onsubmit="creerChallenge(event)">
+                
+                <div style="margin-bottom:15px;">
+                    <label style="display:block; font-weight:bold; margin-bottom:5px; color:#555;">Titre du défi</label>
+                    <input type="text" id="challenge-titre" placeholder="Ex: Sprint de l'après-midi" required 
+                           style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; font-size:14px;">
+                </div>
+
+                <div style="margin-bottom:15px;">
+                    <label style="display:block; font-weight:bold; margin-bottom:5px; color:#555;">Description</label>
+                    <textarea id="challenge-description" rows="3" required placeholder="Détails du challenge..." 
+                              style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; font-size:14px; resize:vertical;"></textarea>
+                </div>
+
+                <div style="display:flex; gap:15px; margin-bottom:15px;">
+                    <div style="flex:1;">
+                        <label style="display:block; font-weight:bold; margin-bottom:5px; color:#555;">Points gagnés</label>
+                        <input type="number" id="challenge-points" value="10" required 
+                               style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+                    </div>
+                    <div style="flex:1;">
+                        <label style="display:block; font-weight:bold; margin-bottom:5px; color:#555;">Type</label>
+                        <select id="challenge-type" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; background:white;">
+                            <option value="Nombre de contrats">Volume Contrats</option>
+                            <option value="Autre">Autre</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:15px; margin-bottom:20px;">
+                    <div style="flex:1;">
+                        <label style="display:block; font-weight:bold; margin-bottom:5px; color:#555;">Début</label>
+                        <input type="datetime-local" id="challenge-debut" required 
+                               style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+                    </div>
+                    <div style="flex:1;">
+                        <label style="display:block; font-weight:bold; margin-bottom:5px; color:#555;">Fin</label>
+                        <input type="datetime-local" id="challenge-fin" required 
+                               style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+                    </div>
+                </div>
+
+                <div style="text-align:right; border-top:1px solid #eee; padding-top:20px; display:flex; justify-content:flex-end; gap:10px;">
+                    <button type="button" onclick="fermerModalChallenge()" 
+                            style="padding:10px 20px; background:#f5f5f5; color:#555; border:none; border-radius:6px; cursor:pointer; font-weight:600;">
+                        Annuler
+                    </button>
+                    <button type="submit" id="btn-submit-challenge" 
+                            style="padding:10px 20px; background:#FF9800; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; box-shadow:0 2px 5px rgba(255,152,0,0.3);">
+                        ⚡ Créer le défi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
     <script src="manager.js"></script>

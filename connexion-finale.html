@@ -287,29 +287,26 @@
         }
 
         async function inscription() {
-            // Récupération des valeurs
+            // 1. Récupération des valeurs
             const prenom = document.getElementById('prenom-signup').value.trim();
             const nom = document.getElementById('nom-signup').value.trim();
             const email = document.getElementById('email-signup').value.trim();
             const password = document.getElementById('pass-signup').value;
             const confirm = document.getElementById('pass-confirm').value;
 
-            // Vérifications
+            // 2. Vérifications de base
             if (!prenom || !nom || !email || !password || !confirm) {
                 afficherErreur('erreur-signup', 'Merci de remplir tous les champs !');
                 return;
             }
-
             if (!email.endsWith('@papernest.com')) {
                 afficherErreur('erreur-signup', 'L\'email doit finir par @papernest.com');
                 return;
             }
-
             if (password.length < 6) {
                 afficherErreur('erreur-signup', 'Mot de passe trop court (min 6)');
                 return;
             }
-
             if (password !== confirm) {
                 afficherErreur('erreur-signup', 'Les mots de passe ne correspondent pas');
                 return;
@@ -320,47 +317,54 @@
             btn.disabled = true;
 
             try {
-                // ÉTAPE 1 : Créer l'accès Auth
-                const authResult = await sb.auth.signUp({ 
+                // --- ÉTAPE A : Créer l'accès Auth ---
+                const { data: authData, error: authError } = await sb.auth.signUp({ 
                     email, 
                     password,
-                    options: {
-                        data: { prenom: prenom, nom: nom } // On sauve aussi dans les métadonnées
-                    }
+                    options: { data: { prenom: prenom, nom: nom } }
                 });
 
-                if (authResult.error) throw authResult.error;
+                if (authError) throw authError;
                 
-                // Si l'utilisateur existe déjà côté Auth mais pas Base, on continue
-                if (authResult.data?.user?.identities?.length === 0) {
+                // Si l'utilisateur existe déjà
+                if (authData?.user?.identities?.length === 0) {
                      throw new Error("Cet email est déjà utilisé.");
                 }
 
-                // ÉTAPE 2 : Créer la fiche dans la table 'users'
-                // C'est ici que ça plantait avant. Maintenant on envoie tout propre.
+                console.log("✅ Auth créé :", authData.user.id);
+
+                // --- ÉTAPE B : Créer la fiche dans la table 'users' ---
                 const { error: insertError } = await sb.from('users').insert({
-                    id: authResult.data.user.id, // Le lien CRUCIAL
+                    id: authData.user.id, // ID venant de l'Auth
                     email: email,
                     prenom: prenom,
-                    nom: nom, // Maintenant on l'a !
+                    nom: nom,
                     role: 'agent',
-                    equipe_id: 1, // Équipe par défaut (pour éviter l'erreur foreign key)
+                    equipe_id: 1, // On force l'équipe 1 pour démarrer
+                    cellule: 'Pépinière', // On force une cellule par défaut
                     onboarding_complete: false
                 });
 
-                if (insertError) throw insertError;
+                if (insertError) {
+                    console.error("❌ ERREUR INSERTION DB :", insertError);
+                    alert("ERREUR CRITIQUE !\n\nL'authentification a marché, mais l'enregistrement dans la base de données a échoué.\n\nMessage : " + insertError.message + "\nCode : " + insertError.code);
+                    throw insertError;
+                }
 
-                // Succès !
-                alert("🎉 Compte créé ! Redirection...");
+                // Succès total
+                console.log("✅ Profil DB créé avec succès !");
+                alert("🎉 Compte créé avec succès ! Redirection...");
                 window.location.href = 'onboarding.html';
 
             } catch (error) {
                 console.error(error);
-                afficherErreur('erreur-signup', error.message);
+                afficherErreur('erreur-signup', error.message || "Erreur inconnue");
                 btn.textContent = 'Créer mon compte';
                 btn.disabled = false;
             }
         }
+
+             
 
         function afficherErreur(id, texte) {
             const elem = document.getElementById(id);
