@@ -1,15 +1,15 @@
 // =============================================================
-// DASHBOARD AGENT - VERSION "WINTER GAMES V2" (CORRIGÉE)
+// DASHBOARD AGENT - VERSION COMPLÈTE
+// Backend stable + Toutes les fonctionnalités visuelles
 // =============================================================
 
-console.log('🏔️ Dashboard Agent V2 - Chargement...');
+console.log('🏔️ Dashboard Agent COMPLET - Chargement...');
 
 const { createClient } = window.supabase;
 const sb = createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.KEY);
 
 // --- UTILITAIRES ---
 
-// Fonction pour vérifier si une date est "Aujourd'hui" (ignorer les heures)
 function estAujourdhui(dateString) {
     if (!dateString) return false;
     const date = new Date(dateString);
@@ -41,9 +41,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // 2. Chargement de l'utilisateur courant
     await chargerDonneesUtilisateur(user.id);
-    if (!utilisateurActuel) return; // Stop si échec
+    if (!utilisateurActuel) return;
 
-    // 3. Chargement global des données (Agents, Contrats, Challenges)
+    // 3. Chargement global des données
     await Promise.all([
         chargerTousLesAgents(),
         chargerTousLesContrats(),
@@ -53,19 +53,22 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 4. Calculs initiaux
     calculerScoresComplets();
 
-    // 5. Vérification des challenges (Auto-détection)
+    // 5. Vérification des challenges
     await detecterEtSoumettreChallenges();
 
-    // 6. Affichage Initial
+    // 6. Affichage Initial COMPLET
     afficherInformationsHeader();
     afficherScoreEtRang();
+    afficherPodiumDuJour();
     calculerEtAfficherSkiFond();
     calculerEtAfficherPerformanceJour();
     calculerEtAfficherEquipe();
     chargerContratsJour();
+    afficherCalendrierComplet();
+    afficherBadgesReels();
     chargerChallengesAffiches();
 
-    // 7. Gestionnaires d'événements (Boutons)
+    // 7. Gestionnaires d'événements
     const form = document.getElementById('formulaire-contrat');
     if (form) form.addEventListener('submit', enregistrerContrat);
     
@@ -76,6 +79,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             window.location.href = 'connexion-finale.html';
         });
     }
+
+    console.log('✅ Dashboard initialisé avec toutes les fonctionnalités');
 });
 
 // =============================================================
@@ -144,7 +149,6 @@ function calculerScoresComplets() {
 
         ['Mover', 'Switcher', 'Coach', 'Pépinière'].forEach(cellule => {
             const agentsCellule = tousLesAgents.filter(a => a.cellule === cellule);
-            // Classement du jour pour cette cellule
             const classementJour = agentsCellule.map(a => {
                 const vol = tousLesContrats.filter(c => c.agent_id === a.id && c.created_at.startsWith(dateStr)).length;
                 return { agent: a, vol: vol };
@@ -162,7 +166,7 @@ function calculerScoresComplets() {
         if (utilisateurActuel) utilisateurActuel.scoreTotal += (cr.points_gagnes || 0);
     });
 
-    // Mise à jour de l'objet utilisateur courant
+    // Mise à jour utilisateur courant
     const moiCalcule = tousLesAgents.find(a => a.id === utilisateurActuel.id);
     if (moiCalcule) utilisateurActuel.scoreTotal = moiCalcule.scoreTotal;
 }
@@ -216,7 +220,7 @@ async function detecterEtSoumettreChallenges() {
 }
 
 // =============================================================
-// 🎨 FONCTIONS D'AFFICHAGE (UI)
+// 🎨 FONCTIONS D'AFFICHAGE (UI COMPLÈTES)
 // =============================================================
 
 function afficherInformationsHeader() {
@@ -241,39 +245,125 @@ function afficherInformationsHeader() {
 function afficherScoreEtRang() {
     tousLesAgents.sort((a, b) => b.scoreTotal - a.scoreTotal);
     
-    document.getElementById('score-total').textContent = utilisateurActuel.scoreTotal;
+    const elScoreTotal = document.getElementById('score-total');
+    if (elScoreTotal) elScoreTotal.textContent = utilisateurActuel.scoreTotal;
 
     const rangGlobal = tousLesAgents.findIndex(a => a.id === utilisateurActuel.id) + 1;
-    document.getElementById('rang-global').textContent = `${rangGlobal}ème/${tousLesAgents.length}`;
+    const elRangGlobal = document.getElementById('rang-global');
+    if (elRangGlobal) elRangGlobal.textContent = `${rangGlobal}ème/${tousLesAgents.length}`;
 
+    // Points manquants pour monter
+    if (rangGlobal > 1) {
+        const agentDevant = tousLesAgents[rangGlobal - 2];
+        const pointsManquants = agentDevant.scoreTotal - utilisateurActuel.scoreTotal + 1;
+        const elPointsManquants = document.getElementById('points-manquants');
+        if (elPointsManquants) {
+            elPointsManquants.textContent = `${pointsManquants} pts pour la ${rangGlobal - 1}${rangGlobal === 2 ? 'ère' : 'ème'} place`;
+        }
+    } else {
+        const elPointsManquants = document.getElementById('points-manquants');
+        if (elPointsManquants) elPointsManquants.textContent = '🥇 Vous êtes 1er !';
+    }
+
+    // Rang équipe
     if (utilisateurActuel.equipe_id) {
         const teamAgents = tousLesAgents.filter(a => a.equipe_id === utilisateurActuel.equipe_id);
+        teamAgents.sort((a, b) => b.scoreTotal - a.scoreTotal);
         const rangTeam = teamAgents.findIndex(a => a.id === utilisateurActuel.id) + 1;
-        document.getElementById('rang-equipe').textContent = `${rangTeam}ème/${teamAgents.length}`;
+        const elRangEquipe = document.getElementById('rang-equipe');
+        if (elRangEquipe) elRangEquipe.textContent = `${rangTeam}ème/${teamAgents.length}`;
     }
 }
 
+// =============================================================
+// 🏆 PODIUM DU JOUR (NOUVEAU)
+// =============================================================
+function afficherPodiumDuJour() {
+    const contratsAujourdhui = tousLesContrats.filter(c => estAujourdhui(c.created_at));
+    
+    const scoresJour = tousLesAgents.map(agent => {
+        const contratsAgent = contratsAujourdhui.filter(c => c.agent_id === agent.id);
+        return { agent, score: contratsAgent.length * 10 };
+    });
+    
+    scoresJour.sort((a, b) => b.score - a.score);
+    const top3 = scoresJour.slice(0, 3);
+
+    // Afficher podium
+    top3.forEach((item, index) => {
+        const place = index + 1;
+        const elAvatar = document.getElementById(`podium-jour-${place}-avatar`);
+        const elNom = document.getElementById(`podium-jour-${place}-nom`);
+        const elScore = document.getElementById(`podium-jour-${place}-score`);
+        
+        if (elAvatar) elAvatar.textContent = item.agent.avatar_url ? '👤' : '👤';
+        if (elNom) elNom.textContent = `${item.agent.prenom} ${item.agent.nom.charAt(0)}.`;
+        if (elScore) elScore.textContent = `${item.score} pts`;
+    });
+
+    // Position de l'agent actuel
+    const maPositionJour = scoresJour.findIndex(s => s.agent.id === utilisateurActuel.id) + 1;
+    const monScoreJour = scoresJour.find(s => s.agent.id === utilisateurActuel.id)?.score || 0;
+    
+    const elPositionAgent = document.getElementById('position-agent-jour');
+    const elScoreAgent = document.getElementById('score-agent-jour');
+    if (elPositionAgent) elPositionAgent.textContent = `${maPositionJour}ème`;
+    if (elScoreAgent) elScoreAgent.textContent = `${monScoreJour} pts`;
+
+    // Message encouragement
+    const elEncouragement = document.getElementById('podium-encouragement');
+    if (elEncouragement) {
+        if (maPositionJour <= 3) {
+            elEncouragement.textContent = '🏆 Vous êtes sur le podium !';
+        } else if (maPositionJour === 4) {
+            const pointsManquants = scoresJour[2].score - monScoreJour + 1;
+            elEncouragement.textContent = `💪 Plus que ${pointsManquants} pts pour le podium !`;
+        } else {
+            elEncouragement.textContent = '🔥 Continuez, vous progressez !';
+        }
+    }
+}
+
+// =============================================================
+// ⛷️ SKI DE FOND (KPI PAR CELLULE)
+// =============================================================
 function calculerEtAfficherSkiFond() {
-    const monVolume = tousLesContrats.filter(c => 
+    const cellule = utilisateurActuel.cellule;
+    let kpiLabel = 'Volume de contrats';
+    let valeur = '0';
+
+    const mesContrats = tousLesContrats.filter(c => 
         c.agent_id === utilisateurActuel.id && 
         ['valide', 'en_attente'].includes(c.statut)
-    ).length;
+    );
 
-    const elVolume = document.querySelector('.ski-fond-volume') || document.getElementById('volume-total');
-    if (elVolume) elVolume.textContent = monVolume;
+    if (cellule === 'Mover') {
+        kpiLabel = 'Taux de Rétention (TR)';
+        const contratsRetention = mesContrats.filter(c => c.type_contrat === 'Telco' || c.type_contrat === 'MRH');
+        const taux = mesContrats.length > 0 ? Math.round((contratsRetention.length / mesContrats.length) * 100) : 0;
+        valeur = taux + '%';
+    } else if (cellule === 'Switcher') {
+        kpiLabel = 'Volume Homeserve';
+        const contratsHomeserve = mesContrats.filter(c => c.type_contrat === 'Mobile' || c.type_contrat === 'Compensation Carbone');
+        valeur = contratsHomeserve.length;
+    } else if (cellule === 'Coach') {
+        kpiLabel = 'Volume Premium';
+        const contratsPremium = mesContrats.filter(c => c.type_contrat === 'Premium');
+        valeur = contratsPremium.length;
+    } else {
+        kpiLabel = 'Volume de contrats';
+        valeur = mesContrats.length;
+    }
 
-    const objectif = 20; 
-    const pourcentage = Math.min((monVolume / objectif) * 100, 100);
-    
-    const elBarre = document.getElementById('ski-progress-bar');
-    if (elBarre) elBarre.style.width = `${pourcentage}%`;
-    
-    const elTexte = document.getElementById('ski-text');
-    if (elTexte) elTexte.textContent = `${monVolume} / ${objectif} ventes`;
+    const elLabel = document.querySelector('.kpi-label');
+    if (elLabel) elLabel.textContent = kpiLabel;
+
+    const elValeur = document.getElementById('ski-fond-valeur');
+    if (elValeur) elValeur.textContent = valeur;
 }
 
 function calculerEtAfficherPerformanceJour() {
-    // 1. Mise à jour de la DATE
+    // Date
     const optionsDate = { weekday: 'long', day: 'numeric', month: 'long' };
     const dateBrute = new Date().toLocaleDateString('fr-FR', optionsDate);
     const dateAffichee = dateBrute.charAt(0).toUpperCase() + dateBrute.slice(1);
@@ -281,7 +371,7 @@ function calculerEtAfficherPerformanceJour() {
     const elDate = document.getElementById('date-epreuve');
     if (elDate) elDate.textContent = dateAffichee;
 
-    // 2. Calcul du Score
+    // Score
     const contratsJour = tousLesContrats.filter(c => 
         c.agent_id === utilisateurActuel.id && 
         estAujourdhui(c.created_at) && 
@@ -295,33 +385,54 @@ function calculerEtAfficherPerformanceJour() {
         scoreJour += isVendredi ? 20 : 10;
     });
 
-    // 3. Affichage
-    const elScore = document.querySelector('.score-jour-valeur') || document.getElementById('score-jour');
+    const elScore = document.getElementById('score-jour');
     if (elScore) elScore.textContent = `${scoreJour} pts`;
+
+    // Classement du jour
+    const scoresJour = tousLesAgents.map(agent => {
+        const contratsAgent = tousLesContrats.filter(c => 
+            c.agent_id === agent.id && 
+            estAujourdhui(c.created_at)
+        );
+        return { agentId: agent.id, score: contratsAgent.length * 10 };
+    });
+    scoresJour.sort((a, b) => b.score - a.score);
+    const maPositionJour = scoresJour.findIndex(s => s.agentId === utilisateurActuel.id) + 1;
+
+    const elClassementJour = document.getElementById('classement-jour');
+    if (elClassementJour) elClassementJour.textContent = `${maPositionJour}ème`;
 }
 
 function calculerEtAfficherEquipe() {
     if (!utilisateurActuel.equipe_id) return;
+    
     const mesCoequipiers = tousLesAgents.filter(a => a.equipe_id === utilisateurActuel.equipe_id);
     const scoreEquipe = mesCoequipiers.reduce((total, agent) => total + (agent.scoreTotal || 0), 0);
 
-    const elScoreEquipe = document.querySelector('.score-equipe-valeur') || document.getElementById('score-equipe');
+    const elScoreEquipe = document.getElementById('score-equipe');
     if (elScoreEquipe) elScoreEquipe.textContent = `${scoreEquipe} pts`;
 
+    // Top 3 avec indication "Vous"
     const top3 = mesCoequipiers.sort((a, b) => b.scoreTotal - a.scoreTotal).slice(0, 3);
     const elTop3 = document.getElementById('top3-equipe');
     if (elTop3) {
-        elTop3.innerHTML = top3.map((a, index) => 
-            `<div>${['🥇','🥈','🥉'][index]} ${a.prenom} (${a.scoreTotal} pts)</div>`
-        ).join('');
+        elTop3.innerHTML = top3.map((agent, index) => {
+            const estMoi = agent.id === utilisateurActuel.id;
+            const classe = estMoi ? ' class="vous"' : '';
+            return `<li${classe}>
+                <span class="top3-nom">${estMoi ? 'Vous' : agent.prenom + ' ' + agent.nom}</span>
+                <span class="top3-score">${agent.scoreTotal} pts</span>
+            </li>`;
+        }).join('');
     }
 }
 
+// =============================================================
+// 📝 CONTRATS DU JOUR (VERSION COMPLÈTE)
+// =============================================================
 function chargerContratsJour() {
-    const container = document.getElementById('liste-contrats-jour') || document.querySelector('.carte-contrats-jour');
-    if (!container) return;
-
-    container.innerHTML = '<h3>📄 Vos Contrats du Jour</h3>';
+    const liste = document.getElementById('contrats-liste');
+    if (!liste) return;
 
     const mesContrats = tousLesContrats.filter(c => 
         c.agent_id === utilisateurActuel.id && 
@@ -329,31 +440,276 @@ function chargerContratsJour() {
     );
 
     if (mesContrats.length === 0) {
-        container.innerHTML += '<p style="color:#666; font-style:italic; padding:10px;">Aucun contrat aujourd\'hui.</p>';
+        liste.innerHTML = '<div class="contrat-vide">Aucun contrat enregistré pour aujourd\'hui</div>';
         return;
     }
 
-    mesContrats.forEach(c => {
+    liste.innerHTML = '';
+    mesContrats.forEach(contrat => {
         const div = document.createElement('div');
-        div.style.padding = "10px";
-        div.style.borderBottom = "1px solid #eee";
-        div.style.display = "flex";
-        div.style.justifyContent = "space-between";
+        div.className = 'contrat-item';
         
-        let icon = c.statut === 'valide' ? '✅' : (c.statut === 'rejete' ? '❌' : '⏳');
+        const heure = new Date(contrat.created_at).toLocaleTimeString('fr-FR', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+
+        const icone = {
+            'Telco': '📞',
+            'Mobile': '📱',
+            'MRH': '🏠',
+            'Premium': '⭐',
+            'Compensation Carbone': '🌱'
+        }[contrat.type_contrat] || '📄';
+
+        const statutBadge = contrat.statut === 'valide' ? 
+            '<span class="badge-valide">✅ Validé</span>' : 
+            contrat.statut === 'rejete' ?
+            '<span class="badge-rejete">❌ Rejeté</span>' :
+            '<span class="badge-attente">⏳ En attente</span>';
 
         div.innerHTML = `
-            <span>${icon} <strong>${c.type_contrat}</strong></span>
-            <span style="color:#888;">${new Date(c.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+            <span class="contrat-icone">${icone}</span>
+            <div class="contrat-info">
+                <span class="contrat-type">${contrat.type_contrat}</span>
+                <span class="contrat-heure">${heure}</span>
+                ${contrat.api_app ? '<span class="badge-apiapp">📱 ApiApp</span>' : ''}
+                ${statutBadge}
+            </div>
+            <div class="contrat-actions">
+                <a href="${contrat.lien_piste}" class="contrat-lien" target="_blank" title="Voir la piste">🔗</a>
+                ${contrat.statut === 'en_attente' ? `<button class="btn-supprimer-contrat" onclick="supprimerContrat('${contrat.id}')" title="Supprimer">🗑️</button>` : ''}
+            </div>
         `;
-        container.appendChild(div);
+        liste.appendChild(div);
     });
 }
 
-function chargerChallengesAffiches() {
+// =============================================================
+// 📅 CALENDRIER 12 JOURS (NOUVEAU)
+// =============================================================
+function afficherCalendrierComplet() {
+    const grid = document.getElementById('calendrier-grid');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+    
+    const debut = new Date(DATE_DEBUT);
+    const fin = new Date(DATE_FIN);
+    const aujourdhui = new Date().toISOString().split('T')[0];
+
+    for (let d = new Date(debut); d <= fin; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().split('T')[0];
+        const estFutur = dateStr > aujourdhui;
+        const estAujourdhui = dateStr === aujourdhui;
+
+        // Compter mes contrats ce jour
+        const contratsJour = tousLesContrats.filter(c => 
+            c.agent_id === utilisateurActuel.id && 
+            c.created_at.startsWith(dateStr) &&
+            c.statut === 'valide'
+        );
+        const score = contratsJour.length * 10;
+
+        // Vérifier si médaille (top 3 du jour dans ma cellule)
+        let medaille = null;
+        if (!estFutur && contratsJour.length > 0) {
+            const agentsCellule = tousLesAgents.filter(a => a.cellule === utilisateurActuel.cellule);
+            const classementJour = agentsCellule.map(agent => {
+                const vol = tousLesContrats.filter(c => 
+                    c.agent_id === agent.id && 
+                    c.created_at.startsWith(dateStr) &&
+                    c.statut === 'valide'
+                ).length;
+                return { agentId: agent.id, vol };
+            }).sort((a, b) => b.vol - a.vol);
+
+            const maPositionJour = classementJour.findIndex(c => c.agentId === utilisateurActuel.id);
+            if (maPositionJour === 0) medaille = '🥇';
+            else if (maPositionJour === 1) medaille = '🥈';
+            else if (maPositionJour === 2) medaille = '🥉';
+        }
+
+        const div = document.createElement('div');
+        div.className = 'jour-carte' + 
+            (estFutur ? ' jour-futur' : '') + 
+            (estAujourdhui ? ' jour-actuel' : '');
+        
+        div.innerHTML = `
+            <div class="jour-date">${d.getDate()} Fév</div>
+            <div class="jour-score">${estFutur ? '—' : score + ' pts'}</div>
+            ${medaille ? '<div class="jour-medaille">' + medaille + '</div>' : ''}
+        `;
+        grid.appendChild(div);
+    }
+}
+
+// =============================================================
+// 🏅 BADGES (NOUVEAU)
+// =============================================================
+function afficherBadgesReels() {
+    const grid = document.getElementById('badges-grid');
+    if (!grid) return;
+
+    const mesContrats = tousLesContrats.filter(c => 
+        c.agent_id === utilisateurActuel.id && 
+        c.statut === 'valide'
+    );
+    const nbContrats = mesContrats.length;
+
+    // Calculer classement
+    const agentsAvecScores = tousLesAgents.map(agent => {
+        const contratsAgent = tousLesContrats.filter(c => 
+            c.agent_id === agent.id && 
+            c.statut === 'valide'
+        );
+        return { agentId: agent.id, score: contratsAgent.length * 10 };
+    });
+    agentsAvecScores.sort((a, b) => b.score - a.score);
+    const maPosition = agentsAvecScores.findIndex(s => s.agentId === utilisateurActuel.id) + 1;
+
+    const badges = [
+        { nom: 'Premier Contrat', icone: '🎯', deblocque: nbContrats >= 1 },
+        { nom: 'Série de 5', icone: '🔥', deblocque: nbContrats >= 5 },
+        { nom: 'Top 3 Global', icone: '🏅', deblocque: maPosition <= 3 },
+        { nom: '10 Contrats', icone: '📚', deblocque: nbContrats >= 10 },
+        { nom: '20 Contrats', icone: '🎖️', deblocque: nbContrats >= 20 },
+        { nom: '50 Contrats', icone: '👑', deblocque: nbContrats >= 50 }
+    ];
+
+    grid.innerHTML = '';
+    badges.forEach(badge => {
+        const div = document.createElement('div');
+        div.className = 'badge-carte' + (badge.deblocque ? ' badge-deblocque' : ' badge-verrouille');
+        div.innerHTML = `
+            <div class="badge-icone">${badge.deblocque ? badge.icone : '🔒'}</div>
+            <div class="badge-nom">${badge.nom}</div>
+        `;
+        grid.appendChild(div);
+    });
+}
+
+// =============================================================
+// ⚡ CHALLENGES FLASH (VERSION COMPLÈTE)
+// =============================================================
+async function chargerChallengesAffiches() {
     const container = document.getElementById('challenges-container');
-    if(!container) return;
-    container.innerHTML = '<div style="padding:10px;text-align:center;color:#666">Challenges chargés...</div>';
+    if (!container) return;
+
+    const maintenant = new Date().toISOString();
+    const { data: challenges } = await sb.from('challenges_flash')
+        .select('*')
+        .eq('statut', 'actif')
+        .lte('date_debut', maintenant)
+        .gte('date_fin', maintenant);
+
+    if (!challenges || challenges.length === 0) {
+        container.innerHTML = '<div class="aucun-challenge">Aucun challenge actif pour le moment 🎯</div>';
+        return;
+    }
+
+    // Filtrer selon cible
+    const challengesPourMoi = challenges.filter(ch => {
+        if (ch.cible === 'tous') return true;
+        if (ch.cible === 'equipe' && ch.equipe_id === utilisateurActuel.equipe_id) return true;
+        if (ch.cible === 'cellule' && ch.cellule_cible === utilisateurActuel.cellule) return true;
+        return false;
+    });
+
+    container.innerHTML = '';
+    
+    for (const challenge of challengesPourMoi) {
+        // Calculer ma progression
+        const mesContrats = tousLesContrats.filter(c => 
+            c.agent_id === utilisateurActuel.id &&
+            c.statut === 'valide' &&
+            c.created_at >= challenge.date_debut &&
+            c.created_at <= challenge.date_fin
+        );
+        
+        const progression = mesContrats.length;
+        const objectif = challenge.objectif || 1;
+        const pourcentage = Math.min((progression / objectif) * 100, 100);
+        const estComplete = progression >= objectif;
+        
+        // Calculer temps restant
+        const fin = new Date(challenge.date_fin);
+        const diffMs = fin - new Date();
+        const diffMin = Math.floor(diffMs / 60000);
+        let tempsRestant = '';
+        
+        if (diffMin < 0) {
+            tempsRestant = 'Terminé';
+        } else if (diffMin < 60) {
+            tempsRestant = diffMin + ' min';
+        } else {
+            const heures = Math.floor(diffMin / 60);
+            tempsRestant = heures + 'h ' + (diffMin % 60) + 'min';
+        }
+        
+        const div = document.createElement('div');
+        div.className = 'challenge-card' + (estComplete ? ' challenge-termine' : '');
+        div.innerHTML = `
+            <div class="challenge-header">
+                <h3 class="challenge-titre">${challenge.titre}</h3>
+                <div class="challenge-timer">${tempsRestant}</div>
+            </div>
+            
+            <p class="challenge-description">${challenge.description}</p>
+            
+            <div class="challenge-progression">
+                <div class="challenge-progression-label">
+                    <span>Progression</span>
+                    <span>${progression} / ${objectif}</span>
+                </div>
+                <div class="challenge-barre">
+                    <div class="challenge-barre-remplie" style="width: ${pourcentage}%"></div>
+                </div>
+            </div>
+            
+            <div class="challenge-info-footer">
+                <div><strong>${challenge.type_challenge}</strong></div>
+                <div class="challenge-points">
+                    ${estComplete ? '✅ ' : ''}+${challenge.points_attribues} pts
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(div);
+    }
+}
+
+// =============================================================
+// 🗑️ SUPPRESSION CONTRAT (NOUVEAU)
+// =============================================================
+async function supprimerContrat(contratId) {
+    if (!confirm('⚠️ Supprimer ce contrat ?\n\nCette action est irréversible.')) {
+        return;
+    }
+
+    try {
+        const { error } = await sb.from('contrats').delete().eq('id', contratId);
+        if (error) throw error;
+
+        alert('✅ Contrat supprimé avec succès');
+
+        // Recharger
+        await chargerTousLesContrats();
+        calculerScoresComplets();
+        
+        afficherScoreEtRang();
+        afficherPodiumDuJour();
+        calculerEtAfficherSkiFond();
+        calculerEtAfficherPerformanceJour();
+        calculerEtAfficherEquipe();
+        chargerContratsJour();
+        afficherCalendrierComplet();
+        afficherBadgesReels();
+
+    } catch (error) {
+        console.error('❌ Erreur suppression:', error);
+        alert('❌ Erreur lors de la suppression');
+    }
 }
 
 // =============================================================
@@ -383,16 +739,18 @@ async function enregistrerContrat(e) {
 
         document.getElementById('formulaire-contrat').reset();
         
-        // --- MISE A JOUR IMMEDIATE ---
-        await chargerTousLesContrats();      // Recharger
-        calculerScoresComplets();            // Recalculer
+        // Recharger tout
+        await chargerTousLesContrats();
+        calculerScoresComplets();
         
-        // Rafraîchir tout l'affichage
-        afficherScoreEtRang();               
-        calculerEtAfficherSkiFond();         
-        calculerEtAfficherPerformanceJour(); 
-        calculerEtAfficherEquipe();          
-        chargerContratsJour();               
+        afficherScoreEtRang();
+        afficherPodiumDuJour();
+        calculerEtAfficherSkiFond();
+        calculerEtAfficherPerformanceJour();
+        calculerEtAfficherEquipe();
+        chargerContratsJour();
+        afficherCalendrierComplet();
+        afficherBadgesReels();
         
         await detecterEtSoumettreChallenges();
         
@@ -407,3 +765,5 @@ async function enregistrerContrat(e) {
         }
     }
 }
+
+console.log('✅ Dashboard COMPLET chargé avec succès');

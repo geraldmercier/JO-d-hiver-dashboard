@@ -59,6 +59,39 @@
                             <div class="position-valeur" id="rang-equipe">-</div>
                         </div>
                     </div>
+                    <div id="points-manquants" class="points-manquants">Calcul en cours...</div>
+                </section>
+
+                <section class="carte carte-podium">
+                    <h3 class="carte-titre">🏆 Podium du Jour</h3>
+                    <div class="podium-container">
+                        <div class="podium-step step-2">
+                            <div class="podium-avatar" id="podium-jour-2-avatar">👤</div>
+                            <div class="podium-barre">2</div>
+                            <div class="podium-info">
+                                <span id="podium-jour-2-nom">-</span>
+                                <small id="podium-jour-2-score">0 pts</small>
+                            </div>
+                        </div>
+                        <div class="podium-step step-1">
+                            <div class="podium-icon">🥇</div>
+                            <div class="podium-avatar" id="podium-jour-1-avatar">👤</div>
+                            <div class="podium-barre">1</div>
+                            <div class="podium-info">
+                                <span id="podium-jour-1-nom">-</span>
+                                <small id="podium-jour-1-score">0 pts</small>
+                            </div>
+                        </div>
+                        <div class="podium-step step-3">
+                            <div class="podium-avatar" id="podium-jour-3-avatar">👤</div>
+                            <div class="podium-barre">3</div>
+                            <div class="podium-info">
+                                <span id="podium-jour-3-nom">-</span>
+                                <small id="podium-jour-3-score">0 pts</small>
+                            </div>
+                        </div>
+                    </div>
+                    <p id="podium-encouragement" class="podium-message">Accrochez-vous !</p>
                 </section>
 
                 <section class="carte carte-ski-fond">
@@ -69,6 +102,10 @@
                             <div class="kpi-valeur" id="ski-fond-valeur">0</div>
                         </div>
                     </div>
+                    <div class="progress-container" style="margin-top:10px; background:#eee; height:10px; border-radius:5px; overflow:hidden;">
+                        <div id="ski-progress-bar" style="width:0%; height:100%; background:#1976D2; transition:width 1s;"></div>
+                    </div>
+                    <div id="ski-text" style="font-size:12px; color:#666; margin-top:5px; text-align:right;"></div>
                 </section>
 
                 <section class="carte carte-performance-jour">
@@ -81,6 +118,10 @@
                             <div class="perf-label">Score Jour</div>
                             <div class="perf-valeur score-actuel" id="score-jour">0 pts</div>
                         </div>
+                        <div class="perf-item">
+                            <div class="perf-label">Classement</div>
+                            <div class="perf-valeur" id="classement-jour">-</div>
+                        </div>
                     </div>
                 </section>
 
@@ -91,18 +132,8 @@
                     </div>
                     <div class="equipe-top3">
                         <h4>🏆 Top 3 Équipe</h4>
-                        <ol class="top3-liste" id="top3-equipe">
-                            </ol>
-                    </div>
-                </section>
-
-                <section class="carte">
-                    <div class="section-header">
-                        <h3 class="carte-titre">⚡ Challenges Flash</h3>
-                        <span class="badge-info" id="badge-challenges-actifs" style="display:none">0</span>
-                    </div>
-                    <div id="challenges-container" class="challenges-container">
-                        <div class="chargement">Recherche de challenges...</div>
+                        <ul class="top3-liste" id="top3-equipe">
+                            </ul>
                     </div>
                 </section>
 
@@ -141,10 +172,32 @@
                     </form>
                 </section>
 
+                <section class="carte carte-badges">
+                    <h3 class="carte-titre">🏅 Vos Trophées</h3>
+                    <div id="badges-grid" class="badges-grid">
+                        </div>
+                </section>
+
                 <section class="carte carte-contrats-jour">
                     <h3 class="carte-titre">📝 Vos Contrats du Jour</h3>
                     <div class="contrats-liste" id="contrats-liste">
                         <div class="chargement">Chargement...</div>
+                    </div>
+                </section>
+
+                <section class="carte carte-calendrier">
+                    <h3 class="carte-titre">📅 Calendrier Olympique</h3>
+                    <div id="calendrier-grid" class="calendrier-grid">
+                        </div>
+                </section>
+
+                <section class="carte">
+                    <div class="section-header">
+                        <h3 class="carte-titre">⚡ Challenges Flash</h3>
+                        <span class="badge-info" id="badge-challenges-actifs" style="display:none">0</span>
+                    </div>
+                    <div id="challenges-container" class="challenges-container">
+                        <div class="chargement">Recherche de challenges...</div>
                     </div>
                 </section>
 
@@ -153,6 +206,7 @@
     </main>
 
     <style>
+        /* Challenges */
         .challenges-container { display: flex; flex-direction: column; gap: 15px; margin-top: 15px; }
         .challenge-card { background: linear-gradient(135deg, #FFB300 0%, #FF6F00 100%); color: white; padding: 15px; border-radius: 10px; position: relative; }
         .challenge-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
@@ -162,6 +216,41 @@
         .challenge-barre { background: rgba(0,0,0,0.2); height: 8px; border-radius: 4px; overflow: hidden; }
         .challenge-barre-remplie { background: white; height: 100%; }
         .aucun-challenge { text-align: center; color: #aaa; font-style: italic; padding: 20px; }
+
+        /* Podium */
+        .podium-container { display: flex; align-items: flex-end; justify-content: center; height: 160px; margin-bottom: 15px; gap: 8px; }
+        .podium-step { display: flex; flex-direction: column; align-items: center; text-align: center; width: 33%; }
+        .podium-barre { width: 100%; border-radius: 5px 5px 0 0; color: white; font-weight: bold; display: flex; align-items: center; justify-content: center; margin-top: 5px; }
+        .step-1 .podium-barre { height: 80px; background: #FFD700; font-size: 1.2em; box-shadow: 0 4px 10px rgba(255, 215, 0, 0.4); }
+        .step-2 .podium-barre { height: 60px; background: #C0C0C0; }
+        .step-3 .podium-barre { height: 40px; background: #CD7F32; }
+        .podium-avatar { font-size: 20px; background: #f0f2f5; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .podium-info { margin-top: 5px; font-size: 0.8em; line-height: 1.2; display: flex; flex-direction: column; }
+        .podium-info span { font-weight: bold; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 80px; }
+        .podium-message { text-align: center; font-style: italic; color: #666; font-size: 0.9em; margin-top: 10px; }
+
+        /* Calendrier */
+        .calendrier-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+        .jour-carte { background: #f8f9fa; padding: 8px 4px; border-radius: 6px; text-align: center; font-size: 0.8em; border: 1px solid #eee; position: relative; }
+        .jour-actuel { border: 2px solid #1976D2; background: #e3f2fd; font-weight: bold; }
+        .jour-futur { opacity: 0.5; }
+        .jour-score { font-weight: bold; color: #1976D2; margin-top: 4px; }
+        .jour-medaille { position: absolute; top: -5px; right: -5px; font-size: 14px; }
+
+        /* Badges */
+        .badges-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 10px; margin-top: 10px; }
+        .badge-carte { background: #f5f5f5; border-radius: 8px; padding: 10px 5px; text-align: center; transition: transform 0.2s; }
+        .badge-carte:hover { transform: scale(1.05); }
+        .badge-deblocque { background: #fff8e1; border: 1px solid #ffecb3; }
+        .badge-verrouille { opacity: 0.6; filter: grayscale(1); }
+        .badge-icone { font-size: 24px; margin-bottom: 5px; }
+        .badge-nom { font-size: 0.75em; color: #555; line-height: 1.2; }
+        
+        /* Petits ajustements */
+        .points-manquants { text-align: center; font-size: 0.85em; color: #666; margin-top: 8px; font-style: italic; }
+        .top3-liste { padding-left: 0; list-style: none; }
+        .top3-liste li { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 0.9em; }
+        .top3-liste li.vous { font-weight: bold; color: #1976D2; background: #e3f2fd; padding-left: 5px; padding-right: 5px; border-radius: 4px; }
     </style>
 
     <script src="config.js"></script>
