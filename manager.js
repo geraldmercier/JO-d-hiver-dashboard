@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     await chargerContratsAttente();
     await chargerChallengesAttente();
     await chargerAgentsEquipe();
+    await chargerGraphiquesManager();
 
     // Boutons
     const btnPlateau = document.getElementById('btn-vue-plateau');
@@ -705,3 +706,90 @@ window.sauvegarderFilRouge = async function(e) {
         btn.disabled = false;
     }
 };
+// =============================================================
+// 📊 AFFICHAGE GRAPHIQUES MANAGER
+// =============================================================
+
+async function chargerGraphiquesManager() {
+    // Vérification de sécurité
+    if (!equipeActuelle || !equipeActuelle.id) return;
+
+    // 1. On récupère TOUTES les données de l'équipe
+    const { data: kpis } = await sb.from('kpi_equipe_journalier')
+        .select('*')
+        .eq('equipe_id', equipeActuelle.id)
+        .order('date_kpi', { ascending: true });
+
+    if (!kpis) return;
+
+    // 2. Liste des cellules à traiter
+    const cellules = ['Mover', 'Switcher', 'Coach', 'Pépinière'];
+
+    cellules.forEach(cell => {
+        // Filtrer les données pour cette cellule spécifique
+        const dataCell = kpis.filter(k => k.cellule === cell);
+        
+        // Préparer les axes
+        const labels = dataCell.map(k => {
+            const d = new Date(k.date_kpi);
+            return `${d.getDate()}/${d.getMonth()+1}`;
+        });
+        const valJour = dataCell.map(k => k.valeur_jour);
+        const valCumul = dataCell.map(k => k.valeur_cumul);
+
+        // Unité (%) ou (Vol)
+        const isPercent = ['Mover', 'Switcher'].includes(cell);
+        const labelUnit = isPercent ? '%' : ' Cts';
+        const color = isPercent ? '#9C27B0' : '#FF9800'; // Violet pour % / Orange pour Volume
+
+        // Dessiner (ou mettre à jour) le graphique
+        const ctx = document.getElementById(`chart-manager-${cell}`);
+        if (ctx) {
+            // Si un graph existe déjà, on le détruit pour éviter les bugs de surimpression
+            const existingChart = Chart.getChart(ctx);
+            if (existingChart) existingChart.destroy();
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Jour',
+                            data: valJour,
+                            borderColor: '#ccc',
+                            backgroundColor: '#eee',
+                            type: 'bar',
+                            order: 2
+                        },
+                        {
+                            label: 'Cumul/Global',
+                            data: valCumul,
+                            borderColor: color,
+                            backgroundColor: color + '33', // Transparence
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3,
+                            type: 'line',
+                            order: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }, // On cache la légende pour gagner de la place
+                    scales: { 
+                        y: { 
+                            beginAtZero: true,
+                            grid: { display: false } // Grille épurée
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+    });
+}

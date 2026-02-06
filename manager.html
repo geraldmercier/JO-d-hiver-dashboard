@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="manager.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="manager-body">
 
@@ -114,6 +115,33 @@
                 
                 <div class="colonne-validations">
 
+               <div style="margin-top: 40px;">
+    <h2 style="color: #9C27B0; margin-bottom: 20px;">📈 Suivi du Fil Rouge (Équipe)</h2>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+        
+        <div class="card" style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+            <h4 style="margin-top:0;">📞 Movers (TR %)</h4>
+            <div style="height: 200px;"><canvas id="chart-manager-Mover"></canvas></div>
+        </div>
+
+        <div class="card" style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+            <h4 style="margin-top:0;">🔄 Switchers (Homeserve %)</h4>
+            <div style="height: 200px;"><canvas id="chart-manager-Switcher"></canvas></div>
+        </div>
+
+        <div class="card" style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+            <h4 style="margin-top:0;">🏆 Coachs (Vol. Premium)</h4>
+            <div style="height: 200px;"><canvas id="chart-manager-Coach"></canvas></div>
+        </div>
+
+        <div class="card" style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+            <h4 style="margin-top:0;">🌱 Pépinière (Vol. Total)</h4>
+            <div style="height: 200px;"><canvas id="chart-manager-Pépinière"></canvas></div>
+        </div>
+
+    </div>
+</div>
                     <section class="carte carte-contrats-attente">
                         <div class="section-header">
                             <h3 class="carte-titre">⏳ Contrats en Attente</h3>
