@@ -371,25 +371,41 @@ async function chargerChallengesAttente() {
             const div = document.createElement('div');
             div.className = 'challenge-attente-item';
             
-            div.innerHTML = `
-                <div class="challenge-attente-info">
-                    <div class="challenge-attente-agent">
-                        <strong>${reussite.users.prenom} ${reussite.users.nom}</strong>
-                        <span class="cellule-badge">${reussite.users.cellule}</span>
-                    </div>
-                    <div class="challenge-attente-details">
-                        ⚡ ${reussite.challenges_flash.titre}
-                        <span class="badge-points">+${reussite.challenges_flash.points_attribues} pts</span>
-                    </div>
-                    <div class="challenge-attente-description">
-                        ${reussite.challenges_flash.description}
-                    </div>
+           // ... à l'intérieur de mesReussites.forEach ...
+
+        // 👇 REMPLACEZ LE BLOC div.innerHTML PAR CECI 👇
+        
+        const isFlash = reussite.challenges_flash.type_challenge === 'flash';
+        
+        // Bouton différent selon si c'est un Flash ou un défi normal
+        let btnAction = '';
+        if (isFlash) {
+            // Le bouton spécial qui appelle la nouvelle fonction
+            btnAction = `<button class="btn-valider" style="background: gold; color: black; font-weight:bold; border: 1px solid #e6b800;" onclick="validerVainqueurFlash('${reussite.id}', '${reussite.challenges_flash.id}', '${reussite.users.prenom} ${reussite.users.nom}')">🏆 Valider & Gagner</button>`;
+        } else {
+            btnAction = `<button class="btn-valider" onclick="validerChallenge('${reussite.id}')">✅ Valider</button>`;
+        }
+
+        div.innerHTML = `
+            <div class="challenge-attente-info">
+                <div class="challenge-attente-agent">
+                    <strong>${reussite.users.prenom} ${reussite.users.nom}</strong>
+                    <span class="cellule-badge">${reussite.users.cellule}</span>
                 </div>
-                <div class="challenge-attente-actions">
-                    <button class="btn-valider" onclick="validerChallenge('${reussite.id}')">✅ Valider</button>
-                    <button class="btn-rejeter" onclick="rejeterChallenge('${reussite.id}')">❌ Rejeter</button>
+                <div class="challenge-attente-details">
+                    ⚡ ${reussite.challenges_flash.titre}
+                    <span class="badge-points">+${reussite.challenges_flash.points_attribues} pts</span>
                 </div>
-            `;
+                <div class="challenge-attente-description">
+                    ${reussite.challenges_flash.description}
+                </div>
+            </div>
+            <div class="challenge-attente-actions">
+                ${btnAction}
+                <button class="btn-rejeter" onclick="rejeterChallenge('${reussite.id}')">❌ Rejeter</button>
+            </div>
+        `;
+        liste.appendChild(div);
             liste.appendChild(div);
         });
 
@@ -435,6 +451,42 @@ window.rejeterChallenge = async function(reussiteId) {
     } catch (error) {
         console.error('❌ Erreur rejet challenge:', error);
         afficherNotification('❌ Erreur lors du rejet', 'error');
+    }
+};
+
+window.validerVainqueurFlash = async function(reussiteId, challengeId, nomGagnant) {
+    if (!confirm(`🏆 Confirmer que ${nomGagnant} remporte ce challenge ?\n\nCela attribuera les points ET clôturera le challenge pour tout le monde.`)) {
+        return;
+    }
+
+    try {
+        // 1. Valider la réussite de l'agent (donner les points)
+        const { error: errorReussite } = await sb.from('challenge_reussites')
+            .update({ statut: 'valide' })
+            .eq('id', reussiteId);
+
+        if (errorReussite) throw errorReussite;
+
+        // 2. Clôturer le challenge Flash (statut 'termine' + nom du gagnant)
+        const { error: errorFlash } = await sb.from('challenges_flash')
+            .update({ 
+                statut: 'termine',
+                gagnant_nom: nomGagnant,
+                date_fin: new Date().toISOString() // On met à jour la date de fin réelle
+            })
+            .eq('id', challengeId);
+
+        if (errorFlash) throw errorFlash;
+
+        afficherNotification(`🏆 Challenge remporté par ${nomGagnant} !`, 'success');
+        
+        // Rafraîchir
+        await chargerChallengesAttente();
+        await calculerEtAfficherPerformanceEquipe();
+
+    } catch (error) {
+        console.error('❌ Erreur validation flash:', error);
+        afficherNotification('Erreur système', 'error');
     }
 };
 

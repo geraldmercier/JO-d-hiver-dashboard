@@ -48,7 +48,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         chargerTousLesAgents(),
         chargerTousLesContrats(),
         chargerToutesLesReussites(),
-        chargerFilRouge() // 👈 AJOUTEZ CETTE LIGNE ICI
+        chargerFilRouge(), // 👈 AJOUTEZ CETTE LIGNE ICI
+        verifierVainqueurFlash()
     ]);
 
     // 4. Calculs initiaux
@@ -852,5 +853,38 @@ async function chargerFilRouge() {
                 scales: { y: { beginAtZero: true, title: { display: true, text: labelUnit } } }
             }
         });
+    }
+}
+// À AJOUTER TOUT EN BAS DE DASHBOARD.JS
+
+async function verifierVainqueurFlash() {
+    // On cherche le dernier challenge terminé récemment (ex: dans les dernières 24h)
+    const hier = new Date();
+    hier.setDate(hier.getDate() - 1);
+
+    const { data: challenges } = await sb.from('challenges_flash')
+        .select('*')
+        .eq('statut', 'termine')
+        .gt('date_fin', hier.toISOString()) // Terminé il y a moins de 24h
+        .order('date_fin', { ascending: false })
+        .limit(1);
+
+    if (challenges && challenges.length > 0) {
+        const challenge = challenges[0];
+        
+        // On vérifie si on a déjà affiché cette info (via localStorage pour ne pas harceler l'agent)
+        const cleMemoire = `vu_vainqueur_${challenge.id}`;
+        if (!localStorage.getItem(cleMemoire)) {
+            
+            // Affichage
+            const texte = `Le défi <strong>"${challenge.titre}"</strong> a été remporté par :<br><br><span style="font-size:1.5em; font-weight:bold; color:#d32f2f;">${challenge.gagnant_nom || 'Un agent'}</span>`;
+            document.getElementById('popup-vainqueur-texte').innerHTML = texte;
+            document.getElementById('popup-vainqueur').style.display = 'flex';
+
+            // On marque comme vu
+            localStorage.setItem(cleMemoire, 'true');
+            
+            // Lancer des confettis si vous avez une lib, sinon c'est déjà bien !
+        }
     }
 }

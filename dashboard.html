@@ -247,6 +247,16 @@
         .top3-liste li.vous { font-weight: bold; color: #1976D2; background: #e3f2fd; padding-left: 5px; padding-right: 5px; border-radius: 4px; }
     </style>
 
+<div id="popup-vainqueur" class="modal" style="display:none; align-items:center; justify-content:center;">
+    <div class="modal-content" style="text-align:center; border: 4px solid #FFD700; background: linear-gradient(135deg, #fff 0%, #fff9e6 100%);">
+        <div style="font-size: 50px;">🏆</div>
+        <h2 style="color: #FF8F00; margin: 10px 0;">Challenge Flash Terminé !</h2>
+        <p style="font-size: 1.2em; color: #333; margin: 20px 0;" id="popup-vainqueur-texte">
+            ...
+        </p>
+        <button onclick="document.getElementById('popup-vainqueur').style.display='none'" class="btn-action" style="background:#333;">Félicitations !</button>
+    </div>
+</div>
     <script src="config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="dashboard.js"></script>
