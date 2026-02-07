@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎿 JO d'Hiver — Connexion</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="login-page">
+        <div class="neige-particule"></div>
+        <div class="neige-particule"></div>
+        <div class="neige-particule"></div>
+        <div class="neige-particule"></div>
+        <div class="neige-particule"></div>
+
+        <div class="login-carte">
+            <div class="login-header">
+                <img src="assets/olympic.png" alt="Logo" class="logo-icon-img" style="height: 80px; margin-bottom: 20px;">
+                <h1 class="login-titre">JO d'Hiver 2026</h1>
+                <p class="login-sous-titre">Challenge Commercial — Call Center</p>
+            </div>
+
+            <div class="login-separateur"></div>
+
+            <!-- ÉTAPE 1 : Entrer son email -->
+            <form id="form-etape1" style="display: block;">
+                <div class="groupe-champ">
+                    <label for="email">📧 Email personnel</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        placeholder="prénom.nom@papernest.com"
+                        required
+                        autocomplete="email"
+                    >
+                </div>
+
+                <button type="submit" class="btn-connexion" id="btn-etape1">
+                    Continuer →
+                </button>
+
+                <div class="message-erreur" id="erreur-etape1"></div>
+            </form>
+
+            <!-- ÉTAPE 2a : PREMIÈRE CONNEXION - Créer mot de passe -->
+            <form id="form-premiere-connexion" style="display: none;">
+                <div style="background: #E3F2FD; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                    <p style="margin: 0; color: var(--bleu-sombre); font-size: 14px;">
+                        ✨ <strong>Première connexion</strong><br>
+                        Créez votre mot de passe personnel
+                    </p>
+                </div>
+
+                <div class="groupe-champ">
+                    <label for="nouveau-mdp">🔒 Créer un mot de passe</label>
+                    <input 
+                        type="password" 
+                        id="nouveau-mdp" 
+                        placeholder="Minimum 8 caractères"
+                        required
+                        minlength="8"
+                    >
+                </div>
+
+                <div class="groupe-champ">
+                    <label for="confirm-mdp">🔒 Confirmer le mot de passe</label>
+                    <input 
+                        type="password" 
+                        id="confirm-mdp" 
+                        placeholder="Retapez votre mot de passe"
+                        required
+                        minlength="8"
+                    >
+                </div>
+
+                <button type="submit" class="btn-connexion" id="btn-creer">
+                    ✅ Créer mon compte
+                </button>
+
+                <button type="button" class="btn-retour" id="btn-retour1">
+                    ← Retour
+                </button>
+
+                <div class="message-erreur" id="erreur-creation"></div>
+            </form>
+
+            <!-- ÉTAPE 2b : CONNEXION NORMALE - Entrer mot de passe -->
+            <form id="form-connexion-normale" style="display: none;">
+                <div class="groupe-champ">
+                    <label for="mdp-connexion">🔒 Mot de passe</label>
+                    <input 
+                        type="password" 
+                        id="mdp-connexion" 
+                        placeholder="Votre mot de passe"
+                        required
+                        autocomplete="current-password"
+                    >
+                </div>
+
+                <button type="submit" class="btn-connexion" id="btn-connexion">
+                    Se Connecter →
+                </button>
+
+                <button type="button" class="btn-retour" id="btn-retour2">
+                    ← Retour
+                </button>
+
+                <div class="message-erreur" id="erreur-connexion"></div>
+            </form>
+
+            <div class="login-info">
+                <p id="info-text">Connectez-vous avec vos identifiants Papernest</p>
+            </div>
+
+            <div class="login-equipes">
+                🇳🇴 🇫🇷 🇨🇦 🇦🇹 🇺🇸
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="login-v3.js"></script>
+
+    <style>
+        .btn-retour {
+            width: 100%;
+            padding: 12px;
+            margin-top: 12px;
+            background: #E0E0E0;
+            color: #757575;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-retour:hover {
+            background: #BDBDBD;
+        }
+    </style>
+</body>
+</html>
