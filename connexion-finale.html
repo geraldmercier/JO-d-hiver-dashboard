@@ -16,14 +16,10 @@
             position: relative;
             overflow: hidden;
         }
+        /* Animation Neige */
         .neige-particule {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background: white;
-            border-radius: 50%;
-            opacity: 0.7;
-            animation: neige 10s linear infinite;
+            position: absolute; width: 10px; height: 10px; background: white;
+            border-radius: 50%; opacity: 0.7; animation: neige 10s linear infinite;
         }
         .neige-particule:nth-child(1) { left: 10%; animation-delay: 0s; }
         .neige-particule:nth-child(2) { left: 30%; animation-delay: 2s; }
@@ -33,118 +29,39 @@
         @keyframes neige { 0% { top: -10%; } 100% { top: 110%; } }
         
         .login-carte {
-            background: white;
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-            width: 90%;
-            max-width: 420px;
-            z-index: 10;
+            background: white; padding: 40px; border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2); width: 90%; max-width: 420px; z-index: 10;
         }
-        .login-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .login-icone {
-            font-size: 48px;
-            display: block;
-            margin-bottom: 16px;
-        }
-        .login-titre {
-            color: #1565C0;
-            font-size: 28px;
-            margin-bottom: 8px;
-        }
-        .login-sous-titre {
-            color: #757575;
-            font-size: 14px;
-        }
-        .login-separateur {
-            height: 2px;
-            background: linear-gradient(to right, transparent, #E0E0E0, transparent);
-            margin-bottom: 30px;
-        }
-        .groupe-champ {
-            margin-bottom: 20px;
-        }
-        .groupe-champ label {
-            display: block;
-            color: #424242;
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-        .groupe-champ input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #E0E0E0;
-            border-radius: 8px;
-            font-size: 15px;
-            transition: border-color 0.2s;
-        }
-        .groupe-champ input:focus {
-            outline: none;
-            border-color: #1976D2;
-        }
+        .login-header { text-align: center; margin-bottom: 30px; }
+        .login-titre { color: #1565C0; font-size: 28px; margin-bottom: 8px; }
+        .login-sous-titre { color: #757575; font-size: 14px; }
+        .login-separateur { height: 2px; background: linear-gradient(to right, transparent, #E0E0E0, transparent); margin-bottom: 30px; }
+        
+        .groupe-champ { margin-bottom: 20px; }
+        .groupe-champ label { display: block; color: #424242; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+        .groupe-champ input { width: 100%; padding: 12px 16px; border: 2px solid #E0E0E0; border-radius: 8px; font-size: 15px; transition: border-color 0.2s; }
+        .groupe-champ input:focus { outline: none; border-color: #1976D2; }
+        
         .btn-connexion {
-            width: 100%;
-            padding: 14px;
-            background: #1976D2;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
+            width: 100%; padding: 14px; background: #1976D2; color: white; border: none;
+            border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.2s;
         }
-        .btn-connexion:hover {
-            background: #1565C0;
-        }
-        .btn-connexion:disabled {
-            background: #BDBDBD;
-            cursor: not-allowed;
-        }
+        .btn-connexion:hover { background: #1565C0; }
+        .btn-connexion:disabled { background: #BDBDBD; cursor: not-allowed; }
+        
         .message-erreur {
-            background: #FFEBEE;
-            color: #C62828;
-            padding: 12px;
-            border-radius: 8px;
-            margin-top: 16px;
-            display: none;
-            font-size: 14px;
+            background: #FFEBEE; color: #C62828; padding: 12px; border-radius: 8px;
+            margin-top: 16px; display: none; font-size: 14px;
         }
-        .message-erreur.visible {
-            display: block;
-        }
-        .login-equipes {
-            text-align: center;
-            margin-top: 24px;
-            font-size: 24px;
-            letter-spacing: 8px;
-        }
-        .lien-switch {
-            text-align: center;
-            margin-top: 16px;
-        }
-        .lien-switch a {
-            color: #1976D2;
-            text-decoration: none;
-            font-size: 14px;
-        }
-        .lien-switch a:hover {
-            text-decoration: underline;
-        }
-        h3 {
-            text-align: center;
-            color: #1565C0;
-            margin-bottom: 24px;
-        }
-        /* Ajout pour l'alignement Prénom/Nom */
-        .ligne-double {
-            display: flex;
-            gap: 10px;
-        }
+        .message-erreur.visible { display: block; }
+        
+        .lien-switch { text-align: center; margin-top: 16px; }
+        .lien-switch a { color: #1976D2; text-decoration: none; font-size: 14px; font-weight: 600; }
+        .lien-switch a:hover { text-decoration: underline; }
+        
+        h3 { text-align: center; color: #1565C0; margin-bottom: 24px; }
+        .ligne-double { display: flex; gap: 10px; }
+        .login-equipes { text-align: center; margin-top: 24px; font-size: 24px; letter-spacing: 8px; }
     </style>
 </head>
 <body>
@@ -165,31 +82,23 @@
 
         <div id="zone-connexion">
             <h3>Connexion</h3>
-            
             <div class="groupe-champ">
                 <label>📧 Email</label>
                 <input type="email" id="email-login" placeholder="prenom.nom@papernest.com">
             </div>
-
             <div class="groupe-champ">
                 <label>🔒 Mot de passe</label>
                 <input type="password" id="pass-login" placeholder="Votre mot de passe">
             </div>
-
-            <button class="btn-connexion" id="btn-login" onclick="connexion()">
-                Se Connecter →
-            </button>
-
+            <button class="btn-connexion" id="btn-login" onclick="connexion()">Se Connecter →</button>
             <div class="lien-switch">
                 <a href="#" onclick="afficherInscription(); return false;">Première connexion ? Créer un compte</a>
             </div>
-
             <div class="message-erreur" id="erreur-login"></div>
         </div>
 
         <div id="zone-inscription" style="display: none;">
             <h3>Créer mon compte</h3>
-            
             <div class="ligne-double">
                 <div class="groupe-champ">
                     <label>👤 Prénom</label>
@@ -200,47 +109,38 @@
                     <input type="text" id="nom-signup" placeholder="Ex: Durand">
                 </div>
             </div>
-
             <div class="groupe-champ">
                 <label>📧 Email</label>
                 <input type="email" id="email-signup" placeholder="prenom.nom@papernest.com">
             </div>
-
             <div class="groupe-champ">
                 <label>🔒 Mot de passe</label>
-                <input type="password" id="pass-signup" placeholder="Minimum 8 caractères">
+                <input type="password" id="pass-signup" placeholder="Minimum 6 caractères">
             </div>
-
             <div class="groupe-champ">
                 <label>🔒 Confirmer</label>
                 <input type="password" id="pass-confirm" placeholder="Retapez le mot de passe">
             </div>
-
-            <button class="btn-connexion" id="btn-signup" onclick="inscription()">
-                Créer mon compte
-            </button>
-
+            <button class="btn-connexion" id="btn-signup" onclick="inscription()">Créer mon compte</button>
             <div class="lien-switch">
                 <a href="#" onclick="afficherConnexion(); return false;">← Retour à la connexion</a>
             </div>
-
             <div class="message-erreur" id="erreur-signup"></div>
         </div>
 
-        <div class="login-equipes">
-            🇳🇴 🇫🇷 🇨🇦 🇦🇹 🇺🇸
-        </div>
+        <div class="login-equipes">🇳🇴 🇫🇷 🇨🇦 🇦🇹 🇺🇸</div>
     </div>
 
     <script src="config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
+        // 1. Initialisation Supabase
         const sb = window.supabase.createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.KEY);
 
+        // 2. Fonctions d'interface
         function afficherInscription() {
             document.getElementById('zone-connexion').style.display = 'none';
             document.getElementById('zone-inscription').style.display = 'block';
-            // Reset des erreurs
             document.getElementById('erreur-signup').classList.remove('visible');
         }
 
@@ -250,12 +150,19 @@
             document.getElementById('erreur-login').classList.remove('visible');
         }
 
+        function afficherErreur(id, texte) {
+            const elem = document.getElementById(id);
+            elem.textContent = texte;
+            elem.classList.add('visible');
+        }
+
+        // 3. Logique de Connexion
         async function connexion() {
             const email = document.getElementById('email-login').value.trim();
             const password = document.getElementById('pass-login').value;
 
             if (!email || !password) {
-                afficherErreur('erreur-login', 'Remplissez tous les champs');
+                afficherErreur('erreur-login', 'Merci de remplir tous les champs.');
                 return;
             }
 
@@ -264,112 +171,90 @@
             btn.disabled = true;
 
             try {
-                // 1. Connexion Auth
-                const result = await sb.auth.signInWithPassword({ email, password });
-                if (result.error) throw result.error;
+                const { data, error } = await sb.auth.signInWithPassword({ email, password });
+                if (error) throw error;
 
-                // 2. Vérification Profil
-                const user = await sb.from('users').select('*').eq('id', result.data.user.id).single();
-
-                if (!user.data || !user.data.onboarding_complete) {
-                    window.location.href = 'onboarding.html';
-                } else if (user.data.role === 'manager' || user.data.role === 'admin') {
-                    window.location.href = 'manager.html';
-                } else {
-                    window.location.href = 'dashboard.html';
-                }
+                // Récupérer le rôle pour rediriger
+                const { data: userData } = await sb.from('users').select('role').eq('id', data.user.id).single();
+                
+                // Redirection intelligente
+                if (userData && userData.role === 'admin') window.location.href = 'plateau.html';
+                else if (userData && userData.role === 'manager') window.location.href = 'manager.html';
+                else window.location.href = 'dashboard.html';
 
             } catch (error) {
-                afficherErreur('erreur-login', "Erreur : " + error.message);
+                console.error(error);
+                afficherErreur('erreur-login', "Erreur : Email ou mot de passe incorrect.");
                 btn.textContent = 'Se Connecter →';
                 btn.disabled = false;
             }
         }
 
+        // 4. Logique d'Inscription (CORRIGÉE ET SÉCURISÉE)
         async function inscription() {
-            // 1. Récupération des valeurs
             const prenom = document.getElementById('prenom-signup').value.trim();
             const nom = document.getElementById('nom-signup').value.trim();
             const email = document.getElementById('email-signup').value.trim();
             const password = document.getElementById('pass-signup').value;
             const confirm = document.getElementById('pass-confirm').value;
 
-            // 2. Vérifications de base
             if (!prenom || !nom || !email || !password || !confirm) {
                 afficherErreur('erreur-signup', 'Merci de remplir tous les champs !');
                 return;
             }
             if (!email.endsWith('@papernest.com')) {
-                afficherErreur('erreur-signup', 'L\'email doit finir par @papernest.com');
+                afficherErreur('erreur-signup', 'Utilisez votre email @papernest.com');
                 return;
             }
             if (password.length < 6) {
-                afficherErreur('erreur-signup', 'Mot de passe trop court (min 6)');
+                afficherErreur('erreur-signup', 'Le mot de passe doit faire 6 caractères min.');
                 return;
             }
             if (password !== confirm) {
-                afficherErreur('erreur-signup', 'Les mots de passe ne correspondent pas');
+                afficherErreur('erreur-signup', 'Les mots de passe ne correspondent pas.');
                 return;
             }
 
             const btn = document.getElementById('btn-signup');
-            btn.textContent = 'Création en cours...';
+            btn.textContent = 'Création...';
             btn.disabled = true;
 
             try {
-                // --- ÉTAPE A : Créer l'accès Auth ---
+                // A. Création compte Auth
                 const { data: authData, error: authError } = await sb.auth.signUp({ 
                     email, 
                     password,
-                    options: { data: { prenom: prenom, nom: nom } }
+                    options: { data: { prenom, nom } }
                 });
 
                 if (authError) throw authError;
-                
-                // Si l'utilisateur existe déjà
-                if (authData?.user?.identities?.length === 0) {
-                     throw new Error("Cet email est déjà utilisé.");
-                }
+                if (authData?.user?.identities?.length === 0) throw new Error("Cet email est déjà utilisé.");
 
-                console.log("✅ Auth créé :", authData.user.id);
-
-                // --- ÉTAPE B : Créer la fiche dans la table 'users' ---
+                // B. Création profil User (AVEC LOGIQUE SÉCURISÉE)
                 const { error: insertError } = await sb.from('users').insert({
-                    id: authData.user.id, // ID venant de l'Auth
+                    id: authData.user.id,
                     email: email,
                     prenom: prenom,
                     nom: nom,
                     role: 'agent',
-                    equipe_id: 1, // On force l'équipe 1 pour démarrer
-                    cellule: 'Pépinière', // On force une cellule par défaut
+                    // 👇 ICI C'EST MIEUX : On met null pour que le manager l'assigne plus tard
+                    equipe_id: null, 
+                    cellule: 'Pépinière', // Par défaut
                     onboarding_complete: false
                 });
 
-                if (insertError) {
-                    console.error("❌ ERREUR INSERTION DB :", insertError);
-                    alert("ERREUR CRITIQUE !\n\nL'authentification a marché, mais l'enregistrement dans la base de données a échoué.\n\nMessage : " + insertError.message + "\nCode : " + insertError.code);
-                    throw insertError;
-                }
+                if (insertError) throw insertError;
 
-                // Succès total
-                console.log("✅ Profil DB créé avec succès !");
-                alert("🎉 Compte créé avec succès ! Redirection...");
-                window.location.href = 'onboarding.html';
+                alert("🎉 Compte créé avec succès ! Bienvenue !");
+                // 👇 ICI C'EST PLUS SÛR : On va au dashboard direct
+                window.location.href = 'dashboard.html';
 
             } catch (error) {
                 console.error(error);
-                afficherErreur('erreur-signup', error.message || "Erreur inconnue");
+                afficherErreur('erreur-signup', error.message || "Erreur lors de l'inscription.");
                 btn.textContent = 'Créer mon compte';
                 btn.disabled = false;
             }
-        }
-
-             
-
-        function afficherErreur(id, texte) {
-            const elem = document.getElementById(id);
-            elem.textContent = texte;
-            elem.classList.add('visible');
         }
     </script>
 </body>
