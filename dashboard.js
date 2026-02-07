@@ -517,8 +517,8 @@ function afficherCalendrierComplet() {
 
     grid.innerHTML = '';
     
-    const debut = new Date(DATE_DEBUT);
-    const fin = new Date(DATE_FIN);
+    const debut = new Date('2026-02-11'); // Mercredi 11 Février
+const fin = new Date('2026-02-25');   // Mercredi 25 Février
     const aujourdhui = new Date().toISOString().split('T')[0];
 
     for (let d = new Date(debut); d <= fin; d.setDate(d.getDate() + 1)) {

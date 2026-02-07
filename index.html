@@ -10,20 +10,20 @@
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #1565C0 0%, #1976D2 100%);
-            min-height: 100vh; /* Permet à la page de grandir */
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
-            padding: 20px; /* Marge pour ne pas coller aux bords */
-            overflow-y: auto; /* ✅ SCROLL AUTORISÉ */
+            padding: 20px;
+            overflow-y: auto;
         }
 
         /* Animation Neige */
         .neige-particule {
             position: absolute; width: 10px; height: 10px; background: white;
             border-radius: 50%; opacity: 0.7; animation: neige 10s linear infinite;
-            pointer-events: none; /* La neige ne bloque pas les clics */
+            pointer-events: none;
         }
         .neige-particule:nth-child(1) { left: 10%; animation-delay: 0s; }
         .neige-particule:nth-child(2) { left: 30%; animation-delay: 2s; }
@@ -37,7 +37,7 @@
             box-shadow: 0 8px 32px rgba(0,0,0,0.2); 
             width: 100%; max-width: 420px; 
             z-index: 10;
-            margin: auto; /* Centrage */
+            margin: auto;
         }
         
         .login-header { text-align: center; margin-bottom: 30px; }
@@ -162,7 +162,7 @@
             elem.classList.add('visible');
         }
 
-        // 3. Logique de Connexion
+        // 3. Logique de Connexion (MISE À JOUR)
         async function connexion() {
             const email = document.getElementById('email-login').value.trim();
             const password = document.getElementById('pass-login').value;
@@ -180,13 +180,27 @@
                 const { data, error } = await sb.auth.signInWithPassword({ email, password });
                 if (error) throw error;
 
-                // Récupérer le rôle pour rediriger
-                const { data: userData } = await sb.from('users').select('role').eq('id', data.user.id).single();
+                // On récupère le rôle ET le statut onboarding
+                const { data: userData } = await sb
+                    .from('users')
+                    .select('role, onboarding_complete')
+                    .eq('id', data.user.id)
+                    .single();
                 
-                // Redirection intelligente
-                if (userData && userData.role === 'admin') window.location.href = 'plateau.html';
-                else if (userData && userData.role === 'manager') window.location.href = 'manager.html';
-                else window.location.href = 'dashboard.html';
+                // Redirection Intelligente
+                if (userData) {
+                    if (userData.role === 'admin') {
+                        window.location.href = 'plateau.html';
+                    } else if (userData.role === 'manager') {
+                        window.location.href = 'manager.html';
+                    } else if (!userData.onboarding_complete) {
+                        // S'il n'a pas fini son setup -> Onboarding
+                        window.location.href = 'onboarding.html';
+                    } else {
+                        // Sinon -> Dashboard
+                        window.location.href = 'dashboard.html';
+                    }
+                }
 
             } catch (error) {
                 console.error(error);
@@ -196,7 +210,7 @@
             }
         }
 
-        // 4. Logique d'Inscription
+        // 4. Logique d'Inscription (MISE À JOUR)
         async function inscription() {
             const prenom = document.getElementById('prenom-signup').value.trim();
             const nom = document.getElementById('nom-signup').value.trim();
@@ -237,6 +251,7 @@
                 if (authData?.user?.identities?.length === 0) throw new Error("Cet email est déjà utilisé. Essayez de vous connecter.");
 
                 // B. Création profil User
+                // On met equipe_id à NULL car il sera choisi dans l'onboarding
                 const { error: insertError } = await sb.from('users').insert({
                     id: authData.user.id,
                     email: email,
@@ -244,14 +259,15 @@
                     nom: nom,
                     role: 'agent',
                     equipe_id: null, 
-                    cellule: 'Pépinière', 
+                    cellule: null, 
                     onboarding_complete: false
                 });
 
                 if (insertError) throw insertError;
 
-                alert("🎉 Compte créé avec succès ! Bienvenue !");
-                window.location.href = 'dashboard.html';
+                // C. Redirection vers ONBOARDING
+                alert("🎉 Compte créé ! Finalisons votre profil...");
+                window.location.href = 'onboarding.html';
 
             } catch (error) {
                 console.error(error);
