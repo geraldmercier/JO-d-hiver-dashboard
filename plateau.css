@@ -157,6 +157,20 @@
     background: var(--bleu-tres-sombre);
 }
 
+.btn-action {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.btn-action:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
 
 /* -------------------------------------------------------------
    4. DROPDOWN ÉQUIPES
