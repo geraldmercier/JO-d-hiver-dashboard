@@ -180,16 +180,32 @@
         </div>
     </main>
 
-    <div id="modal-challenge" class="modal">
+   <div id="modal-challenge" class="modal" style="display:none;">
         <div class="modal-content">
             <h3>⚡ Nouveau Challenge Flash</h3>
             <form onsubmit="creerChallenge(event)" id="form-challenge">
-                <label>Titre du défi</label>
-                <input type="text" id="challenge-titre" placeholder="Ex: Sprint de l'après-midi" required>
                 
-                <label>Description</label>
-                <textarea id="challenge-description" placeholder="Détails du challenge..." required></textarea>
+                <div style="margin-bottom: 15px;">
+                    <label>Titre du défi</label>
+                    <input type="text" id="challenge-titre" placeholder="Ex: Sprint de l'après-midi" required>
+                </div>
                 
+                <div style="margin-bottom: 15px;">
+                    <label>Description</label>
+                    <textarea id="challenge-description" placeholder="Détails du challenge..." required></textarea>
+                </div>
+                
+                <div style="margin-bottom: 15px; background: #e3f2fd; padding: 10px; border-radius: 8px; border: 1px solid #bbdefb;">
+                    <label style="color: #1565C0;">🎯 Qui participe ?</label>
+                    <select id="challenge-cible-cellule" style="margin-bottom: 0; border: 2px solid #1976D2;">
+                        <option value="toutes">🌍 Tout le monde (Toutes cellules)</option>
+                        <option value="Mover">🏠 Seulement les Movers</option>
+                        <option value="Switcher">💰 Seulement les Switchers</option>
+                        <option value="Coach">⭐ Seulement les Coachs</option>
+                        <option value="Pépinière">🌱 Seulement la Pépinière</option>
+                    </select>
+                </div>
+
                 <div style="display:flex; gap:10px;">
                     <div style="flex:1;">
                         <label>Points gagnés</label>
@@ -198,7 +214,7 @@
                     <div style="flex:1;">
                         <label>Type</label>
                         <select id="challenge-type">
-                            <option value="flash">⚡ Flash (Le premier gagne)</option>
+                            <option value="flash">⚡ Flash (Le 1er gagne)</option>
                             <option value="duree">⏳ Durée (Points pour tous)</option>
                         </select>
                     </div>

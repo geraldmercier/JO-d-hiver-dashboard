@@ -211,11 +211,11 @@ async function detecterEtSoumettreChallenges() {
         const dejaFait = challengesReussis.find(cr => cr.challenge_id === ch.id);
         if (dejaFait) continue;
 
-        if (ch.cible !== 'tous' && 
-           (ch.cible === 'equipe' && ch.equipe_id !== utilisateurActuel.equipe_id) ||
-           (ch.cible === 'cellule' && ch.cellule_cible !== utilisateurActuel.cellule)) {
+        // 1. Si ce n'est pas pour ma cellule (et que ce n'est pas "toutes"), je zappe
+        if (ch.cellule_cible !== 'toutes' && ch.cellule_cible !== utilisateurActuel.cellule) {
             continue;
         }
+        
 
         const contratsPeriode = tousLesContrats.filter(c => 
             c.agent_id === utilisateurActuel.id &&
@@ -633,9 +633,12 @@ async function chargerChallengesAffiches() {
 
     // Filtrer selon cible
     const challengesPourMoi = challenges.filter(ch => {
-        if (ch.cible === 'tous') return true;
-        if (ch.cible === 'equipe' && ch.equipe_id === utilisateurActuel.equipe_id) return true;
-        if (ch.cible === 'cellule' && ch.cellule_cible === utilisateurActuel.cellule) return true;
+        // Si c'est pour tout le monde : OK
+        if (ch.cellule_cible === 'toutes') return true;
+        // Si c'est spécifiquement pour ma cellule : OK
+        if (ch.cellule_cible === utilisateurActuel.cellule) return true;
+        
+        // Sinon : Non
         return false;
     });
 

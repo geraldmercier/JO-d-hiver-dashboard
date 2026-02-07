@@ -297,10 +297,14 @@ window.fermerModalChallenge = function() {
     document.getElementById('modal-challenge').style.display = 'none';
 };
 
+// ==========================================
+// VERSION FINALE : CRÉATION CHALLENGE CIBLÉ
+// ==========================================
 window.creerChallenge = async function(e) {
     e.preventDefault();
     const btn = document.getElementById('btn-submit-challenge');
     btn.textContent = 'Création...';
+    btn.disabled = true;
 
     try {
         const { error } = await sb.from('challenges_flash').insert({
@@ -310,17 +314,28 @@ window.creerChallenge = async function(e) {
             points_attribues: document.getElementById('challenge-points').value,
             date_debut: document.getElementById('challenge-debut').value,
             date_fin: document.getElementById('challenge-fin').value,
-            cible: 'global',
+            
+            // 👇 C'EST ICI QUE ÇA CHANGE
+            cible: 'global', // TOUJOURS GLOBAL (Pour tout le monde)
+            cellule_cible: document.getElementById('challenge-cible-cellule').value, // Filtrage par cellule
+            
             statut: 'actif'
         });
 
         if (error) throw error;
-        alert('✅ Challenge lancé à toutes les équipes !');
+        
+        // Message adapté selon le ciblage
+        const cibleTexte = document.getElementById('challenge-cible-cellule').value === 'toutes' ? 'tout le monde' : document.getElementById('challenge-cible-cellule').value;
+        alert(`✅ Challenge lancé pour ${cibleTexte} !`);
+        
         fermerModalChallenge();
+        document.getElementById('form-challenge').reset();
+
     } catch (err) {
         alert('Erreur : ' + err.message);
     } finally {
-        btn.innerHTML = '⚡ Créer le défi';
+        btn.textContent = '⚡ Créer le défi';
+        btn.disabled = false;
     }
 };
 

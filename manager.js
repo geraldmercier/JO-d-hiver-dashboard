@@ -658,13 +658,14 @@ window.fermerModalChallenge = function() {
     if (modal) modal.style.display = 'none';
 };
 
+// ==========================================
+// VERSION FINALE : CRÉATION CHALLENGE CIBLÉ
+// ==========================================
 window.creerChallenge = async function(e) {
     e.preventDefault();
     const btn = document.getElementById('btn-submit-challenge');
-    if (btn) {
-        btn.disabled = true;
-        btn.textContent = 'Création...';
-    }
+    btn.textContent = 'Création...';
+    btn.disabled = true;
 
     try {
         const { error } = await sb.from('challenges_flash').insert({
@@ -674,25 +675,28 @@ window.creerChallenge = async function(e) {
             points_attribues: document.getElementById('challenge-points').value,
             date_debut: document.getElementById('challenge-debut').value,
             date_fin: document.getElementById('challenge-fin').value,
-            equipe_id: equipeActuelle.id, // Lie le challenge à l'équipe du manager
-            cible: 'equipe', // Par défaut pour l'équipe
+            
+            // 👇 C'EST ICI QUE ÇA CHANGE
+            cible: 'global', // TOUJOURS GLOBAL (Pour tout le monde)
+            cellule_cible: document.getElementById('challenge-cible-cellule').value, // Filtrage par cellule
+            
             statut: 'actif'
         });
 
         if (error) throw error;
-
-        afficherNotification('✅ Challenge créé avec succès !', 'success');
+        
+        // Message adapté selon le ciblage
+        const cibleTexte = document.getElementById('challenge-cible-cellule').value === 'toutes' ? 'tout le monde' : document.getElementById('challenge-cible-cellule').value;
+        alert(`✅ Challenge lancé pour ${cibleTexte} !`);
+        
         fermerModalChallenge();
         document.getElementById('form-challenge').reset();
 
     } catch (err) {
-        console.error("Erreur création challenge :", err);
-        afficherNotification("❌ Erreur : " + err.message, 'error');
+        alert('Erreur : ' + err.message);
     } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.textContent = 'Créer le défi';
-        }
+        btn.textContent = '⚡ Créer le défi';
+        btn.disabled = false;
     }
 };
 
