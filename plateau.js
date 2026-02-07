@@ -4,11 +4,11 @@
 
 console.log('🏔️ Plateau V4 (Fusion) - Démarrage...');
 
-// VARIABLES GLOBALES (Crucial pour le filtrage par cellule)
+// VARIABLES GLOBALES
 let donneesGlobales = {
     agents: [],
     contrats: [],
-    utilisateur: null // Pour stocker les infos du manager connecté
+    utilisateur: null
 };
 
 const sb = window.supabase.createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.KEY);
@@ -18,14 +18,14 @@ const sb = window.supabase.createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.KEY
 // =============================================================
 document.addEventListener('DOMContentLoaded', async function() {
 
-    // 1. Vérification Auth (Sécurité)
+    // 1. Vérification Auth
     const { data: { user } } = await sb.auth.getUser();
     if (!user) { window.location.href = 'index.html'; return; }
 
-    // 2. Chargement du profil Manager/Admin
+    // 2. Chargement Profil
     await chargerProfilManager(user.id);
 
-    // 3. VÉRIFICATION DES DROITS (Sécurité stricte)
+    // 3. Sécurité
     if (!donneesGlobales.utilisateur || 
        (donneesGlobales.utilisateur.role !== 'manager' && donneesGlobales.utilisateur.role !== 'admin')) {
         alert("⛔ Accès réservé aux Managers et Admins.");
@@ -33,31 +33,31 @@ document.addEventListener('DOMContentLoaded', async function() {
         return;
     }
 
-    // 4. Mise à jour Header & Boutons
+    // 4. Affichage
     afficherHeaderEtBoutons();
 
-    // 5. Chargement des données du plateau
+    // 5. Chargement Données & Calculs
     await chargerEtCalculer();
 
-    // 6. Charger la liste VISUELLE des challenges (Info-bulle)
-    await chargerChallengesActifsVisuels();
-
-    // 7. Gestion des onglets (Global / Équipes / Cellules)
+    // 6. Gestion des onglets
     activerGestionOnglets();
 
-    // 8. Initialisation de la vue "Par Cellule" (Mover par défaut)
+    // 7. Initialisation Cellule
     if (window.changerCellule) window.changerCellule('Mover');
 
-    // 9. Menu Équipes (Si Admin)
+    // 8. FONCTIONS ADMIN AJOUTÉES
+    await chargerGraphiqueGlobal(); // Le graphique
     if (donneesGlobales.utilisateur.role === 'admin') {
-        initialiserMenuEquipes();
+        chargerValidationsAdmin(); // Le panel de validation
+        // Lancer la vérification auto toutes les 10 secondes
+        setInterval(chargerValidationsAdmin, 10000);
     }
 
     console.log("✅ Plateau V4 initialisé avec succès");
 });
 
 // =============================================================
-// 🔐 GESTION UTILISATEUR & SÉCURITÉ
+// 🔐 GESTION UTILISATEUR & HEADER
 // =============================================================
 
 async function chargerProfilManager(userId) {
@@ -69,20 +69,11 @@ function afficherHeaderEtBoutons() {
     const u = donneesGlobales.utilisateur;
     if (!u) return;
 
-    // Infos Header
-    const elNom = document.getElementById('nom-utilisateur');
-    const elRole = document.getElementById('role-utilisateur');
-    if (elNom) elNom.textContent = `${u.prenom} ${u.nom}`;
-    if (elRole) elRole.textContent = u.role === 'admin' ? 'Administrateur' : 'Manager';
+    document.getElementById('nom-utilisateur').textContent = `${u.prenom} ${u.nom}`;
+    document.getElementById('role-utilisateur').textContent = u.role === 'admin' ? 'Administrateur' : 'Manager';
 
-    // Boutons d'action
-    const btnRetour = document.getElementById('btn-retour-manager');
-    if (btnRetour) {
-        btnRetour.style.display = 'inline-block'; // On s'assure qu'il est visible
-        btnRetour.addEventListener('click', () => window.location.href = 'manager.html');
-    }
-
-    const btnDeconnexion = document.getElementById('btn-deconnexion');
+    // Bouton Déconnexion
+    const btnDeconnexion = document.getElementById('btn-deconnexion-plateau');
     if (btnDeconnexion) {
         btnDeconnexion.addEventListener('click', async () => {
             if (confirm("Se déconnecter ?")) {
@@ -92,21 +83,15 @@ function afficherHeaderEtBoutons() {
         });
     }
 
-    // Admin : Bouton Créer Challenge et Menu Équipes
-    const btnCreer = document.getElementById('btn-creer-challenge');
-    const menuEquipes = document.getElementById('dropdown-equipes-admin');
-    
-    if (u.role === 'admin') {
-        if (btnCreer) {
-            btnCreer.style.display = 'inline-block';
-            btnCreer.addEventListener('click', () => window.location.href = 'manager.html'); // Ou ouvrir modal
-        }
-        if (menuEquipes) menuEquipes.style.display = 'block';
+    // Admin : Bouton Créer Challenge
+    const btnCreer = document.getElementById('btn-creer-challenge-plateau');
+    if (u.role === 'admin' && btnCreer) {
+        btnCreer.style.display = 'inline-block';
     }
 }
 
 // =============================================================
-// 🧠 MOTEUR DE DONNÉES (Le cœur du V3)
+// 🧠 MOTEUR DE DONNÉES & TABLEAUX
 // =============================================================
 
 async function chargerEtCalculer() {
@@ -116,79 +101,32 @@ async function chargerEtCalculer() {
     const { data: reussites } = await sb.from('challenge_reussites').select('*').eq('statut', 'valide');
     const { data: equipes } = await sb.from('equipes').select('*');
 
-    // Stockage Global
     donneesGlobales.agents = agents || [];
     donneesGlobales.contrats = contrats || [];
 
     // Calcul des scores
     donneesGlobales.agents.forEach(agent => {
         agent.scoreTotal = 0;
-
-        // Points Contrats
+        
+        // Contrats
         const contratsAgent = donneesGlobales.contrats.filter(c => c.agent_id === agent.id);
         contratsAgent.forEach(c => {
             const isFri = c.created_at.includes('2026-02-20');
             agent.scoreTotal += isFri ? 20 : 10;
         });
 
-        // Points Challenges
+        // Challenges
         const challengesAgent = (reussites || []).filter(r => r.agent_id === agent.id);
         challengesAgent.forEach(r => {
             agent.scoreTotal += (r.points_gagnes || 0);
         });
     });
 
-    // Affichage Initial des Tableaux
+    // Affichage
     afficherPodium(donneesGlobales.agents);
     afficherTableauGlobal(donneesGlobales.agents, donneesGlobales.contrats);
     afficherClassementEquipes(equipes || [], donneesGlobales.agents);
 }
-
-// =============================================================
-// ⚡ CHALLENGES VISUELS (Le manque du V3 comblé)
-// =============================================================
-
-async function chargerChallengesActifsVisuels() {
-    try {
-        const { data: challenges } = await sb.from('challenges_flash')
-            .select('*')
-            .eq('statut', 'actif')
-            .order('date_debut', { ascending: false });
-
-        const liste = document.getElementById('challenges-actifs-liste');
-        if (!liste) return; // Si l'élément n'existe pas dans le HTML, on ignore
-
-        if (!challenges || challenges.length === 0) {
-            liste.innerHTML = '<div class="aucun-challenge">Aucun challenge actif 😴</div>';
-            return;
-        }
-
-        liste.innerHTML = '';
-        challenges.forEach(ch => {
-            const fin = new Date(ch.date_fin).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
-            
-            const div = document.createElement('div');
-            div.className = 'challenge-item'; // Assurez-vous d'avoir du CSS pour ça
-            div.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee;">
-                    <div>
-                        <strong>⚡ ${ch.titre}</strong><br>
-                        <small style="color:#666;">${ch.type_challenge} • Fin à ${fin}</small>
-                    </div>
-                    <div style="background:#FF9800; color:white; padding:2px 8px; border-radius:10px; font-weight:bold;">
-                        ${ch.points_attribues} pts
-                    </div>
-                </div>
-            `;
-            liste.appendChild(div);
-        });
-
-    } catch (e) { console.error("Erreur challenges visuels", e); }
-}
-
-// =============================================================
-// 📊 AFFICHAGE TABLEAUX & PODIUM
-// =============================================================
 
 function afficherPodium(agents) {
     const top3 = [...agents].sort((a, b) => b.scoreTotal - a.scoreTotal).slice(0, 3);
@@ -202,12 +140,12 @@ function updatePodiumSlot(rang, agent) {
     const nomDiv = document.getElementById(`podium-${rang}-nom`);
     const scoreDiv = document.getElementById(`podium-${rang}-score`);
     const equipeDiv = document.getElementById(`podium-${rang}-equipe`);
-    const avatarDiv = document.getElementById(`podium-${rang}-avatar`); // Ajout avatar
+    const avatarDiv = document.getElementById(`podium-${rang}-avatar`);
     
     if (nomDiv) nomDiv.textContent = `${agent.prenom} ${agent.nom}`;
     if (scoreDiv) scoreDiv.textContent = `${agent.scoreTotal} pts`;
     if (equipeDiv) equipeDiv.textContent = agent.equipes?.nom || '';
-    if (avatarDiv) avatarDiv.textContent = agent.avatar_url ? '👤' : '🏃';
+    if (avatarDiv) avatarDiv.textContent = agent.avatar_url ? '👤' : (rang === 1 ? '🥇' : rang === 2 ? '🥈' : '🥉');
 }
 
 function afficherTableauGlobal(agents, contrats) {
@@ -257,35 +195,25 @@ function afficherClassementEquipes(equipes, agents) {
 }
 
 // =============================================================
-// 📞 GESTION DES CELLULES (Le système dynamique)
+// 📞 GESTION CELLULES
 // =============================================================
 
 window.changerCellule = function(nomCellule) {
-    // 1. Mise à jour visuelle des boutons
-    const boutons = document.querySelectorAll('.cellule-tab-btn');
-    boutons.forEach(btn => {
+    // Boutons actifs
+    document.querySelectorAll('.cellule-tab-btn').forEach(btn => {
         btn.classList.remove('active');
-        if (btn.innerText.includes(nomCellule) || btn.getAttribute('onclick').includes(nomCellule)) {
-            btn.classList.add('active');
-        }
+        if (btn.innerText.includes(nomCellule)) btn.classList.add('active');
     });
 
-    // 2. Mise à jour du titre
     const titre = document.getElementById('titre-top-cellule');
     if (titre) titre.textContent = `📞 Top ${nomCellule}s`;
 
-    // 3. Filtrage des agents
+    // Filtrage
     const agentsFiltres = donneesGlobales.agents.filter(a => a.cellule === nomCellule);
-
-    // 4. Affichage du tableau
-    afficherTableauCellule(agentsFiltres, donneesGlobales.contrats);
-};
-
-function afficherTableauCellule(agents, contrats) {
     const tbody = document.getElementById('tableau-cellule-body');
     if (!tbody) return;
 
-    const classe = [...agents].sort((a, b) => b.scoreTotal - a.scoreTotal);
+    const classe = [...agentsFiltres].sort((a, b) => b.scoreTotal - a.scoreTotal);
 
     if (classe.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Aucun agent dans cette cellule</td></tr>';
@@ -293,24 +221,20 @@ function afficherTableauCellule(agents, contrats) {
     }
 
     tbody.innerHTML = classe.map((agent, index) => {
-        const nbContrats = contrats.filter(c => c.agent_id === agent.id).length;
-        let medaille = '';
-        if (index === 0) medaille = '🥇'; else if (index === 1) medaille = '🥈'; else if (index === 2) medaille = '🥉';
-
         return `
             <tr>
-                <td style="font-weight:bold;">${index + 1} ${medaille}</td>
+                <td style="font-weight:bold;">${index + 1}</td>
                 <td><strong>${agent.prenom} ${agent.nom}</strong></td>
                 <td>${agent.equipes?.nom || ''}</td>
                 <td style="font-weight:bold; color:#1976D2;">${agent.scoreTotal} pts</td>
-                <td>${nbContrats}</td>
+                <td>${donneesGlobales.contrats.filter(c => c.agent_id === agent.id).length}</td>
             </tr>
         `;
     }).join('');
-}
+};
 
 // =============================================================
-// 🛠 UTILITAIRES & MENU ADMIN
+// 🛠 UTILITAIRES ONGLETS
 // =============================================================
 
 function activerGestionOnglets() {
@@ -330,19 +254,153 @@ function activerGestionOnglets() {
     });
 }
 
-function initialiserMenuEquipes() {
-    sb.from('equipes').select('*').order('id')
-      .then(({ data: equipes }) => {
-            const menu = document.getElementById('menu-equipes-admin');
-            if(!menu) return;
-            
-            menu.innerHTML = '';
-            equipes.forEach(equipe => {
-                const div = document.createElement('div');
-                div.className = 'dropdown-item';
-                div.textContent = `${equipe.drapeau_emoji || '🏳️'} Équipe ${equipe.nom}`;
-                div.onclick = () => window.location.href = `manager.html?equipe=${equipe.id}`;
-                menu.appendChild(div);
+// =============================================================
+// 📈 NOUVEAU : GRAPHIQUE GLOBAL (Fil Rouge)
+// =============================================================
+
+async function chargerGraphiqueGlobal() {
+    const { data: kpis } = await sb.from('kpi_equipe_journalier')
+        .select('*, equipes(nom, drapeau_emoji)')
+        .order('date_kpi', { ascending: true });
+
+    if (!kpis || kpis.length === 0) return;
+
+    const labels = [...new Set(kpis.map(k => new Date(k.date_kpi).toLocaleDateString()))];
+    const equipesUniques = [...new Set(kpis.map(k => k.equipe_id))];
+    const datasets = [];
+
+    equipesUniques.forEach(eqId => {
+        const dataEquipe = kpis.filter(k => k.equipe_id === eqId);
+        // On prend "Pépinière" comme référence pour le volume global
+        const dataPépinière = dataEquipe.filter(k => k.cellule === 'Pépinière');
+        
+        if (dataPépinière.length > 0) {
+            const nom = dataPépinière[0].equipes.nom;
+            const emoji = dataPépinière[0].equipes.drapeau_emoji || '';
+            const color = `hsl(${Math.random() * 360}, 70%, 50%)`;
+
+            datasets.push({
+                label: `${emoji} ${nom}`,
+                data: labels.map(date => {
+                    const entree = dataPépinière.find(k => new Date(k.date_kpi).toLocaleDateString() === date);
+                    return entree ? entree.valeur_cumul : 0;
+                }),
+                borderColor: color,
+                backgroundColor: 'transparent',
+                tension: 0.3,
+                borderWidth: 3
             });
-      });
+        }
+    });
+
+    const ctx = document.getElementById('graphiqueGlobal');
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'line',
+            data: { labels, datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    title: { display: true, text: '🏆 Course aux Volumes (Pépinière)' }
+                },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
 }
+
+// =============================================================
+// ⚡ NOUVEAU : FONCTIONS ADMIN (CHALLENGES)
+// =============================================================
+
+window.ouvrirModalChallenge = function() {
+    document.getElementById('modal-challenge').style.display = 'flex';
+};
+window.fermerModalChallenge = function() {
+    document.getElementById('modal-challenge').style.display = 'none';
+};
+
+window.creerChallenge = async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-submit-challenge');
+    btn.textContent = 'Création...';
+
+    try {
+        const { error } = await sb.from('challenges_flash').insert({
+            titre: document.getElementById('challenge-titre').value,
+            description: document.getElementById('challenge-description').value,
+            type_challenge: document.getElementById('challenge-type').value,
+            points_attribues: document.getElementById('challenge-points').value,
+            date_debut: document.getElementById('challenge-debut').value,
+            date_fin: document.getElementById('challenge-fin').value,
+            cible: 'global',
+            statut: 'actif'
+        });
+
+        if (error) throw error;
+        alert('✅ Challenge lancé à toutes les équipes !');
+        fermerModalChallenge();
+    } catch (err) {
+        alert('Erreur : ' + err.message);
+    } finally {
+        btn.textContent = 'Créer le défi';
+    }
+};
+
+async function chargerValidationsAdmin() {
+    const panel = document.getElementById('admin-panel');
+    const liste = document.getElementById('liste-validations-admin');
+    
+    // On cherche tout ce qui est "en_attente"
+    const { data: reussites } = await sb.from('challenge_reussites')
+        .select('*, users(prenom, nom, equipe_id), challenges_flash(titre, type_challenge)')
+        .eq('statut', 'en_attente');
+
+    if (!reussites || reussites.length === 0) {
+        panel.style.display = 'none';
+        return;
+    }
+
+    panel.style.display = 'block';
+    liste.innerHTML = '';
+
+    reussites.forEach(r => {
+        const div = document.createElement('div');
+        div.style.borderBottom = '1px solid #eee';
+        div.style.padding = '10px 0';
+        
+        const isFlash = r.challenges_flash.type_challenge === 'flash';
+        const btnColor = isFlash ? 'gold' : '#4CAF50';
+        const btnText = isFlash ? '🏆 WIN' : '✅ OK';
+
+        div.innerHTML = `
+            <div style="font-size:0.9em;"><strong>${r.users.prenom} ${r.users.nom}</strong></div>
+            <div style="font-size:0.8em; color:#666;">${r.challenges_flash.titre}</div>
+            <div style="margin-top:5px;">
+                <button onclick="adminValider('${r.id}', '${r.challenge_id}', '${isFlash}', '${r.users.prenom}')" style="background:${btnColor}; border:none; padding:5px 10px; cursor:pointer; border-radius:4px;">${btnText}</button>
+                <button onclick="adminRejeter('${r.id}')" style="background:#f44336; color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:4px;">❌</button>
+            </div>
+        `;
+        liste.appendChild(div);
+    });
+}
+
+window.adminValider = async function(reussiteId, challengeId, isFlash, nomGagnant) {
+    if (isFlash === 'true') {
+        if(!confirm(`🏆 DÉCLARER ${nomGagnant} VAINQUEUR ?\nCela ferme le challenge pour tout le monde.`)) return;
+        
+        await sb.from('challenge_reussites').update({ statut: 'valide' }).eq('id', reussiteId);
+        await sb.from('challenges_flash').update({ statut: 'termine', gagnant_nom: nomGagnant }).eq('id', challengeId);
+    } else {
+        await sb.from('challenge_reussites').update({ statut: 'valide' }).eq('id', reussiteId);
+    }
+    chargerValidationsAdmin();
+};
+
+window.adminRejeter = async function(id) {
+    if(!confirm("Rejeter ?")) return;
+    await sb.from('challenge_reussites').update({ statut: 'rejete' }).eq('id', id);
+    chargerValidationsAdmin();
+};

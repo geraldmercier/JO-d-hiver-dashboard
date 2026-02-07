@@ -11,6 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body class="plateau-body">
@@ -25,6 +26,12 @@
                 </div>
             </div>
 
+            <div class="header-actions">
+                <button onclick="ouvrirModalChallenge()" id="btn-creer-challenge-plateau" class="btn-action" style="background: #FF9800; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; display:none;">
+                    ⚡ Créer Challenge Flash
+                </button>
+            </div>
+
             <div class="header-user">
                 <div class="user-info">
                     <h2 id="nom-utilisateur">Chargement...</h2>
@@ -33,19 +40,21 @@
             </div>
 
             <div class="header-actions">
-    <a href="manager.html" class="btn-retour-manager" style="text-decoration: none;">
-        👔 Vue Manager
-    </a>
-
-    <a href="index.html" class="btn-deconnexion" style="text-decoration: none;">
-        🚪 Déconnexion
-    </a>
-</div>
+                <a href="manager.html" class="btn-retour-manager" style="text-decoration: none;">👔 Vue Manager</a>
+                <button id="btn-deconnexion-plateau" class="btn-deconnexion" style="border:none; cursor:pointer;">🚪 Déconnexion</button>
+            </div>
         </div>
     </header>
 
     <main class="plateau-main">
         <div class="plateau-container">
+
+            <section class="carte-plateau" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 30px;">
+                <h2 style="color: #333; margin-bottom: 20px;">📈 La Course en Direct (Fil Rouge)</h2>
+                <div style="height: 350px;">
+                    <canvas id="graphiqueGlobal"></canvas>
+                </div>
+            </section>
 
             <div class="plateau-tabs">
                 <button class="tab-btn active" data-tab="global">🌍 Classement Global</button>
@@ -55,7 +64,6 @@
             </div>
 
             <section class="tab-content active" id="tab-global">
-                
                 <div class="podium-container">
                     <div class="podium-place place-2">
                         <div class="podium-avatar" id="podium-2-avatar">🥈</div>
@@ -65,7 +73,6 @@
                         <div class="podium-medaille">🥈</div>
                         <div class="podium-rank">2</div>
                     </div>
-                    
                     <div class="podium-place place-1">
                         <div class="podium-avatar" id="podium-1-avatar">🥇</div>
                         <div class="podium-nom" id="podium-1-nom">-</div>
@@ -74,7 +81,6 @@
                         <div class="podium-medaille">🥇</div>
                         <div class="podium-rank">1</div>
                     </div>
-                    
                     <div class="podium-place place-3">
                         <div class="podium-avatar" id="podium-3-avatar">🥉</div>
                         <div class="podium-nom" id="podium-3-nom">-</div>
@@ -99,8 +105,7 @@
                                 <th>Med.</th>
                             </tr>
                         </thead>
-                        <tbody id="tableau-global-body">
-                            </tbody>
+                        <tbody id="tableau-global-body"></tbody>
                     </table>
                 </div>
             </section>
@@ -121,35 +126,10 @@
                 </div>
 
                 <div class="cellule-content active" id="cellule-Mover">
-                    <h3>📞 Top Movers</h3>
+                    <h3 id="titre-top-cellule">📞 Top Movers</h3>
                     <table class="tableau-classement">
                         <thead><tr><th>Rang</th><th>Agent</th><th>Éq.</th><th>Score</th><th>KPI</th></tr></thead>
-                        <tbody id="tableau-Mover"></tbody>
-                    </table>
-                </div>
-
-                <div class="cellule-content" id="cellule-Switcher">
-                    <h3>📱 Top Switchers</h3>
-                    <table class="tableau-classement">
-                        <thead><tr><th>Rang</th><th>Agent</th><th>Éq.</th><th>Score</th><th>KPI</th></tr></thead>
-                        <tbody id="tableau-Switcher"></tbody>
-                    </table>
-                </div>
-
-                <div class="cellule-content" id="cellule-Coach">
-                    <h3>⭐ Top Coachs</h3>
-                    <table class="tableau-classement">
-                        <thead><tr><th>Rang</th><th>Agent</th><th>Éq.</th><th>Score</th><th>KPI</th></tr></thead>
-                        <tbody id="tableau-Coach"></tbody>
-                    </table>
-                </div>
-
-                <div class="cellule-content" id="cellule-Pépinière">
-                    <h3>🌱 Top Pépinière</h3>
-                    <table class="tableau-classement">
-                        <thead><tr><th>Rang</th><th>Agent</th><th>Éq.</th><th>Score</th><th>KPI</th></tr></thead>
-                        <tbody id="tableau-Pépinière"></tbody>
-                    </table>
+                        <tbody id="tableau-cellule-body"></tbody> </table>
                 </div>
             </section>
 
@@ -172,11 +152,35 @@
         </div>
     </main>
 
+    <div id="modal-challenge" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h3>⚡ Nouveau Challenge Flash</h3>
+            <form onsubmit="creerChallenge(event)" id="form-challenge">
+                <input type="text" id="challenge-titre" placeholder="Titre (ex: Sprint Telco)" required style="width:100%; margin-bottom:10px; padding:8px;">
+                <textarea id="challenge-description" placeholder="Description..." required style="width:100%; margin-bottom:10px; padding:8px;"></textarea>
+                <select id="challenge-type" style="width:100%; margin-bottom:10px; padding:8px;">
+                    <option value="flash">⚡ Flash (Le premier gagne)</option>
+                    <option value="duree">⏳ Durée (Points pour tous)</option>
+                </select>
+                <input type="number" id="challenge-points" placeholder="Points" required style="width:100%; margin-bottom:10px; padding:8px;">
+                <label>Début :</label><input type="datetime-local" id="challenge-debut" required style="width:100%; margin-bottom:10px; padding:8px;">
+                <label>Fin :</label><input type="datetime-local" id="challenge-fin" required style="width:100%; margin-bottom:10px; padding:8px;">
+                <div class="modal-actions" style="text-align:right;">
+                    <button type="button" onclick="fermerModalChallenge()" style="padding:8px 15px; margin-right:10px;">Annuler</button>
+                    <button type="submit" id="btn-submit-challenge" style="padding:8px 15px; background:#FF9800; color:white; border:none; cursor:pointer;">Créer le défi</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
- <script src="config.js"></script>
+    <div id="admin-panel" style="position: fixed; bottom: 20px; right: 20px; width: 350px; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 -5px 20px rgba(0,0,0,0.2); display: none; z-index:9999;">
+        <h4 style="margin-top:0;">🔔 Validations en attente</h4>
+        <div id="liste-validations-admin" style="max-height: 300px; overflow-y: auto;">
+            </div>
+    </div>
 
+    <script src="config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <script src="plateau.js"></script>
 </body>
 </html>
