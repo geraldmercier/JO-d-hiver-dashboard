@@ -27,7 +27,7 @@
             </div>
 
             <div class="header-actions">
-                <button onclick="ouvrirModalChallenge()" id="btn-creer-challenge-plateau" class="btn-action" style="background: #FF9800; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; display:none;">
+                <button onclick="ouvrirModalChallenge()" id="btn-creer-challenge-plateau" class="btn-action" style="display:none;">
                     ⚡ Créer Challenge Flash
                 </button>
             </div>
@@ -40,8 +40,8 @@
             </div>
 
             <div class="header-actions">
-                <a href="manager.html" class="btn-retour-manager" style="text-decoration: none;">👔 Vue Manager</a>
-                <button id="btn-deconnexion-plateau" class="btn-deconnexion" style="border:none; cursor:pointer;">🚪 Déconnexion</button>
+                <a href="manager.html" class="btn-retour-manager">👔 Vue Manager</a>
+                <button id="btn-deconnexion-plateau" class="btn-deconnexion">🚪 Déconnexion</button>
             </div>
         </div>
     </header>
@@ -49,10 +49,37 @@
     <main class="plateau-main">
         <div class="plateau-container">
 
-            <section class="carte-plateau" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 30px;">
-                <h2 style="color: #333; margin-bottom: 20px;">📈 La Course en Direct (Fil Rouge)</h2>
-                <div style="height: 350px;">
-                    <canvas id="graphiqueGlobal"></canvas>
+            <section class="section-graphiques">
+                <h2 style="color: #333; margin-bottom: 20px;">📈 La Course en Direct (Par Piste)</h2>
+                
+                <div class="graphs-grid">
+                    <div class="graph-card">
+                        <h3>🏠 Course Mover</h3>
+                        <div class="canvas-container">
+                            <canvas id="chart-Mover"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="graph-card">
+                        <h3>💰 Course Switcher</h3>
+                        <div class="canvas-container">
+                            <canvas id="chart-Switcher"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="graph-card">
+                        <h3>⭐ Course Coach</h3>
+                        <div class="canvas-container">
+                            <canvas id="chart-Coach"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="graph-card">
+                        <h3>🌱 Course Pépinière</h3>
+                        <div class="canvas-container">
+                            <canvas id="chart-Pépinière"></canvas>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -129,7 +156,8 @@
                     <h3 id="titre-top-cellule">📞 Top Movers</h3>
                     <table class="tableau-classement">
                         <thead><tr><th>Rang</th><th>Agent</th><th>Éq.</th><th>Score</th><th>KPI</th></tr></thead>
-                        <tbody id="tableau-cellule-body"></tbody> </table>
+                        <tbody id="tableau-cellule-body"></tbody>
+                    </table>
                 </div>
             </section>
 
@@ -152,22 +180,44 @@
         </div>
     </main>
 
-    <div id="modal-challenge" class="modal" style="display:none;">
+    <div id="modal-challenge" class="modal">
         <div class="modal-content">
             <h3>⚡ Nouveau Challenge Flash</h3>
             <form onsubmit="creerChallenge(event)" id="form-challenge">
-                <input type="text" id="challenge-titre" placeholder="Titre (ex: Sprint Telco)" required style="width:100%; margin-bottom:10px; padding:8px;">
-                <textarea id="challenge-description" placeholder="Description..." required style="width:100%; margin-bottom:10px; padding:8px;"></textarea>
-                <select id="challenge-type" style="width:100%; margin-bottom:10px; padding:8px;">
-                    <option value="flash">⚡ Flash (Le premier gagne)</option>
-                    <option value="duree">⏳ Durée (Points pour tous)</option>
-                </select>
-                <input type="number" id="challenge-points" placeholder="Points" required style="width:100%; margin-bottom:10px; padding:8px;">
-                <label>Début :</label><input type="datetime-local" id="challenge-debut" required style="width:100%; margin-bottom:10px; padding:8px;">
-                <label>Fin :</label><input type="datetime-local" id="challenge-fin" required style="width:100%; margin-bottom:10px; padding:8px;">
-                <div class="modal-actions" style="text-align:right;">
-                    <button type="button" onclick="fermerModalChallenge()" style="padding:8px 15px; margin-right:10px;">Annuler</button>
-                    <button type="submit" id="btn-submit-challenge" style="padding:8px 15px; background:#FF9800; color:white; border:none; cursor:pointer;">Créer le défi</button>
+                <label>Titre du défi</label>
+                <input type="text" id="challenge-titre" placeholder="Ex: Sprint de l'après-midi" required>
+                
+                <label>Description</label>
+                <textarea id="challenge-description" placeholder="Détails du challenge..." required></textarea>
+                
+                <div style="display:flex; gap:10px;">
+                    <div style="flex:1;">
+                        <label>Points gagnés</label>
+                        <input type="number" id="challenge-points" placeholder="10" required>
+                    </div>
+                    <div style="flex:1;">
+                        <label>Type</label>
+                        <select id="challenge-type">
+                            <option value="flash">⚡ Flash (Le premier gagne)</option>
+                            <option value="duree">⏳ Durée (Points pour tous)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:10px;">
+                    <div style="flex:1;">
+                        <label>Début</label>
+                        <input type="datetime-local" id="challenge-debut" required>
+                    </div>
+                    <div style="flex:1;">
+                        <label>Fin</label>
+                        <input type="datetime-local" id="challenge-fin" required>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" onclick="fermerModalChallenge()">Annuler</button>
+                    <button type="submit" id="btn-submit-challenge">⚡ Créer le défi</button>
                 </div>
             </form>
         </div>

@@ -1,8 +1,8 @@
 // =============================================================
-// PLATEAU V4 - FUSION COMPLÈTE (Stable & Sécurisé)
+// PLATEAU V5 - QUADRUPLE PISTE (Final)
 // =============================================================
 
-console.log('🏔️ Plateau V4 (Fusion) - Démarrage...');
+console.log('🏔️ Plateau V5 (Quadruple) - Démarrage...');
 
 // VARIABLES GLOBALES
 let donneesGlobales = {
@@ -45,15 +45,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 7. Initialisation Cellule
     if (window.changerCellule) window.changerCellule('Mover');
 
-    // 8. FONCTIONS ADMIN AJOUTÉES
-    await chargerGraphiqueGlobal(); // Le graphique
+    // 8. FONCTIONS ADMIN (GRAPHIQUES + VALIDATION)
+    await chargerGraphiquesQuadruple(); // <--- NOUVELLE FONCTION 4 GRAPHIQUES
+    
     if (donneesGlobales.utilisateur.role === 'admin') {
-        chargerValidationsAdmin(); // Le panel de validation
-        // Lancer la vérification auto toutes les 10 secondes
+        chargerValidationsAdmin();
         setInterval(chargerValidationsAdmin, 10000);
     }
 
-    console.log("✅ Plateau V4 initialisé avec succès");
+    console.log("✅ Plateau V5 initialisé avec succès");
 });
 
 // =============================================================
@@ -72,7 +72,6 @@ function afficherHeaderEtBoutons() {
     document.getElementById('nom-utilisateur').textContent = `${u.prenom} ${u.nom}`;
     document.getElementById('role-utilisateur').textContent = u.role === 'admin' ? 'Administrateur' : 'Manager';
 
-    // Bouton Déconnexion
     const btnDeconnexion = document.getElementById('btn-deconnexion-plateau');
     if (btnDeconnexion) {
         btnDeconnexion.addEventListener('click', async () => {
@@ -83,7 +82,6 @@ function afficherHeaderEtBoutons() {
         });
     }
 
-    // Admin : Bouton Créer Challenge
     const btnCreer = document.getElementById('btn-creer-challenge-plateau');
     if (u.role === 'admin' && btnCreer) {
         btnCreer.style.display = 'inline-block';
@@ -95,7 +93,6 @@ function afficherHeaderEtBoutons() {
 // =============================================================
 
 async function chargerEtCalculer() {
-    // Récupération
     const { data: agents } = await sb.from('users').select(`*, equipes (nom, drapeau_emoji)`).eq('role', 'agent');
     const { data: contrats } = await sb.from('contrats').select('*').in('statut', ['valide', 'en_attente']);
     const { data: reussites } = await sb.from('challenge_reussites').select('*').eq('statut', 'valide');
@@ -104,25 +101,19 @@ async function chargerEtCalculer() {
     donneesGlobales.agents = agents || [];
     donneesGlobales.contrats = contrats || [];
 
-    // Calcul des scores
     donneesGlobales.agents.forEach(agent => {
         agent.scoreTotal = 0;
-        
-        // Contrats
         const contratsAgent = donneesGlobales.contrats.filter(c => c.agent_id === agent.id);
         contratsAgent.forEach(c => {
             const isFri = c.created_at.includes('2026-02-20');
             agent.scoreTotal += isFri ? 20 : 10;
         });
-
-        // Challenges
         const challengesAgent = (reussites || []).filter(r => r.agent_id === agent.id);
         challengesAgent.forEach(r => {
             agent.scoreTotal += (r.points_gagnes || 0);
         });
     });
 
-    // Affichage
     afficherPodium(donneesGlobales.agents);
     afficherTableauGlobal(donneesGlobales.agents, donneesGlobales.contrats);
     afficherClassementEquipes(equipes || [], donneesGlobales.agents);
@@ -151,14 +142,11 @@ function updatePodiumSlot(rang, agent) {
 function afficherTableauGlobal(agents, contrats) {
     const tbody = document.getElementById('tableau-global-body');
     if (!tbody) return;
-
     const classe = [...agents].sort((a, b) => b.scoreTotal - a.scoreTotal);
-
     tbody.innerHTML = classe.map((agent, index) => {
         const nbContrats = contrats.filter(c => c.agent_id === agent.id).length;
         let medaille = '';
         if (index === 0) medaille = '🥇'; else if (index === 1) medaille = '🥈'; else if (index === 2) medaille = '🥉';
-
         return `
             <tr>
                 <td style="font-weight:bold;">${index + 1}</td>
@@ -176,12 +164,10 @@ function afficherTableauGlobal(agents, contrats) {
 function afficherClassementEquipes(equipes, agents) {
     const container = document.getElementById('equipes-classement');
     if (!container) return;
-
     const scoreEquipes = equipes.map(eq => {
         const total = agents.filter(a => a.equipe_id === eq.id).reduce((sum, a) => sum + a.scoreTotal, 0);
         return { ...eq, totalPoints: total };
     }).sort((a, b) => b.totalPoints - a.totalPoints);
-
     container.innerHTML = scoreEquipes.map((eq, index) => `
         <div class="equipe-card" style="display:flex; justify-content:space-between; padding:15px; background:white; margin-bottom:10px; border-radius:10px; box-shadow:0 2px 4px rgba(0,0,0,0.05); align-items:center;">
             <div style="display:flex; align-items:center; gap:15px;">
@@ -194,32 +180,18 @@ function afficherClassementEquipes(equipes, agents) {
     `).join('');
 }
 
-// =============================================================
-// 📞 GESTION CELLULES
-// =============================================================
-
 window.changerCellule = function(nomCellule) {
-    // Boutons actifs
     document.querySelectorAll('.cellule-tab-btn').forEach(btn => {
         btn.classList.remove('active');
         if (btn.innerText.includes(nomCellule)) btn.classList.add('active');
     });
-
     const titre = document.getElementById('titre-top-cellule');
     if (titre) titre.textContent = `📞 Top ${nomCellule}s`;
-
-    // Filtrage
     const agentsFiltres = donneesGlobales.agents.filter(a => a.cellule === nomCellule);
     const tbody = document.getElementById('tableau-cellule-body');
     if (!tbody) return;
-
     const classe = [...agentsFiltres].sort((a, b) => b.scoreTotal - a.scoreTotal);
-
-    if (classe.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Aucun agent dans cette cellule</td></tr>';
-        return;
-    }
-
+    if (classe.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Aucun agent dans cette cellule</td></tr>'; return; }
     tbody.innerHTML = classe.map((agent, index) => {
         return `
             <tr>
@@ -233,19 +205,13 @@ window.changerCellule = function(nomCellule) {
     }).join('');
 };
 
-// =============================================================
-// 🛠 UTILITAIRES ONGLETS
-// =============================================================
-
 function activerGestionOnglets() {
     const btns = document.querySelectorAll('.tab-btn');
     const contents = document.querySelectorAll('.tab-content');
-
     btns.forEach(btn => {
         btn.addEventListener('click', () => {
             btns.forEach(b => b.classList.remove('active'));
             contents.forEach(c => c.classList.remove('active'));
-            
             btn.classList.add('active');
             const tabId = btn.getAttribute('data-tab');
             const targetContent = document.getElementById(`tab-${tabId}`);
@@ -255,64 +221,73 @@ function activerGestionOnglets() {
 }
 
 // =============================================================
-// 📈 NOUVEAU : GRAPHIQUE GLOBAL (Fil Rouge)
+// 📈 NOUVEAU : GRAPHIQUES QUADRUPLE PISTE
 // =============================================================
 
-async function chargerGraphiqueGlobal() {
+async function chargerGraphiquesQuadruple() {
+    // 1. Récupérer TOUTES les données
     const { data: kpis } = await sb.from('kpi_equipe_journalier')
         .select('*, equipes(nom, drapeau_emoji)')
         .order('date_kpi', { ascending: true });
 
     if (!kpis || kpis.length === 0) return;
 
+    // 2. Préparer les dates (Axe X commun)
     const labels = [...new Set(kpis.map(k => new Date(k.date_kpi).toLocaleDateString()))];
-    const equipesUniques = [...new Set(kpis.map(k => k.equipe_id))];
-    const datasets = [];
+    const idsEquipes = [...new Set(kpis.map(k => k.equipe_id))];
 
-    equipesUniques.forEach(eqId => {
-        const dataEquipe = kpis.filter(k => k.equipe_id === eqId);
-        // On prend "Pépinière" comme référence pour le volume global
-        const dataPépinière = dataEquipe.filter(k => k.cellule === 'Pépinière');
-        
-        if (dataPépinière.length > 0) {
-            const nom = dataPépinière[0].equipes.nom;
-            const emoji = dataPépinière[0].equipes.drapeau_emoji || '';
-            const color = `hsl(${Math.random() * 360}, 70%, 50%)`;
+    // 3. Boucler sur les 4 cellules pour créer les 4 graphiques
+    const cellules = ['Mover', 'Switcher', 'Coach', 'Pépinière'];
 
-            datasets.push({
-                label: `${emoji} ${nom}`,
-                data: labels.map(date => {
-                    const entree = dataPépinière.find(k => new Date(k.date_kpi).toLocaleDateString() === date);
+    cellules.forEach(cell => {
+        const datasets = [];
+
+        idsEquipes.forEach(eqId => {
+            // Filtrer données pour Équipe + Cellule
+            const dataEquipeCell = kpis.filter(k => k.equipe_id === eqId && k.cellule === cell);
+            
+            if (dataEquipeCell.length > 0) {
+                const info = dataEquipeCell[0].equipes;
+                const color = `hsl(${(eqId * 50) % 360}, 70%, 50%)`;
+
+                const dataPoints = labels.map(date => {
+                    const entree = dataEquipeCell.find(k => new Date(k.date_kpi).toLocaleDateString() === date);
                     return entree ? entree.valeur_cumul : 0;
-                }),
-                borderColor: color,
-                backgroundColor: 'transparent',
-                tension: 0.3,
-                borderWidth: 3
+                });
+
+                datasets.push({
+                    label: `${info.drapeau_emoji} ${info.nom}`,
+                    data: dataPoints,
+                    borderColor: color,
+                    backgroundColor: 'transparent',
+                    tension: 0.3,
+                    borderWidth: 2,
+                    pointRadius: 3
+                });
+            }
+        });
+
+        // Dessiner le graphique spécifique à cette cellule
+        const ctx = document.getElementById(`chart-${cell}`);
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } },
+                    },
+                    scales: { y: { beginAtZero: true } }
+                }
             });
         }
     });
-
-    const ctx = document.getElementById('graphiqueGlobal');
-    if (ctx) {
-        new Chart(ctx, {
-            type: 'line',
-            data: { labels, datasets },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom' },
-                    title: { display: true, text: '🏆 Course aux Volumes (Pépinière)' }
-                },
-                scales: { y: { beginAtZero: true } }
-            }
-        });
-    }
 }
 
 // =============================================================
-// ⚡ NOUVEAU : FONCTIONS ADMIN (CHALLENGES)
+// ⚡ FONCTIONS ADMIN
 // =============================================================
 
 window.ouvrirModalChallenge = function() {
@@ -345,7 +320,7 @@ window.creerChallenge = async function(e) {
     } catch (err) {
         alert('Erreur : ' + err.message);
     } finally {
-        btn.textContent = 'Créer le défi';
+        btn.innerHTML = '⚡ Créer le défi';
     }
 };
 
@@ -353,7 +328,6 @@ async function chargerValidationsAdmin() {
     const panel = document.getElementById('admin-panel');
     const liste = document.getElementById('liste-validations-admin');
     
-    // On cherche tout ce qui est "en_attente"
     const { data: reussites } = await sb.from('challenge_reussites')
         .select('*, users(prenom, nom, equipe_id), challenges_flash(titre, type_challenge)')
         .eq('statut', 'en_attente');
@@ -390,7 +364,6 @@ async function chargerValidationsAdmin() {
 window.adminValider = async function(reussiteId, challengeId, isFlash, nomGagnant) {
     if (isFlash === 'true') {
         if(!confirm(`🏆 DÉCLARER ${nomGagnant} VAINQUEUR ?\nCela ferme le challenge pour tout le monde.`)) return;
-        
         await sb.from('challenge_reussites').update({ statut: 'valide' }).eq('id', reussiteId);
         await sb.from('challenges_flash').update({ statut: 'termine', gagnant_nom: nomGagnant }).eq('id', challengeId);
     } else {

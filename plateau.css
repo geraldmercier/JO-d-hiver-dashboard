@@ -883,3 +883,238 @@
         flex: 1 1 45%;
     }
 }
+/* ========================================= */
+/* STYLES MODALE (COPIÉ DE MANAGER) */
+/* ========================================= */
+.modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); /* Fond sombre transparent */
+    display: none; /* Caché par défaut */
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    position: relative;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    color: #333;
+    font-size: 1.5em;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #FF9800;
+    display: inline-block;
+    padding-bottom: 5px;
+}
+
+.modal-content input, 
+.modal-content select, 
+.modal-content textarea {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    box-sizing: border-box; /* Important pour ne pas dépasser */
+    font-family: 'Poppins', sans-serif;
+}
+
+.modal-content textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.modal-content label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #666;
+    font-size: 0.9em;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.modal-actions button {
+    padding: 10px 20px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+.modal-actions button[type="button"] {
+    background: #f5f5f5;
+    color: #333;
+}
+.modal-actions button[type="button"]:hover { background: #e0e0e0; }
+
+.modal-actions button[type="submit"] {
+    background: #FF9800;
+    color: white;
+}
+.modal-actions button[type="submit"]:hover { background: #F57C00; }
+/* =============================================================
+   👇 A COLLER TOUT EN BAS DE VOTRE FICHIER PLATEAU.CSS 👇
+   (Gestion des 4 Graphiques + Modale Admin)
+   ============================================================= */
+
+/* --- GRILLE DES 4 GRAPHIQUES --- */
+.section-graphiques {
+    margin-bottom: 40px;
+    margin-top: 20px;
+}
+
+.graphs-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2 colonnes */
+    gap: 20px;
+}
+
+.graph-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.graph-card h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    color: #444;
+    border-left: 4px solid #1976D2;
+    padding-left: 10px;
+}
+
+.canvas-container {
+    height: 250px;
+    position: relative;
+    width: 100%;
+}
+
+/* RESPONSIVE : 1 colonne sur mobile */
+@media (max-width: 768px) {
+    .graphs-grid { grid-template-columns: 1fr; }
+}
+
+/* --- DESIGN DU FORMULAIRE ADMIN (MODALE) --- */
+/* C'est ce qui manquait pour que votre formulaire soit beau */
+
+.modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); /* Fond sombre */
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    position: relative;
+    animation: slideDown 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    color: #333;
+    font-size: 1.5em;
+    margin-bottom: 20px;
+    border-bottom: 3px solid #FF9800;
+    display: inline-block;
+    padding-bottom: 5px;
+}
+
+/* Champs du formulaire */
+.modal-content input, 
+.modal-content select, 
+.modal-content textarea {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    box-sizing: border-box;
+    background: #f9f9f9;
+}
+
+.modal-content textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.modal-content label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #555;
+    font-size: 0.9em;
+}
+
+/* Boutons en bas du formulaire */
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 15px;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+
+.modal-actions button {
+    padding: 10px 20px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+.modal-actions button[type="button"] { /* Bouton Annuler */
+    background: #f0f0f0;
+    color: #333;
+}
+.modal-actions button[type="button"]:hover { background: #e0e0e0; }
+
+.modal-actions button[type="submit"] { /* Bouton Valider */
+    background: #FF9800;
+    color: white;
+}
+.modal-actions button[type="submit"]:hover { background: #F57C00; }
