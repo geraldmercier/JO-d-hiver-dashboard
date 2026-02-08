@@ -153,6 +153,35 @@
                         </div>
                     </section>
 
+                    <div class="manager-card" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 30px; border-left: 5px solid #002395;">
+    <h3 style="margin-top:0; color: #002395;">⚡ Attribution Rapide de Points</h3>
+    <p style="color:#666; margin-bottom:15px; font-size: 0.9em;">Sélectionnez une épreuve et un agent pour ajouter des points directement (sans validation).</p>
+    
+    <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
+        <div style="flex: 2; min-width: 200px;">
+            <label style="display:block; font-weight:bold; margin-bottom:5px;">📅 Épreuve</label>
+            <select id="select-challenge-manuel" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; background:#f9f9f9;">
+                <option value="">Chargement...</option>
+            </select>
+        </div>
+
+        <div style="flex: 2; min-width: 200px;">
+            <label style="display:block; font-weight:bold; margin-bottom:5px;">👤 Agent</label>
+            <select id="select-agent-manuel" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; background:#f9f9f9;">
+                <option value="">Chargement...</option>
+            </select>
+        </div>
+
+        <div style="flex: 1; min-width: 80px;">
+            <label style="display:block; font-weight:bold; margin-bottom:5px;">Points</label>
+            <input type="number" id="input-points-manuel" value="10" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+        </div>
+
+        <button onclick="attribuerPointsManuels()" style="padding: 12px 25px; background: #002395; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 0 0 auto;">
+            Envoyer ✅
+        </button>
+    </div>
+</div>
                     <section class="carte carte-challenges-attente" id="section-challenges-validation" style="display: none;">
                         <div class="section-header">
                             <h3 class="carte-titre">⚡ Challenges à Valider</h3>

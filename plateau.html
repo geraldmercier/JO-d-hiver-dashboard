@@ -3,247 +3,260 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏆 Vue Plateau — JO d'Hiver</title>
+    <title>👑 Admin Cockpit — JO d'Hiver 2026</title>
 
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="plateau.css">
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="manager.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body { background-color: #f0f2f5; font-family: 'Poppins', sans-serif; padding-top: 90px; }
+        .admin-container { max-width: 1600px; margin: 0 auto; padding: 20px; }
+
+        /* Header */
+        .cockpit-header {
+            background: linear-gradient(135deg, #1565C0, #1E88E5);
+            color: white; padding: 0 30px; height: 80px; display: flex; align-items: center; justify-content: space-between;
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        /* KPIs */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .kpi-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid transparent; }
+        .kpi-value { font-size: 2.5em; font-weight: 800; color: #1565C0; }
+        .kpi-label { color: #777; font-size: 0.85em; text-transform: uppercase; font-weight: 600; margin-top: 5px; }
+
+        /* Navigation */
+        .tabs-header { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+        .tab-btn { padding: 12px 25px; background: transparent; border: none; font-size: 1.1em; font-weight: 600; color: #777; cursor: pointer; border-radius: 8px; transition: 0.3s; }
+        .tab-btn:hover { background: #e3f2fd; color: #1565C0; }
+        .tab-btn.active { background: #1565C0; color: white; box-shadow: 0 4px 10px rgba(21, 101, 192, 0.3); }
+
+        .tab-content { display: none; animation: fadeIn 0.4s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Panneaux */
+        .panel { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .panel h3 { margin-top: 0; color: #1565C0; border-left: 4px solid #FF9800; padding-left: 10px; }
+
+        /* Tableaux */
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th { background: #f5f7fa; padding: 12px; text-align: left; color: #444; font-weight: 700; border-bottom: 2px solid #ddd; position: sticky; top: 0; z-index: 10; }
+        .data-table td { padding: 12px; border-bottom: 1px solid #eee; }
+        .data-table tr:hover { background-color: #f9fbff; }
+
+        /* Scrollable Table Container */
+        .table-scroll-container {
+            max-height: 600px; /* Hauteur max avant scroll */
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 8px;
+        }
+
+        /* Graphiques Fil Rouge */
+        .fil-rouge-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 30px; }
+        .graph-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .graph-header { font-weight: bold; color: #333; margin-bottom: 10px; display: flex; justify-content: space-between; }
+        .canvas-container { position: relative; height: 250px; width: 100%; }
+
+        @media (max-width: 1000px) { .fil-rouge-grid { grid-template-columns: 1fr; } }
+    </style>
 </head>
 
-<body class="plateau-body">
+<body>
 
-    <header class="plateau-header">
-        <div class="header-container">
-            <div class="header-logo">
-                <img src="assets/olympic.png" alt="Logo" class="logo-icon-img">
-                <div class="logo-text">
-                    <h1>JO d'Hiver 2026</h1>
-                    <p>Vue Plateau</p>
-                </div>
+    <header class="cockpit-header">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div style="font-size: 2.5em;">👑</div>
+            <div>
+                <h1 style="margin: 0; font-size: 1.4em;">Cockpit Admin</h1>
+                <div style="font-size: 0.8em; opacity: 0.8;">SUPERVISION GLOBALE</div>
             </div>
-
-            <div class="header-user">
-                <div class="user-info">
-                    <h2 id="nom-utilisateur">Chargement...</h2>
-                    <p id="role-utilisateur">...</p>
-                </div>
-            </div>
-
-            <div class="header-actions">
-                <button onclick="ouvrirModalChallenge()" id="btn-creer-challenge-plateau" class="btn-action" style="display:none; background: #FF9800; color: white; border: none; margin-right: 10px;">
-                    ⚡ Créer Challenge
-                </button>
-                <a href="manager.html" class="btn-retour-manager" style="margin-right: 10px;">👔 Vue Manager</a>
-                <button id="btn-deconnexion-plateau" class="btn-deconnexion">🚪 Déconnexion</button>
-            </div>
+        </div>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <div id="loading-indicator" style="display:none; font-weight:bold; color:#FFD700;">⏳ Chargement...</div>
+            <a href="manager.html" style="background: rgba(255,255,255,0.2); color: white; text-decoration: none; padding: 8px 15px; border-radius: 6px; font-weight: 600;">👔 Retour Manager</a>
+            <button id="btn-deconnexion" style="background: #ff5252; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600;">Déconnexion</button>
         </div>
     </header>
 
-    <main class="plateau-main">
-        <div class="plateau-container">
+    <main class="admin-container">
 
-            <section class="section-graphiques">
-                <h2 style="color: #333; margin-bottom: 20px;">📈 La Course en Direct (Par Piste)</h2>
-                
-                <div class="graphs-grid">
-                    <div class="graph-card">
-                        <h3>🏠 Course Mover</h3>
-                        <div class="canvas-container">
-                            <canvas id="chart-Mover"></canvas>
-                        </div>
-                    </div>
+        <div class="kpi-grid">
+            <div class="kpi-card" style="border-bottom-color: #2196F3;">
+                <div class="kpi-value" id="kpi-total-contrats">-</div>
+                <div class="kpi-label">Contrats Validés</div>
+            </div>
+            <div class="kpi-card" style="border-bottom-color: #FF9800;">
+                <div class="kpi-value" id="kpi-total-points">-</div>
+                <div class="kpi-label">Points Distribués</div>
+            </div>
+            <div class="kpi-card" style="border-bottom-color: #4CAF50;">
+                <div class="kpi-value" id="kpi-top-equipe">-</div>
+                <div class="kpi-label">Équipe en Tête</div>
+            </div>
+            <div class="kpi-card" style="border-bottom-color: #9C27B0;">
+                <div class="kpi-value" id="kpi-top-agent">-</div>
+                <div class="kpi-label">Meilleur Agent</div>
+            </div>
+        </div>
 
-                    <div class="graph-card">
-                        <h3>💰 Course Switcher</h3>
-                        <div class="canvas-container">
-                            <canvas id="chart-Switcher"></canvas>
-                        </div>
-                    </div>
+        <div class="tabs-header">
+            <button class="tab-btn active" onclick="switchTab('pilotage')">🚨 Pilotage & Validation</button>
+            <button class="tab-btn" onclick="switchTab('classements')">📈 Fil Rouge & Classements</button>
+            <button class="tab-btn" onclick="switchTab('actions')">⚡ Actions & Défis</button>
+        </div>
 
-                    <div class="graph-card">
-                        <h3>⭐ Course Coach</h3>
-                        <div class="canvas-container">
-                            <canvas id="chart-Coach"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="graph-card">
-                        <h3>🌱 Course Pépinière</h3>
-                        <div class="canvas-container">
-                            <canvas id="chart-Pépinière"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <div class="plateau-tabs">
-                <button class="tab-btn active" data-tab="global">🌍 Classement Global</button>
-                <button class="tab-btn" data-tab="equipes">🏆 Classement Équipes</button>
-                <button class="tab-btn" data-tab="cellules">📊 Par Cellule</button>
-                <button class="tab-btn" data-tab="records">🏅 Hall of Fame</button>
+        <section id="tab-pilotage" class="tab-content active">
+            <div class="panel" id="panel-attente" style="border-left: 5px solid #F44336; display:none;">
+                <h3 style="color: #D32F2F;">⚠️ Validations Requises (<span id="count-attente">0</span>)</h3>
+                <table class="data-table">
+                    <thead><tr><th>Heure</th><th>Agent</th><th>Équipe</th><th>Type</th><th>Action</th></tr></thead>
+                    <tbody id="tbody-attente"></tbody>
+                </table>
             </div>
 
-            <section class="tab-content active" id="tab-global">
-                <div class="podium-container">
-                    <div class="podium-place place-2">
-                        <div class="podium-avatar" id="podium-2-avatar">🥈</div>
-                        <div class="podium-nom" id="podium-2-nom">-</div>
-                        <div class="podium-equipe" id="podium-2-equipe">-</div>
-                        <div class="podium-score" id="podium-2-score">0 pts</div>
-                        <div class="podium-medaille">🥈</div>
-                        <div class="podium-rank">2</div>
-                    </div>
-                    <div class="podium-place place-1">
-                        <div class="podium-avatar" id="podium-1-avatar">🥇</div>
-                        <div class="podium-nom" id="podium-1-nom">-</div>
-                        <div class="podium-equipe" id="podium-1-equipe">-</div>
-                        <div class="podium-score" id="podium-1-score">0 pts</div>
-                        <div class="podium-medaille">🥇</div>
-                        <div class="podium-rank">1</div>
-                    </div>
-                    <div class="podium-place place-3">
-                        <div class="podium-avatar" id="podium-3-avatar">🥉</div>
-                        <div class="podium-nom" id="podium-3-nom">-</div>
-                        <div class="podium-equipe" id="podium-3-equipe">-</div>
-                        <div class="podium-score" id="podium-3-score">0 pts</div>
-                        <div class="podium-medaille">🥉</div>
-                        <div class="podium-rank">3</div>
+            <div class="panel">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h3>📋 Historique Global</h3>
+                    <div style="display:flex; gap:10px;">
+                        <select id="filtre-equipe" class="filter-select" onchange="filtrerHistorique()" style="padding:8px;"><option value="all">Toutes équipes</option></select>
+                        <select id="filtre-statut" class="filter-select" onchange="filtrerHistorique()" style="padding:8px;"><option value="all">Tous statuts</option><option value="valide">✅ Validé</option><option value="rejete">❌ Rejeté</option></select>
                     </div>
                 </div>
-
-                <div class="tableau-wrapper">
-                    <h3>🏆 Classement Complet</h3>
-                    <table class="tableau-classement" id="tableau-global">
-                        <thead>
-                            <tr>
-                                <th>Rang</th>
-                                <th>Agent</th>
-                                <th>Équipe</th>
-                                <th>Cellule</th>
-                                <th>Score</th>
-                                <th>Contrats</th>
-                                <th>Med.</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableau-global-body"></tbody>
+                <div class="table-scroll-container" style="max-height: 400px;">
+                    <table class="data-table">
+                        <thead><tr><th>Date</th><th>Agent</th><th>Équipe</th><th>Contrat</th><th>Statut</th><th>Lien</th></tr></thead>
+                        <tbody id="tbody-historique"></tbody>
                     </table>
                 </div>
-            </section>
+            </div>
+        </section>
 
-            <section class="tab-content" id="tab-equipes">
-                <h3>🏆 Classement des Équipes</h3>
-                <div class="equipes-classement" id="equipes-classement">
-                    <div class="chargement">Calcul des scores...</div>
+        <section id="tab-classements" class="tab-content">
+            
+            <h2 style="color:#1565C0; margin-bottom:20px;">📈 Fil Rouge Olympique</h2>
+            <div class="fil-rouge-grid">
+                <div class="graph-card">
+                    <div class="graph-header"><span>📞 Mover (TR %)</span><span>Comparatif Équipes</span></div>
+                    <div class="canvas-container"><canvas id="chart-Mover"></canvas></div>
                 </div>
-            </section>
-
-            <section class="tab-content" id="tab-cellules">
-                <div class="cellules-tabs">
-                    <button class="cellule-tab-btn active" onclick="changerCellule('Mover')">📞 Movers</button>
-                    <button class="cellule-tab-btn" onclick="changerCellule('Switcher')">📱 Switchers</button>
-                    <button class="cellule-tab-btn" onclick="changerCellule('Coach')">⭐ Coachs</button>
-                    <button class="cellule-tab-btn" onclick="changerCellule('Pépinière')">🌱 Pépinière</button>
+                <div class="graph-card">
+                    <div class="graph-header"><span>📱 Switcher (Homeserve %)</span><span>Comparatif Équipes</span></div>
+                    <div class="canvas-container"><canvas id="chart-Switcher"></canvas></div>
                 </div>
+                <div class="graph-card">
+                    <div class="graph-header"><span>⭐ Coach (Premium)</span><span>Progression Unique</span></div>
+                    <div class="canvas-container"><canvas id="chart-Coach"></canvas></div>
+                </div>
+                <div class="graph-card">
+                    <div class="graph-header"><span>🌱 Pépinière (Volume Total)</span><span>Progression Unique</span></div>
+                    <div class="canvas-container"><canvas id="chart-Pépinière"></canvas></div>
+                </div>
+            </div>
 
-                <div class="cellule-content active" id="cellule-Mover">
-                    <h3 id="titre-top-cellule">📞 Top Movers</h3>
-                    <table class="tableau-classement">
-                        <thead><tr><th>Rang</th><th>Agent</th><th>Éq.</th><th>Score</th><th>KPI</th></tr></thead>
-                        <tbody id="tableau-cellule-body"></tbody>
+            <hr style="margin: 40px 0; border:0; border-top:1px solid #ddd;">
+
+            <div style="display:flex; gap:25px; flex-wrap:wrap;">
+                
+                <div class="panel" style="flex:1; min-width:350px;">
+                    <h3>🌍 Classement Équipes</h3>
+                    <table class="data-table">
+                        <thead><tr><th>#</th><th>Équipe</th><th>Pts</th><th>Vol.</th></tr></thead>
+                        <tbody id="tbody-classement-equipes"></tbody>
                     </table>
                 </div>
-            </section>
 
-            <section class="tab-content" id="tab-records">
-                <h3>🏅 Hall of Fame</h3>
-                <div class="records-grid">
-                    <div class="record-carte">
-                        <div class="record-icone">🏆</div>
-                        <div class="record-titre">Leader Actuel</div>
-                        <div class="record-valeur" id="record-medailles">-</div>
-                    </div>
-                    <div class="record-carte">
-                        <div class="record-icone">🔥</div>
-                        <div class="record-titre">Record Journée</div>
-                        <div class="record-valeur" id="record-points-jour">-</div>
+                <div class="panel" style="flex:1; min-width:350px;">
+                    <h3>👤 Classement Agents (Complet)</h3>
+                    <div class="table-scroll-container"> <table class="data-table">
+                            <thead><tr><th>#</th><th>Agent</th><th>Équipe</th><th>Pts</th></tr></thead>
+                            <tbody id="tbody-classement-agents"></tbody>
+                        </table>
                     </div>
                 </div>
-            </section>
+            </div>
+        </section>
 
-        </div>
+        <section id="tab-actions" class="tab-content">
+            <div class="panel">
+                <h3>🎁 Attribuer des Points Manuels (Bonus)</h3>
+                <div style="display:flex; gap:15px; flex-wrap:wrap; align-items:flex-end;">
+                    <div style="flex:1;">
+                        <label>Raison</label>
+                        <select id="select-admin-epreuve" style="width:100%; padding:10px;"><option value="">Chargement...</option></select>
+                    </div>
+                    <div style="flex:1;">
+                        <label>Bénéficiaire</label>
+                        <select id="select-admin-agent" style="width:100%; padding:10px;"><option value="">Chargement...</option></select>
+                    </div>
+                    <div style="width:100px;">
+                        <label>Points</label>
+                        <input type="number" id="input-admin-points" style="width:100%; padding:10px;">
+                    </div>
+                    <button onclick="adminAttribuerPoints()" style="background:#FF9800; color:white; border:none; padding:12px 25px; border-radius:6px; cursor:pointer; font-weight:bold;">Envoyer</button>
+                </div>
+            </div>
+
+            <div class="panel" style="border-left: 5px solid #2196F3;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div><h3 style="color:#1565C0; margin-top:0;">⚡ Lancer un Challenge</h3><p style="margin:0;">Créer une épreuve Flash, durée, ou ciblée.</p></div>
+                    <button onclick="ouvrirModalChallenge()" style="background:#2196F3; color:white; border:none; padding:15px 30px; border-radius:8px; cursor:pointer; font-weight:bold;">+ Créer</button>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h3>🔥 Challenges en cours</h3>
+                <div id="liste-challenges-actifs">Chargement...</div>
+            </div>
+        </section>
+
     </main>
 
-   <div id="modal-challenge" class="modal" style="display:none;">
-        <div class="modal-content">
-            <h3>⚡ Nouveau Challenge Flash</h3>
+    <div id="modal-challenge" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+        <div class="modal-content" style="background:white; padding:30px; border-radius:12px; width:90%; max-width:550px; box-shadow:0 10px 30px rgba(0,0,0,0.3); animation: fadeIn 0.3s;">
+            <h3 style="margin-top:0; color:#1565C0; border-bottom:2px solid #eee; padding-bottom:10px;">⚡ Nouveau Challenge</h3>
             <form onsubmit="creerChallenge(event)" id="form-challenge">
-                
-                <div style="margin-bottom: 15px;">
-                    <label>Titre du défi</label>
-                    <input type="text" id="challenge-titre" placeholder="Ex: Sprint de l'après-midi" required>
-                </div>
-                
-                <div style="margin-bottom: 15px;">
-                    <label>Description</label>
-                    <textarea id="challenge-description" placeholder="Détails du challenge..." required></textarea>
-                </div>
-                
-                <div style="margin-bottom: 15px; background: #e3f2fd; padding: 10px; border-radius: 8px; border: 1px solid #bbdefb;">
-                    <label style="color: #1565C0;">🎯 Qui participe ?</label>
-                    <select id="challenge-cible-cellule" style="margin-bottom: 0; border: 2px solid #1976D2;">
-                        <option value="toutes">🌍 Tout le monde (Toutes cellules)</option>
-                        <option value="Mover">🏠 Seulement les Movers</option>
-                        <option value="Switcher">💰 Seulement les Switchers</option>
-                        <option value="Coach">⭐ Seulement les Coachs</option>
-                        <option value="Pépinière">🌱 Seulement la Pépinière</option>
+                <div style="margin-bottom: 15px;"><label>Titre</label><input type="text" id="challenge-titre" required style="width:100%; padding:10px;"></div>
+                <div style="margin-bottom: 15px;"><label>Description</label><textarea id="challenge-description" required style="width:100%; padding:10px; height:70px;"></textarea></div>
+                <div style="margin-bottom: 15px; background: #e3f2fd; padding: 15px; border-radius: 8px;">
+                    <label style="color: #1565C0; font-weight:bold;">🎯 Qui participe ?</label>
+                    <select id="challenge-cible-cellule" style="width:100%; padding:10px; border: 2px solid #1976D2; font-weight:bold; color:#0d47a1;">
+                        <option value="toutes">🌍 Tout le monde</option>
+                        <option value="Mover">🏠 Movers</option>
+                        <option value="Switcher">💰 Switchers</option>
+                        <option value="Coach">⭐ Coachs</option>
+                        <option value="Pépinière">🌱 Pépinière</option>
                     </select>
                 </div>
-
-                <div style="display:flex; gap:10px;">
-                    <div style="flex:1;">
-                        <label>Points gagnés</label>
-                        <input type="number" id="challenge-points" placeholder="10" required>
-                    </div>
-                    <div style="flex:1;">
-                        <label>Type</label>
-                        <select id="challenge-type">
-                            <option value="flash">⚡ Flash (Le 1er gagne)</option>
-                            <option value="duree">⏳ Durée (Points pour tous)</option>
-                        </select>
-                    </div>
+                <div style="display:flex; gap:15px; margin-bottom:15px;">
+                    <div style="flex:1;"><label>Points</label><input type="number" id="challenge-points" required style="width:100%; padding:10px;"></div>
+                    <div style="flex:1;"><label>Type</label><select id="challenge-type" style="width:100%; padding:10px;"><option value="flash">⚡ Flash</option><option value="duree">⏳ Durée</option></select></div>
                 </div>
-
-                <div style="display:flex; gap:10px;">
-                    <div style="flex:1;">
-                        <label>Début</label>
-                        <input type="datetime-local" id="challenge-debut" required>
-                    </div>
-                    <div style="flex:1;">
-                        <label>Fin</label>
-                        <input type="datetime-local" id="challenge-fin" required>
-                    </div>
+                <div style="display:flex; gap:15px; margin-bottom:20px;">
+                    <div style="flex:1;"><label>Début</label><input type="datetime-local" id="challenge-debut" required style="width:100%; padding:10px;"></div>
+                    <div style="flex:1;"><label>Fin</label><input type="datetime-local" id="challenge-fin" required style="width:100%; padding:10px;"></div>
                 </div>
-
-                <div class="modal-actions">
-                    <button type="button" onclick="fermerModalChallenge()">Annuler</button>
-                    <button type="submit" id="btn-submit-challenge">⚡ Créer le défi</button>
+                <div style="display:flex; justify-content:flex-end; gap:10px; border-top:1px solid #eee; padding-top:15px;">
+                    <button type="button" onclick="fermerModalChallenge()" style="padding:10px 20px; border:none; background:#eee; cursor:pointer;">Annuler</button>
+                    <button type="submit" id="btn-submit-challenge" style="padding:10px 20px; border:none; background:#1976D2; color:white; font-weight:bold; cursor:pointer;">Créer</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="admin-panel" style="position: fixed; bottom: 20px; right: 20px; width: 350px; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 -5px 20px rgba(0,0,0,0.2); display: none; z-index:9999;">
-        <h4 style="margin-top:0;">🔔 Validations en attente</h4>
-        <div id="liste-validations-admin" style="max-height: 300px; overflow-y: auto;">
-            </div>
-    </div>
-
     <script src="config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="plateau.js"></script>
+    <script>
+        function switchTab(id) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + id).classList.add('active');
+            document.querySelector(`button[onclick="switchTab('${id}')"]`).classList.add('active');
+        }
+    </script>
 </body>
 </html>

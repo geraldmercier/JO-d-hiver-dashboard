@@ -29,11 +29,18 @@ document.addEventListener('DOMContentLoaded', async function() {
         return;
     }
 
+    // Chargement des données principales
     await Promise.all([
         chargerTousLesAgents(),
         chargerTousLesContrats(),
         chargerToutesLesEquipes()
-    ]);
+    ]); 
+
+    // On charge le menu déroulant JUSTE APRÈS (Sécurité anti-bug)
+    await chargerListeChallengesManuels();
+
+    // Affichage complet
+    afficherInformationsHeader();
 
     // Affichage complet
     afficherInformationsHeader();
@@ -42,6 +49,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     await chargerChallengesAttente();
     await chargerAgentsEquipe();
     await chargerGraphiquesManager();
+    await chargerChallengesActifsManager();
 
     // Boutons
     const btnPlateau = document.getElementById('btn-vue-plateau');
@@ -89,10 +97,17 @@ async function chargerDonneesManager(uid) {
 }
 
 async function chargerTousLesAgents() {
+    // On demande TOUT (*) + le nom et le drapeau dans la table 'equipes'
     const { data } = await sb.from('users')
-        .select('*')
+        .select('*, equipes (nom, drapeau_emoji)')
         .eq('role', 'agent');
+    
     tousLesAgents = data || [];
+    
+    // Une fois chargé, on met à jour le menu déroulant immédiatement
+    if (typeof remplirSelectAgentsManuels === 'function') {
+        remplirSelectAgentsManuels();
+    }
 }
 
 async function chargerTousLesContrats() {
@@ -849,3 +864,164 @@ async function chargerGraphiquesManager() {
         }
     });
 }
+
+// =============================================================
+// ⚡ NOUVELLE FONCTIONNALITÉ : ATTRIBUTION MANUELLE
+// =============================================================
+
+// 1. Charger la liste des challenges dans le menu déroulant
+async function chargerListeChallengesManuels() {
+    const select = document.getElementById('select-challenge-manuel');
+    if (!select) return;
+
+    // On récupère les challenges actifs (Flash, Business, Events...)
+    // On trie pour avoir ceux d'aujourd'hui en premier ou par date
+    const { data: challenges, error } = await sb
+        .from('challenges_flash')
+        .select('*')
+        .eq('statut', 'actif')
+        .order('date_debut', { ascending: false });
+
+    select.innerHTML = '<option value="">-- Choisir une épreuve --</option>';
+
+    if (challenges) {
+        challenges.forEach(c => {
+            // Petit formatage de date pour la lisibilité
+            const dateStr = new Date(c.date_debut).toLocaleDateString('fr-FR', {day:'numeric', month:'short'});
+            select.innerHTML += `<option value="${c.id}" data-points="${c.gain_or || 10}">[${dateStr}] ${c.titre}</option>`;
+        });
+    }
+}
+
+// 2. Remplir la liste des agents (on réutilise la variable globale déjà existante)
+function remplirSelectAgentsManuels() {
+    const select = document.getElementById('select-agent-manuel');
+    if (!select || !tousLesAgents) return;
+
+    select.innerHTML = '<option value="">-- Choisir un agent --</option>';
+    
+    // Tri alphabétique
+    const agentsTries = [...tousLesAgents].sort((a, b) => a.nom.localeCompare(b.nom));
+
+    agentsTries.forEach(agent => {
+        // --- DÉTECTION INTELLIGENTE DE L'ÉQUIPE ---
+        let nomEquipe = 'Sans équipe';
+        
+        // Cas 1 : Supabase renvoie "equipes" (objet)
+        if (agent.equipes && agent.equipes.nom) {
+            nomEquipe = `${agent.equipes.nom} ${agent.equipes.drapeau_emoji || ''}`;
+        }
+        // Cas 2 : Supabase renvoie "equipes" (tableau)
+        else if (Array.isArray(agent.equipes) && agent.equipes[0]) {
+            nomEquipe = `${agent.equipes[0].nom} ${agent.equipes[0].drapeau_emoji || ''}`;
+        }
+        
+        select.innerHTML += `<option value="${agent.id}">${agent.nom} ${agent.prenom} (${nomEquipe})</option>`;
+    });
+}
+
+// 3. L'action du bouton "Envoyer"
+// 3. L'action du bouton "Envoyer" (VERSION CORRIGÉE agent_id)
+// 3. L'action du bouton "Envoyer" (VERSION FLEXIBLE & BONUS)
+window.attribuerPointsManuels = async function() {
+    const challengeId = document.getElementById('select-challenge-manuel').value;
+    const agentId = document.getElementById('select-agent-manuel').value;
+    const pointsInput = document.getElementById('input-points-manuel').value; // On récupère ce que vous avez tapé
+
+    if (!challengeId || !agentId || !pointsInput) {
+        alert("❌ Merci de tout remplir.");
+        return;
+    }
+
+    if (!confirm(`Confirmer l'ajout de ${pointsInput} points à cet agent ?`)) return;
+
+    try {
+        // On envoie à la base de données AVEC la valeur manuelle
+        const { error } = await sb.from('challenge_reussites').insert([
+            {
+                agent_id: agentId,
+                challenge_flash_id: challengeId,
+                statut: 'valide',
+                date_validation: new Date().toISOString(),
+                points_manuel: parseInt(pointsInput) // 👈 C'est ici la magie !
+            }
+        ]);
+
+        if (error) throw error;
+
+        afficherNotification(`✅ Succès ! ${pointsInput} points attribués.`, 'success');
+        
+        // Rafraîchissement des tableaux
+        if (typeof chargerAgentsEquipe === 'function') await chargerAgentsEquipe();
+        if (typeof calculerEtAfficherPerformanceEquipe === 'function') await calculerEtAfficherPerformanceEquipe();
+
+    } catch (err) {
+        console.error(err);
+        alert("Erreur : " + err.message);
+    }
+};
+async function chargerChallengesActifsManager() {
+    // 1. On cherche la "boîte" HTML qu'on a créée à l'étape 1
+    const container = document.getElementById('liste-challenges-actifs');
+    
+    // Sécurité : Si la boîte n'existe pas dans la page, on s'arrête là pour éviter un bug.
+    if (!container) return;
+
+    // 2. On interroge Supabase
+    // "Donne-moi tous les challenges dont le statut est encore 'actif'"
+    const { data: challenges } = await sb.from('challenges_flash')
+        .select('*')
+        .eq('statut', 'actif');
+
+    // 3. On nettoie la boîte (on efface l'ancien contenu pour ne pas avoir de doublons)
+    // Et on met un petit titre
+    container.innerHTML = '<h3>🔥 Challenges en cours</h3>';
+    
+    // Si la liste est vide, on affiche un petit message et on s'arrête.
+    if (!challenges || challenges.length === 0) {
+        container.innerHTML += '<p style="color:#888;">Aucun challenge actif.</p>';
+        return;
+    }
+
+    // 4. La Boucle : Pour chaque challenge trouvé...
+    challenges.forEach(c => {
+        // On crée un élément visuel (une div)
+        const div = document.createElement('div');
+        
+        // On lui donne du style (bordure bleue, fond blanc...)
+        div.style.cssText = "background:white; padding:15px; margin-bottom:10px; border-radius:8px; border-left:4px solid #2196F3; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 5px rgba(0,0,0,0.05);";
+        
+        // On remplit l'intérieur de la div avec du HTML
+        // Notez le bouton <button onclick="stopperChallenge('${c.id}')">
+        // C'est lui qui contient l'ID unique du challenge à supprimer.
+        div.innerHTML = `
+            <div>
+                <strong>${c.titre}</strong> 
+                <span style="background:#e3f2fd; color:#1565C0; padding:2px 6px; border-radius:4px; font-size:0.8em;">${c.points_attribues} pts</span>
+                <div style="font-size:0.85em; color:#666;">${c.description}</div>
+            </div>
+            
+            <button onclick="stopperChallenge('${c.id}')" style="background:#ff5252; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:0.8em;">
+                🗑️ Arrêter
+            </button>
+        `;
+        
+        // On ajoute cette div dans la grande boîte principale
+        container.appendChild(div);
+    });
+}
+window.stopperChallenge = async function(id) {
+    if (!confirm("⚠️ Voulez-vous vraiment ARRÊTER ce challenge immédiatement ?\n\nIl disparaîtra des écrans des agents.")) return;
+
+    const { error } = await sb.from('challenges_flash')
+        .update({ statut: 'termine' }) // 👈 REMPLACEZ 'supprime' PAR 'termine' ICI
+        .eq('id', id);
+
+    if (error) {
+        alert("Erreur technique : " + error.message);
+    } else {
+        alert("Challenge arrêté avec succès.");
+        chargerChallengesActifsManager(); 
+        if(typeof chargerListeChallengesManuels === 'function') chargerListeChallengesManuels();
+    }
+};

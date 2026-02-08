@@ -49,7 +49,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         chargerTousLesContrats(),
         chargerToutesLesReussites(),
         chargerFilRouge(), // 👈 AJOUTEZ CETTE LIGNE ICI
-        verifierVainqueurFlash()
+        verifierVainqueurFlash(),
+        verifierPopupsAlertes()
     ]);
 
     // 4. Calculs initiaux
@@ -105,8 +106,30 @@ async function chargerDonneesUtilisateur(uid) {
 }
 
 async function chargerTousLesAgents() {
-    const { data } = await sb.from('users').select(`*, equipes (nom, drapeau_emoji)`).eq('role', 'agent');
-    tousLesAgents = data || [];
+    // 1. On charge les agents
+    const { data: agents } = await sb.from('users')
+        .select('*, equipes (nom, drapeau_emoji)')
+        .eq('role', 'agent');
+    
+    tousLesAgents = agents || [];
+
+    // 2. LA CORRECTION : On récupère les points challenges DÉJÀ CALCULÉS par la base de données
+    // (C'est ici que se trouve votre "3")
+    const { data: scores } = await sb.from('view_classement_general')
+        .select('user_id, points_challenges'); 
+    
+    // 3. On distribue ces points aux agents
+    if (scores) {
+        tousLesAgents.forEach(agent => {
+            const scoreRow = scores.find(s => s.user_id === agent.id);
+            if (scoreRow) {
+                // On stocke ça dans une variable spéciale
+                agent.pointsChallengesOfficiels = scoreRow.points_challenges || 0;
+            } else {
+                agent.pointsChallengesOfficiels = 0;
+            }
+        });
+    }
 }
 
 async function chargerTousLesContrats() {
@@ -115,9 +138,10 @@ async function chargerTousLesContrats() {
 }
 
 async function chargerToutesLesReussites() {
-    // On charge TOUT sans filtrer par utilisateur
-    const { data } = await sb.from('challenge_reussites').select('*');
-    // On stocke dans une variable globale pour que le calcul la trouve
+    // CORRECTION : On demande aussi les points du challenge associé !
+    const { data } = await sb.from('challenge_reussites')
+        .select('*, challenges_flash (points_attribues)');
+    
     window.toutesLesReussites = data || [];
 }
 
@@ -131,40 +155,55 @@ async function chargerMesChallengesReussis() {
 // =============================================================
 
 function calculerScoresComplets() {
-    // Réinitialisation
-    tousLesAgents.forEach(a => { a.scoreTotal = 0; a.scoreJour = 0; });
+    // 0. Réinitialisation
+    tousLesAgents.forEach(a => { 
+        a.scoreTotal = 0; 
+        a.scoreJour = 0; 
+    });
 
-    // 1. Points de Volume
+    // =====================================================
+    // 1. POINTS DE VOLUME (CONTRATS) - Calcul JS conservé
+    // (Pour garder la règle du "Vendredi x2" qui n'est pas dans la vue simple)
+    // =====================================================
     tousLesContrats.forEach(c => {
-        const agent = tousLesAgents.find(a => a.id === c.agent_id);
-        if (agent) {
-            const dateC = c.created_at.split('T')[0];
-            const points = (dateC === DATE_SPRINT) ? 20 : 10;
-            agent.scoreTotal += points;
+        if (c.statut === 'valide' || c.statut === 'en_attente') {
+            const agent = tousLesAgents.find(a => a.id === c.agent_id);
+            if (agent) {
+                const dateC = c.created_at.split('T')[0];
+                // Règle Spéciale : Vendredi = 20 pts, sinon 10 pts
+                const points = (dateC === DATE_SPRINT) ? 20 : 10;
+                
+                agent.scoreTotal += points;
+
+                // Score du jour (pour le podium quotidien)
+                if (estAujourdhui(c.created_at)) {
+                    agent.scoreJour += points;
+                }
+            }
         }
     });
 
-            // 3. Intégration des points Challenges
-    if (typeof toutesLesReussites !== 'undefined') {
-        toutesLesReussites.forEach(reussite => {
-            // On ne compte que les challenges validés
-            if (reussite.statut === 'valide') {
-                const agent = tousLesAgents.find(a => a.id === reussite.agent_id);
-                if (agent) {
-                    // On ajoute les points (par défaut 10 si non précisé)
-                    agent.scoreTotal += (reussite.points_gagnes || 0);
-                }
-            }
-        });
-    }
-    
-    // 2. Bonus Médailles (Podiums quotidiens)
+    // =====================================================
+    // 2. POINTS DES CHALLENGES (LA CORRECTION EST ICI 🛠️)
+    // =====================================================
+    // Au lieu de recalculer et d'échouer, on prend la valeur sûre de la base
+    tousLesAgents.forEach(agent => {
+        if (agent.pointsChallengesOfficiels) {
+            agent.scoreTotal += agent.pointsChallengesOfficiels;
+        }
+    });
+
+    // =====================================================
+    // 3. BONUS MÉDAILLES (PODIUMS QUOTIDIENS) - CONSERVÉ ✅
+    // =====================================================
     const ajd = new Date().toISOString().split('T')[0];
     let dateCurseur = new Date(DATE_DEBUT);
     const dateFinObj = new Date(ajd < DATE_FIN ? ajd : DATE_FIN);
 
     while (dateCurseur <= dateFinObj) {
         const dateStr = dateCurseur.toISOString().split('T')[0];
+        
+        // Bonus doublés le vendredi
         const estVendredi = (dateStr === DATE_SPRINT);
         const bonusOr = estVendredi ? 20 : 10;
         const bonusArg = estVendredi ? 10 : 5;
@@ -172,26 +211,34 @@ function calculerScoresComplets() {
 
         ['Mover', 'Switcher', 'Coach', 'Pépinière'].forEach(cellule => {
             const agentsCellule = tousLesAgents.filter(a => a.cellule === cellule);
+            
+            // Classement du jour pour les médailles
             const classementJour = agentsCellule.map(a => {
-                const vol = tousLesContrats.filter(c => c.agent_id === a.id && c.created_at.startsWith(dateStr)).length;
+                const vol = tousLesContrats.filter(c => 
+                    c.agent_id === a.id && 
+                    c.created_at.startsWith(dateStr) &&
+                    c.statut === 'valide'
+                ).length;
                 return { agent: a, vol: vol };
             }).sort((a, b) => b.vol - a.vol);
 
+            // Distribution
             if (classementJour[0] && classementJour[0].vol > 0) classementJour[0].agent.scoreTotal += bonusOr;
             if (classementJour[1] && classementJour[1].vol > 0) classementJour[1].agent.scoreTotal += bonusArg;
             if (classementJour[2] && classementJour[2].vol > 0) classementJour[2].agent.scoreTotal += bonusBrz;
         });
+
         dateCurseur.setDate(dateCurseur.getDate() + 1);
     }
 
-    // 3. Points Challenges Flash
-    challengesReussis.filter(cr => cr.statut === 'valide').forEach(cr => {
-        if (utilisateurActuel) utilisateurActuel.scoreTotal += (cr.points_gagnes || 0);
-    });
-
-    // Mise à jour utilisateur courant
+    // =====================================================
+    // 4. MISE À JOUR DE L'UTILISATEUR CONNECTÉ
+    // =====================================================
     const moiCalcule = tousLesAgents.find(a => a.id === utilisateurActuel.id);
-    if (moiCalcule) utilisateurActuel.scoreTotal = moiCalcule.scoreTotal;
+    if (moiCalcule) {
+        utilisateurActuel.scoreTotal = moiCalcule.scoreTotal;
+        if (utilisateurActuel.scoreJour !== undefined) utilisateurActuel.scoreJour = moiCalcule.scoreJour;
+    }
 }
 
 // =============================================================
@@ -508,61 +555,89 @@ function chargerContratsJour() {
     });
 }
 
-// =============================================================
-// 📅 CALENDRIER 12 JOURS (NOUVEAU)
-// =============================================================
-function afficherCalendrierComplet() {
+// ==========================================
+// 📅 CALENDRIER OLYMPIQUE (VERSION CORRIGÉE)
+// ==========================================
+async function afficherCalendrierComplet() {
     const grid = document.getElementById('calendrier-grid');
     if (!grid) return;
 
-    grid.innerHTML = '';
-    
-    const debut = new Date('2026-02-11'); // Mercredi 11 Février
-const fin = new Date('2026-02-25');   // Mercredi 25 Février
-    const aujourdhui = new Date().toISOString().split('T')[0];
+    grid.innerHTML = '<div style="text-align:center; col-span:4;">Chargement...</div>';
 
+    // 1. Récupération des challenges depuis Supabase
+    // On prend TOUT pour être sûr
+    const { data: challenges, error } = await sb
+        .from('challenges_flash')
+        .select('*')
+        .eq('statut', 'actif');
+
+    if (error) {
+        console.error("Erreur chargement challenges:", error);
+        grid.innerHTML = "Erreur de chargement";
+        return;
+    }
+
+    console.log("Challenges trouvés :", challenges); // Pour vérifier dans la console (F12)
+
+    // 2. Configuration des dates (11 au 25 Février)
+    grid.innerHTML = ''; // On vide
+    const debut = new Date('2026-02-11');
+    const fin = new Date('2026-02-25');
+    const aujourdhuiStr = new Date().toISOString().split('T')[0];
+
+    // 3. Boucle jour par jour
     for (let d = new Date(debut); d <= fin; d.setDate(d.getDate() + 1)) {
-        const dateStr = d.toISOString().split('T')[0];
-        const estFutur = dateStr > aujourdhui;
-        const estAujourdhui = dateStr === aujourdhui;
+        // Formatage de la date du jour (YYYY-MM-DD)
+        const dateBoucle = d.toISOString().split('T')[0];
+        
+        // Formatage pour l'affichage (ex: "11 Fév")
+        const dateAffiche = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 
-        // Compter mes contrats ce jour
-        const contratsJour = tousLesContrats.filter(c => 
-            c.agent_id === utilisateurActuel.id && 
-            c.created_at.startsWith(dateStr) &&
-            c.statut === 'valide'
-        );
-        const score = contratsJour.length * 10;
+        // 4. RECHERCHE DU CHALLENGE (Logique Floue)
+        // On regarde si un challenge commence ou finit ce jour-là
+        // On utilise .startsWith pour ignorer les heures (T00:00:00)
+        const challengeDuJour = challenges.find(c => {
+            const deb = c.date_debut.split('T')[0]; // On garde juste 2026-02-11
+            const fin = c.date_fin.split('T')[0];
+            return dateBoucle >= deb && dateBoucle <= fin;
+        });
 
-        // Vérifier si médaille (top 3 du jour dans ma cellule)
-        let medaille = null;
-        if (!estFutur && contratsJour.length > 0) {
-            const agentsCellule = tousLesAgents.filter(a => a.cellule === utilisateurActuel.cellule);
-            const classementJour = agentsCellule.map(agent => {
-                const vol = tousLesContrats.filter(c => 
-                    c.agent_id === agent.id && 
-                    c.created_at.startsWith(dateStr) &&
-                    c.statut === 'valide'
-                ).length;
-                return { agentId: agent.id, vol };
-            }).sort((a, b) => b.vol - a.vol);
+        // 5. Création de la case HTML
+        const div = document.createElement('div');
+        div.className = 'calendar-day';
 
-            const maPositionJour = classementJour.findIndex(c => c.agentId === utilisateurActuel.id);
-            if (maPositionJour === 0) medaille = '🥇';
-            else if (maPositionJour === 1) medaille = '🥈';
-            else if (maPositionJour === 2) medaille = '🥉';
+        // Est-ce aujourd'hui ?
+        if (dateBoucle === aujourdhuiStr) div.classList.add('today');
+
+        // Contenu par défaut (Tiret)
+        let iconHtml = `<div class="day-status empty">—</div>`;
+
+        // Si on a trouvé un challenge !
+        if (challengeDuJour) {
+            // Choix de l'icône selon le titre ou le type
+            let emoji = '⚡'; 
+            if (challengeDuJour.titre.includes('Biathlon')) emoji = '🎿';
+            else if (challengeDuJour.titre.includes('Patinage')) emoji = '⛸️';
+            else if (challengeDuJour.titre.includes('Descente')) emoji = '⛷️';
+            else if (challengeDuJour.titre.includes('Slalom')) emoji = '🚩';
+            else if (challengeDuJour.titre.includes('Bobsleigh')) emoji = '🛷';
+            else if (challengeDuJour.titre.includes('Snowboard')) emoji = '🏂';
+            else if (challengeDuJour.titre.includes('Curling')) emoji = '🥌';
+            else if (challengeDuJour.titre.includes('Cérémonie')) emoji = '🔥';
+            else if (challengeDuJour.titre.includes('SPRINT')) emoji = '🚀';
+
+            iconHtml = `<div class="day-status active" style="font-size: 24px;">${emoji}</div>`;
+            
+            // Clic pour ouvrir
+            div.style.cursor = 'pointer';
+            div.onclick = () => afficherDetailChallenge(challengeDuJour);
         }
 
-        const div = document.createElement('div');
-        div.className = 'jour-carte' + 
-            (estFutur ? ' jour-futur' : '') + 
-            (estAujourdhui ? ' jour-actuel' : '');
-        
         div.innerHTML = `
-            <div class="jour-date">${d.getDate()} Fév</div>
-            <div class="jour-score">${estFutur ? '—' : score + ' pts'}</div>
-            ${medaille ? '<div class="jour-medaille">' + medaille + '</div>' : ''}
+            <div class="day-date">${dateAffiche}</div>
+            ${iconHtml}
         `;
+
         grid.appendChild(div);
     }
 }
@@ -888,6 +963,110 @@ async function verifierVainqueurFlash() {
             localStorage.setItem(cleMemoire, 'true');
             
             // Lancer des confettis si vous avez une lib, sinon c'est déjà bien !
+        }
+    }
+}
+// ==========================================
+// 🕵️‍♂️ GESTION DU POPUP (MODAL)
+// ==========================================
+function afficherDetailChallenge(challenge) {
+    const modal = document.getElementById('modal-challenge');
+    if (!modal) {
+        console.error("Erreur: Le modal HTML est introuvable !");
+        return;
+    }
+
+    // 1. Remplissage des textes
+    document.getElementById('modal-titre').innerText = challenge.titre;
+    document.getElementById('modal-desc').innerText = challenge.description;
+    
+    // 2. Affichage des gains (Médailles)
+    const gainsHtml = `
+        <div class="medals-grid">
+            <div class="medal-item">🥇 Or : +${challenge.gain_or || 0} pts</div>
+            <div class="medal-item">🥈 Argent : +${challenge.gain_argent || 0} pts</div>
+            <div class="medal-item">🥉 Bronze : +${challenge.gain_bronze || 0} pts</div>
+        </div>
+        <p style="margin-top:10px; font-size:0.9em; color:#666;">
+            Type : <strong>${challenge.type_challenge || 'Standard'}</strong> | 
+            Cible : <strong>${challenge.cible || 'Tous'}</strong>
+        </p>
+    `;
+    document.getElementById('modal-gains').innerHTML = gainsHtml;
+
+    // 3. Afficher le modal
+    modal.style.display = 'flex';
+}
+
+// Fonction pour fermer le modal (à relier au bouton croix)
+function fermerModal() {
+    const modal = document.getElementById('modal-challenge');
+    if (modal) modal.style.display = 'none';
+}
+
+// Fermer si on clique en dehors du contenu
+window.onclick = function(event) {
+    const modal = document.getElementById('modal-challenge');
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
+
+// Ajoutez cet appel dans le chargement initial (vers ligne 50) :
+// await verifierPopupsAlertes();
+
+// --- NOUVELLES FONCTIONS DE DÉTECTION ---
+
+async function verifierPopupsAlertes() {
+    const now = new Date().toISOString();
+
+    // 1. DÉTECTION NOUVEAUX CHALLENGES ACTIFS
+    const { data: challengesActifs } = await sb.from('challenges_flash')
+        .select('*')
+        .eq('statut', 'actif')
+        .lte('date_debut', now)
+        .gte('date_fin', now);
+
+    if (challengesActifs) {
+        // On prend le plus récent
+        const dernier = challengesActifs[0]; 
+        if (dernier) {
+            const cleMemoire = `vu_new_challenge_${dernier.id}`;
+            // Si on ne l'a jamais vu
+            if (!localStorage.getItem(cleMemoire)) {
+                // Remplir Popup
+                document.getElementById('popup-titre-challenge').innerText = dernier.titre;
+                document.getElementById('popup-desc-challenge').innerText = dernier.description;
+                document.getElementById('popup-points-challenge').innerText = dernier.points_attribues;
+                
+                // Afficher
+                document.getElementById('popup-nouveau-challenge').style.display = 'flex';
+                
+                // Mémoriser qu'on l'a vu
+                localStorage.setItem(cleMemoire, 'true');
+            }
+        }
+    }
+
+    // 2. DÉTECTION VICTOIRE RÉCENTE (Moins de 24h)
+    const hier = new Date();
+    hier.setDate(hier.getDate() - 1);
+    
+    const { data: challengesTermines } = await sb.from('challenges_flash')
+        .select('*')
+        .eq('statut', 'termine') // Statut mis par le manager quand il valide le vainqueur
+        .gt('date_fin', hier.toISOString())
+        .not('gagnant_nom', 'is', null) // S'il y a un gagnant
+        .order('date_fin', { ascending: false });
+
+    if (challengesTermines && challengesTermines.length > 0) {
+        const victoire = challengesTermines[0];
+        const cleVictoire = `vu_victoire_${victoire.id}`;
+
+        if (!localStorage.getItem(cleVictoire)) {
+            document.getElementById('popup-gagnant-nom').innerText = victoire.gagnant_nom;
+            document.getElementById('popup-victoire').style.display = 'flex';
+            localStorage.setItem(cleVictoire, 'true');
         }
     }
 }
