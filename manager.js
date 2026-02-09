@@ -49,13 +49,25 @@ document.addEventListener('DOMContentLoaded', async function() {
     await chargerChallengesAttente();
     await chargerAgentsEquipe();
     await chargerGraphiquesManager();
-    await chargerChallengesActifsManager();
+    await chargerChallengesActifsManager();if(typeof chargerClassementDetailleManager === 'function') await chargerClassementDetailleManager();
+
+    console.log('✅ Manager initialisé');
+});
+
 
     // Boutons
-    const btnPlateau = document.getElementById('btn-vue-plateau');
-    if (btnPlateau) {
+   const btnPlateau = document.getElementById('btn-vue-plateau');
+if (btnPlateau) {
+    // Si je suis Admin, je vois le bouton et je peux cliquer
+    if (managerActuel.role === 'admin') {
+        btnPlateau.style.display = 'inline-block'; // Ou 'block' selon votre design
         btnPlateau.addEventListener('click', () => window.location.href = 'plateau.html');
+    } 
+    // Sinon (Manager simple), je cache le bouton
+    else {
+        btnPlateau.style.display = 'none';
     }
+}
 
     const btnDeconnexion = document.getElementById('btn-deconnexion');
     if (btnDeconnexion) {
@@ -72,8 +84,52 @@ document.addEventListener('DOMContentLoaded', async function() {
         initialiserMenuEquipes();
     }
 
+    // 8. Temps Réel
+    ecouterRealtimeManager();
+
     console.log('✅ Dashboard Manager initialisé');
-});
+
+// =============================================================
+// 📡 TEMPS RÉEL (REALTIME)
+// =============================================================
+
+/**
+ * Écoute les changements sur les tables clés pour le manager
+ */
+function ecouterRealtimeManager() {
+    console.log('📡 Activation du temps réel pour le Manager...');
+    
+    sb.channel('flux-manager')
+        .on(
+            'postgres_changes', 
+            { event: '*', schema: 'public', table: 'contrats' }, 
+            async () => {
+                console.log('🔔 Nouveau contrat détecté (Realtime)');
+                await chargerTousLesContrats();
+                await calculerEtAfficherPerformanceEquipe();
+                await chargerContratsAttente();
+                await chargerAgentsEquipe();
+            }
+        )
+        .on(
+            'postgres_changes', 
+            { event: '*', schema: 'public', table: 'challenges_flash' }, 
+            async () => {
+                console.log('🔔 Mise à jour challenge détectée (Realtime)');
+                await chargerChallengesActifsManager();
+            }
+        )
+        .on(
+            'postgres_changes', 
+            { event: '*', schema: 'public', table: 'challenge_reussites' }, 
+            async () => {
+                console.log('🔔 Nouvelle réussite challenge détectée (Realtime)');
+                await chargerChallengesAttente();
+                await calculerEtAfficherPerformanceEquipe();
+            }
+        )
+        .subscribe();
+}
 
 // =============================================================
 // 📡 CHARGEMENT DES DONNÉES
@@ -874,21 +930,22 @@ async function chargerListeChallengesManuels() {
     const select = document.getElementById('select-challenge-manuel');
     if (!select) return;
 
-    // On récupère les challenges actifs (Flash, Business, Events...)
-    // On trie pour avoir ceux d'aujourd'hui en premier ou par date
-    const { data: challenges, error } = await sb
+    const { data: challenges } = await sb
         .from('challenges_flash')
         .select('*')
         .eq('statut', 'actif')
         .order('date_debut', { ascending: false });
 
+    // On remet l'option par défaut
     select.innerHTML = '<option value="">-- Choisir une épreuve --</option>';
+    
+    // 👇 AJOUT : L'option BONUS magique qui manquait
+    select.innerHTML += '<option value="bonus" style="font-weight:bold; color:#E91E63;">🎁 BONUS MANUEL (Hors Challenge)</option>';
 
     if (challenges) {
         challenges.forEach(c => {
-            // Petit formatage de date pour la lisibilité
             const dateStr = new Date(c.date_debut).toLocaleDateString('fr-FR', {day:'numeric', month:'short'});
-            select.innerHTML += `<option value="${c.id}" data-points="${c.gain_or || 10}">[${dateStr}] ${c.titre}</option>`;
+            select.innerHTML += `<option value="${c.id}">[${dateStr}] ${c.titre}</option>`;
         });
     }
 }
@@ -926,89 +983,131 @@ function remplirSelectAgentsManuels() {
 window.attribuerPointsManuels = async function() {
     const challengeId = document.getElementById('select-challenge-manuel').value;
     const agentId = document.getElementById('select-agent-manuel').value;
-    const pointsInput = document.getElementById('input-points-manuel').value; // On récupère ce que vous avez tapé
+    const pointsInput = document.getElementById('input-points-manuel').value;
 
     if (!challengeId || !agentId || !pointsInput) {
-        alert("❌ Merci de tout remplir.");
+        alert("❌ Merci de tout remplir (Épreuve, Agent et Points).");
         return;
     }
 
     if (!confirm(`Confirmer l'ajout de ${pointsInput} points à cet agent ?`)) return;
 
     try {
-        // On envoie à la base de données AVEC la valeur manuelle
+        // Préparation des données
+        // Si c'est "bonus", on envoie NULL comme ID de challenge, sinon l'ID réel
+        const idPourLaBase = (challengeId === 'bonus') ? null : challengeId;
+
         const { error } = await sb.from('challenge_reussites').insert([
             {
                 agent_id: agentId,
-                challenge_flash_id: challengeId,
+                challenge_flash_id: idPourLaBase, // null si bonus, uuid si challenge
                 statut: 'valide',
                 date_validation: new Date().toISOString(),
-                points_manuel: parseInt(pointsInput) // 👈 C'est ici la magie !
+                points_manuel: parseInt(pointsInput),
+                commentaire: (challengeId === 'bonus') ? 'Bonus Manager' : null // Petit commentaire pour s'y retrouver
             }
         ]);
 
         if (error) throw error;
 
-        afficherNotification(`✅ Succès ! ${pointsInput} points attribués.`, 'success');
+        // Notification et rafraîchissement
+        // On vérifie si la fonction de notification existe, sinon alert simple
+        if (typeof afficherNotification === 'function') {
+            afficherNotification(`✅ Succès ! ${pointsInput} points attribués.`, 'success');
+        } else {
+            alert(`✅ Succès ! ${pointsInput} points attribués.`);
+        }
         
         // Rafraîchissement des tableaux
         if (typeof chargerAgentsEquipe === 'function') await chargerAgentsEquipe();
         if (typeof calculerEtAfficherPerformanceEquipe === 'function') await calculerEtAfficherPerformanceEquipe();
+        if (typeof chargerClassementDetailleManager === 'function') await chargerClassementDetailleManager();
 
     } catch (err) {
         console.error(err);
-        alert("Erreur : " + err.message);
+        alert("Erreur lors de l'attribution : " + err.message);
     }
 };
 async function chargerChallengesActifsManager() {
-    // 1. On cherche la "boîte" HTML qu'on a créée à l'étape 1
-    const container = document.getElementById('liste-challenges-actifs');
-    
-    // Sécurité : Si la boîte n'existe pas dans la page, on s'arrête là pour éviter un bug.
+    // 1. On cible la zone d'affichage
+    const container = document.getElementById('liste-challenges-actifs'); 
     if (!container) return;
 
-    // 2. On interroge Supabase
-    // "Donne-moi tous les challenges dont le statut est encore 'actif'"
+    // 2. On récupère TOUS les challenges (sauf les terminés/supprimés)
+    // On trie par date pour avoir les prochains en premier
     const { data: challenges } = await sb.from('challenges_flash')
         .select('*')
-        .eq('statut', 'actif');
+        .neq('statut', 'supprime')
+        .neq('statut', 'termine')
+        .order('date_debut', { ascending: true });
 
-    // 3. On nettoie la boîte (on efface l'ancien contenu pour ne pas avoir de doublons)
-    // Et on met un petit titre
-    container.innerHTML = '<h3>🔥 Challenges en cours</h3>';
+    if (!challenges) return;
+
+    container.innerHTML = ''; // On vide la boîte
     
-    // Si la liste est vide, on affiche un petit message et on s'arrête.
-    if (!challenges || challenges.length === 0) {
-        container.innerHTML += '<p style="color:#888;">Aucun challenge actif.</p>';
-        return;
-    }
+    // 3. Préparation Date locale (pour bien comparer)
+    const date = new Date();
+    date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+    const now = date.toISOString();
 
-    // 4. La Boucle : Pour chaque challenge trouvé...
-    challenges.forEach(c => {
-        // On crée un élément visuel (une div)
+    let futursAffiches = 0; // Compteur pour limiter le teasing
+
+    challenges.forEach(ch => {
+        // Est-ce qu'il est en cours ? (Date début passée ET Date fin pas encore passée)
+        const estActif = ch.statut === 'actif' && ch.date_debut <= now && ch.date_fin >= now;
+        // Est-ce qu'il est dans le futur ?
+        const estFutur = ch.date_debut > now;
+
+        // --- 🧹 LE FILTRE DE NETTOYAGE ---
+        // 1. Si c'est un futur et qu'on en a déjà affiché un -> On zappe (on masque les suivants)
+        if (estFutur && futursAffiches >= 1) return;
+        
+        // 2. Si c'est un futur, on compte +1
+        if (estFutur) futursAffiches++;
+
+        // 3. Si ce n'est ni actif ni futur (ex: un vieux buggé), on zappe
+        if (!estActif && !estFutur) return;
+        // ----------------------------------
+
+        // 4. Création visuelle (HTML)
         const div = document.createElement('div');
         
-        // On lui donne du style (bordure bleue, fond blanc...)
-        div.style.cssText = "background:white; padding:15px; margin-bottom:10px; border-radius:8px; border-left:4px solid #2196F3; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 5px rgba(0,0,0,0.05);";
-        
-        // On remplit l'intérieur de la div avec du HTML
-        // Notez le bouton <button onclick="stopperChallenge('${c.id}')">
-        // C'est lui qui contient l'ID unique du challenge à supprimer.
+        // Style différent si Actif (Blanc/Vert) ou Futur (Gris)
+        div.style.background = estActif ? "white" : "#f0f2f5";
+        div.style.padding = "15px";
+        div.style.marginBottom = "10px";
+        div.style.borderRadius = "8px";
+        div.style.borderLeft = estActif ? "5px solid #4CAF50" : "5px solid #bbb"; // Vert vs Gris
+        div.style.boxShadow = "0 2px 5px rgba(0,0,0,0.05)";
+        div.style.display = "flex";
+        div.style.justifyContent = "space-between";
+        div.style.alignItems = "center";
+        if(estFutur) div.style.opacity = "0.8";
+
+        // Heure formatée (ex: 14:30)
+        const dateDeb = new Date(ch.date_debut);
+        const heure = dateDeb.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+
         div.innerHTML = `
             <div>
-                <strong>${c.titre}</strong> 
-                <span style="background:#e3f2fd; color:#1565C0; padding:2px 6px; border-radius:4px; font-size:0.8em;">${c.points_attribues} pts</span>
-                <div style="font-size:0.85em; color:#666;">${c.description}</div>
+                <strong style="font-size:1.1em; color: ${estActif ? '#2e7d32' : '#666'}">
+                    ${estActif ? '🔥 EN COURS' : '⏳ BIENTÔT (' + heure + ')'}
+                </strong>
+                <div style="font-weight:bold; margin:4px 0; font-size:1.1em;">${ch.titre}</div>
+                <div style="font-size:0.9em; color:#666;">${ch.description}</div>
             </div>
-            
-            <button onclick="stopperChallenge('${c.id}')" style="background:#ff5252; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:0.8em;">
-                🗑️ Arrêter
-            </button>
+            <div style="text-align:right;">
+                <div style="font-weight:bold; color:#1976D2; font-size:1.4em;">${ch.points_attribues} pts</div>
+            </div>
         `;
-        
-        // On ajoute cette div dans la grande boîte principale
+
         container.appendChild(div);
     });
+
+    // Message vide
+    if (container.innerHTML === '') {
+        container.innerHTML = '<div style="padding:20px; text-align:center; color:#999;">Aucun challenge à l\'affiche 🎬</div>';
+    }
 }
 window.stopperChallenge = async function(id) {
     if (!confirm("⚠️ Voulez-vous vraiment ARRÊTER ce challenge immédiatement ?\n\nIl disparaîtra des écrans des agents.")) return;
@@ -1025,3 +1124,128 @@ window.stopperChallenge = async function(id) {
         if(typeof chargerListeChallengesManuels === 'function') chargerListeChallengesManuels();
     }
 };
+
+
+// =============================================================
+// 📡 TEMPS RÉEL GLOBAL (MANAGER) - VERSION ULTIME
+// =============================================================
+(function activerTempsReelManager() {
+    console.log("📡 Manager : Mode Temps Réel activé !");
+
+    const channel = sb.channel('manager-global-updates')
+    
+    // 1. Si un CHALLENGE change (création, stop, modif)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'challenges_flash' }, async (payload) => {
+        console.log("⚡ Challenge modifié !", payload);
+        if(typeof chargerChallengesActifsManager === 'function') await chargerChallengesActifsManager();
+    })
+
+    // 2. Si un CONTRAT est ajouté ou validé
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'contrats' }, async (payload) => {
+        console.log("📝 Mouvement de contrats !", payload);
+        if(typeof chargerTousLesAgents === 'function') await chargerTousLesAgents();
+        if(typeof chargerGraphiquesManager === 'function') await chargerGraphiquesManager();
+        // Si vous avez une liste de validations en attente
+        if(typeof chargerContratsAttente === 'function') await chargerContratsAttente();
+        if(typeof chargerClassementDetailleManager === 'function') await chargerClassementDetailleManager(); 
+    })
+
+    // 3. Si une RÉUSSITE de challenge arrive
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'challenge_reussites' }, async () => {
+        console.log("🏆 Quelqu'un a réussi un challenge !");
+        if(typeof chargerChallengesActifsManager === 'function') await chargerChallengesActifsManager();
+    })
+
+    .subscribe();
+})();
+
+// =============================================================
+// 👥 CLASSEMENT DÉTAILLÉ (Double Rang : Équipe + Global)
+// =============================================================
+async function chargerClassementDetailleManager() {
+    // 1. On cherche la zone d'affichage (Assurez-vous d'avoir une <div id="liste-agents-detail"> dans votre HTML)
+    const container = document.getElementById('liste-agents-detail');
+    if (!container) return; // Sécurité
+
+    // 2. On récupère TOUS les agents de l'entreprise (pour le rang global)
+    const { data: tousLesAgents } = await sb.from('users')
+        .select('*, equipes(nom)')
+        .eq('role', 'agent');
+
+    // 3. On récupère les scores (via la vue ou calcul)
+    // Pour simplifier, on suppose que 'tousLesAgents' a déjà les scores ou on les recalcule vite fait
+    // Ici, on va simuler que le calcul des scores est fait (souvent stocké dans une variable globale 'agentsGlobal' si vous l'avez)
+    // Si vous n'avez pas de variable globale, on peut refaire un appel rapide aux contrats :
+    const { data: contrats } = await sb.from('contrats').select('*').in('statut', ['valide', 'en_attente']);
+    
+    // Calcul des scores pour tout le monde
+    tousLesAgents.forEach(agent => {
+        const sesContrats = contrats.filter(c => c.agent_id === agent.id);
+        agent.scoreTotal = sesContrats.reduce((sum, c) => sum + (c.created_at.includes('2026-02-20') ? 20 : 10), 0);
+        // Ajoutez ici la logique des points challenges si nécessaire
+    });
+
+    // 4. TRI GLOBAL (Du 1er au dernier de l'entreprise)
+    tousLesAgents.sort((a, b) => b.scoreTotal - a.scoreTotal);
+
+    // On attribue le rang global à chacun
+    tousLesAgents.forEach((agent, index) => {
+        agent.rangGlobal = index + 1;
+    });
+
+    // 5. FILTRE ÉQUIPE (On ne garde que MES agents)
+    // (utilisateurCourant doit être défini au début du fichier manager.js)
+    if (!equipeActuelle || !equipeActuelle.id) return;
+    
+    const mesAgents = tousLesAgents.filter(a => a.equipe_id === equipeActuelle.id);
+    
+    // On les trie (le 1er de l'équipe en haut)
+    mesAgents.sort((a, b) => b.scoreTotal - a.scoreTotal);
+
+    // 6. AFFICHAGE HTML
+    let html = `
+        <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+            <thead>
+                <tr style="background:#f4f6f8; color:#666; font-size:0.9em; text-align:left;">
+                    <th style="padding:10px; border-radius:8px 0 0 8px;">Agent</th>
+                    <th style="padding:10px; text-align:center;">Score</th>
+                    <th style="padding:10px; text-align:center;">Rang Team</th>
+                    <th style="padding:10px; text-align:center; border-radius:0 8px 8px 0;">Rang Global</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    mesAgents.forEach((agent, index) => {
+        const rangTeam = index + 1; // Son rang dans l'équipe
+        
+        // Médailles Team
+        let medaille = `<span style="font-weight:bold; color:#666;">#${rangTeam}</span>`;
+        if (rangTeam === 1) medaille = '🥇';
+        if (rangTeam === 2) medaille = '🥈';
+        if (rangTeam === 3) medaille = '🥉';
+
+        html += `
+            <tr style="border-bottom:1px solid #eee;">
+                <td style="padding:12px 5px; display:flex; align-items:center; gap:10px;">
+                    <div style="background:#e3f2fd; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center;">👤</div>
+                    <strong>${agent.prenom} ${agent.nom}</strong>
+                </td>
+                <td style="text-align:center; font-weight:bold; color:#1565C0;">${agent.scoreTotal} pts</td>
+                <td style="text-align:center; font-size:1.2em;">${medaille}</td>
+                <td style="text-align:center;">
+                    <span style="background:#f5f5f5; border:1px solid #ddd; padding:2px 8px; border-radius:12px; font-size:0.85em; color:#555;">
+                        🌍 ${agent.rangGlobal}ème
+                    </span>
+                </td>
+            </tr>
+        `;
+    });
+
+    html += '</tbody></table>';
+    
+    // Si l'équipe est vide
+    if (mesAgents.length === 0) html = '<p style="text-align:center; padding:20px; color:#999;">Aucun agent dans votre équipe pour le moment.</p>';
+
+    container.innerHTML = html;
+}

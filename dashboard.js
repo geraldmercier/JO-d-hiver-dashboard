@@ -49,7 +49,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         chargerTousLesContrats(),
         chargerToutesLesReussites(),
         chargerFilRouge(), // 👈 AJOUTEZ CETTE LIGNE ICI
-        verifierVainqueurFlash(),
         verifierPopupsAlertes()
     ]);
 
@@ -71,7 +70,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     afficherBadgesReels();
     chargerChallengesAffiches();
 
-    // 7. Gestionnaires d'événements
+    // 7. Écoute en temps réel
+    ecouterChallengesRealtime();
+    ecouterContratsRealtime();
+
+    // 8. Gestionnaires d'événements
     const form = document.getElementById('formulaire-contrat');
     if (form) form.addEventListener('submit', enregistrerContrat);
     
@@ -245,7 +248,9 @@ function calculerScoresComplets() {
 // 🎯 CHALLENGES AUTO
 // =============================================================
 async function detecterEtSoumettreChallenges() {
-    const now = new Date().toISOString();
+   const date = new Date();
+    date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+    const now = date.toISOString();
     const { data: challenges } = await sb.from('challenges_flash')
         .select('*')
         .eq('statut', 'actif')
@@ -694,7 +699,10 @@ async function chargerChallengesAffiches() {
     const container = document.getElementById('challenges-container');
     if (!container) return;
 
-    const maintenant = new Date().toISOString();
+    // CORRECTION HEURE LOCALE
+    const date = new Date();
+    date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+    const maintenant = date.toISOString();
     const { data: challenges } = await sb.from('challenges_flash')
         .select('*')
         .eq('statut', 'actif')
@@ -1018,7 +1026,10 @@ window.onclick = function(event) {
 // --- NOUVELLES FONCTIONS DE DÉTECTION ---
 
 async function verifierPopupsAlertes() {
-    const now = new Date().toISOString();
+    // CORRECTION HEURE LOCALE
+    const date = new Date();
+    date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+    const now = date.toISOString();
 
     // 1. DÉTECTION NOUVEAUX CHALLENGES ACTIFS
     const { data: challengesActifs } = await sb.from('challenges_flash')
@@ -1070,3 +1081,187 @@ async function verifierPopupsAlertes() {
         }
     }
 }
+
+// =============================================================
+// 🔔 TEMPS RÉEL (SUPABASE REALTIME)
+// =============================================================
+
+/**
+ * Écoute les changements sur la table des challenges pour mettre à jour
+ * le dashboard et afficher les popups instantanément.
+ */
+function ecouterChallengesRealtime() {
+    console.log('📡 Activation de l\'écoute Realtime pour les challenges...');
+    
+    sb.channel('flux-challenges')
+        .on(
+            'postgres_changes', 
+            { 
+                event: '*', 
+                schema: 'public', 
+                table: 'challenges_flash' 
+            }, 
+            async (payload) => {
+                console.log('🔔 Mise à jour Challenge reçue:', payload);
+                
+                // 1. Recharger la liste des challenges (pour qu'ils apparaissent dans le conteneur)
+                await chargerChallengesAffiches();
+                
+                // 2. Vérifier s'il faut déclencher un popup (nouveau ou victoire)
+                await verifierPopupsAlertes();
+
+                // 3. Optionnel : Si c'est une insertion, on peut faire un petit effet sonore ou visuel
+                if (payload.eventType === 'INSERT' && payload.new.statut === 'actif') {
+                    console.log('✨ Nouveau challenge flash activé !');
+                }
+            }
+        )
+        .subscribe((status) => {
+            console.log('🔌 Statut de la connexion Realtime (Challenges):', status);
+        });
+}
+
+/**
+ * Écoute les nouveaux contrats pour mettre à jour les scores et classements
+ */
+function ecouterContratsRealtime() {
+    console.log('📡 Activation de l\'écoute Realtime pour les scores...');
+    
+    sb.channel('flux-scores')
+        .on(
+            'postgres_changes', 
+            { 
+                event: '*', 
+                schema: 'public', 
+                table: 'contrats' 
+            }, 
+            async (payload) => {
+                console.log('📈 Mise à jour Score reçue:', payload);
+                
+                // Rechargement complet des données de calcul
+                await Promise.all([
+                    chargerTousLesAgents(),
+                    chargerTousLesContrats(),
+                    chargerToutesLesReussites()
+                ]);
+
+                // Recalcul et mise à jour UI
+                calculerScoresComplets();
+                afficherScoreEtRang();
+                afficherPodiumDuJour();
+                calculerEtAfficherSkiFond();
+                calculerEtAfficherPerformanceJour();
+                calculerEtAfficherEquipe();
+                chargerContratsJour();
+                afficherCalendrierComplet();
+                
+                // Vérifier si ce nouveau contrat valide un challenge
+                await detecterEtSoumettreChallenges();
+            }
+        )
+        .subscribe((status) => {
+            console.log('🔌 Statut de la connexion Realtime (Scores):', status);
+        });
+}
+
+// =============================================================
+// 📡 TEMPS RÉEL (AUTO-REFRESH)
+// =============================================================
+(function activerTempsReel() {
+    console.log("📡 Activation du Temps Réel...");
+
+    const channel = sb.channel('dashboard-updates')
+        .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'contrats' },
+            () => { console.log("🔔 Changement Contrats !"); rafraichirTout(); }
+        )
+        .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'challenges_flash' },
+            () => { console.log("⚡ Changement Challenges !"); rafraichirTout(); }
+        )
+        .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'challenge_reussites' },
+            () => { console.log("🏆 Changement Réussites !"); rafraichirTout(); }
+        )
+        .subscribe();
+
+    async function rafraichirTout() {
+        // 1. Recharger les données brutes
+        await Promise.all([
+            chargerTousLesAgents(),
+            chargerTousLesContrats(),
+            chargerToutesLesReussites(),
+            chargerFilRouge()
+        ]);
+
+        // 2. Refaire les calculs
+        calculerScoresComplets();
+
+        // 3. Mettre à jour l'affichage
+        afficherInformationsHeader();
+        afficherScoreEtRang();
+        afficherPodiumDuJour();
+        calculerEtAfficherSkiFond();
+        calculerEtAfficherPerformanceJour();
+        calculerEtAfficherEquipe();
+        chargerContratsJour();
+        afficherCalendrierComplet();
+        afficherBadgesReels();
+        chargerChallengesAffiches();
+        
+        // 4. Vérifier les alertes (Popups)
+        verifierPopupsAlertes(); 
+        
+        // 5. Vérifier les nouveaux challenges auto
+        detecterEtSoumettreChallenges();
+    }
+})();
+
+// =============================================================
+// 📡 TEMPS RÉEL GLOBAL (AGENT) - VERSION ULTIME
+// =============================================================
+(function activerTempsReelAgent() {
+    console.log("📡 Agent : Mode Temps Réel activé !");
+
+    const channel = sb.channel('agent-global-updates')
+
+    // 1. Écoute de TOUT (Contrats, Challenges, Victoires)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'challenges_flash' }, () => {
+        console.log("⚡ Nouveau Challenge ou Victoire !");
+        rechargerToutLeDashboard();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'contrats' }, () => {
+        console.log("📈 Score mis à jour !");
+        rechargerToutLeDashboard();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'challenge_reussites' }, () => {
+        console.log("🏆 Validation challenge !");
+        rechargerToutLeDashboard();
+    })
+    .subscribe();
+
+    // Fonction qui relance toute la mécanique
+    async function rechargerToutLeDashboard() {
+        // On recharge les données
+        await Promise.all([
+            chargerTousLesAgents(),
+            chargerTousLesContrats(),
+            chargerToutesLesReussites(),
+            chargerFilRouge()
+        ]);
+        // On refait les calculs
+        calculerScoresComplets();
+        // On réaffiche tout
+        afficherInformationsHeader();
+        afficherScoreEtRang();
+        afficherPodiumDuJour();
+        calculerEtAfficherSkiFond();
+        calculerEtAfficherPerformanceJour();
+        chargerContratsJour();
+        chargerChallengesAffiches();
+        verifierPopupsAlertes(); // Important pour les popups !
+    }
+})();

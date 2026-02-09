@@ -182,6 +182,43 @@
         </button>
     </div>
 </div>
+</div>  
+
+<div class="manager-card" style="
+    background: white; 
+    padding: 15px; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+    margin-bottom: 30px; 
+    border-left: 5px solid #2196F3;
+    /* 👇 Le décalage vers le bas pour s'aligner avec le Fil Rouge */
+    margin-top: 100px;
+    height: fit-content; 
+    max-height: 500px; 
+    overflow-y: auto;
+">
+    <h3 style="margin-top:0; color:#1565C0; margin-bottom:15px;">📊 Performance Individuelle</h3>
+    <div id="liste-agents-detail">
+        Chargement des scores...
+    </div>
+</div>
+
+<div class="manager-card" style="
+    background: white; 
+    padding: 20px; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+    border-left: 5px solid #4CAF50;
+">
+    <h3 style="margin-top:0; color:#2e7d32; margin-bottom:15px;">⚡ Challenges Flash</h3>
+    <div id="liste-challenges-actifs">
+        Chargement des challenges...
+    </div>
+</div>
+
+<section class="carte carte-challenges-attente" id="section-challenges-validation" ...>
+    <div class="section-header">
+        <h3 class="carte-titre">⚡ Challenges à Valider</h3>
                     <section class="carte carte-challenges-attente" id="section-challenges-validation" style="display: none;">
                         <div class="section-header">
                             <h3 class="carte-titre">⚡ Challenges à Valider</h3>
@@ -472,5 +509,108 @@
     <script src="config.js"></script>
     <script src="manager.js"></script>
 
+    <div id="modal-challenge" class="modal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
+    <div class="modal-content" style="background:white; padding:30px; border-radius:12px; width:90%; max-width:500px; position:relative;">
+        <span onclick="fermerModalChallenge()" style="position:absolute; right:20px; top:15px; font-size:24px; cursor:pointer; color:#aaa;">&times;</span>
+        
+        <h2 style="margin-top:0; color:#FF9800;">⚡ Créer un Challenge Flash</h2>
+        
+        <form id="form-challenge" onsubmit="creerChallenge(event)">
+            <label style="display:block; margin:10px 0 5px; font-weight:bold;">Titre du défi</label>
+            <input type="text" id="challenge-titre" required placeholder="Ex: Rush 1h !" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+
+            <label style="display:block; margin:10px 0 5px; font-weight:bold;">Description</label>
+            <textarea id="challenge-description" rows="3" placeholder="Ex: 5 contrats signés = bonus..." style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;"></textarea>
+
+            <div style="display:flex; gap:10px;">
+                <div style="flex:1;">
+                    <label style="display:block; margin:10px 0 5px; font-weight:bold;">Type</label>
+                    <select id="challenge-type" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+                        <option value="flash">⚡ Flash (Court terme)</option>
+                        <option value="journee">📅 Journée</option>
+                    </select>
+                </div>
+                <div style="flex:1;">
+                    <label style="display:block; margin:10px 0 5px; font-weight:bold;">Points</label>
+                    <input type="number" id="challenge-points" value="50" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+                </div>
+            </div>
+
+            <label style="display:block; margin:10px 0 5px; font-weight:bold;">Cible (Cellule)</label>
+            <select id="challenge-cible-cellule" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+                <option value="toutes">🌍 Tout le monde</option>
+                <option value="Mover">📞 Mover</option>
+                <option value="Switcher">🔄 Switcher</option>
+                <option value="Coach">🏆 Coach</option>
+                <option value="Pépinière">🌱 Pépinière</option>
+            </select>
+
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <div style="flex:1;">
+                    <label style="font-size:0.8em; color:#666;">Début</label>
+                    <input type="datetime-local" id="challenge-debut" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size:0.8em; color:#666;">Fin</label>
+                    <input type="datetime-local" id="challenge-fin" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                </div>
+            </div>
+
+            <button type="submit" id="btn-submit-challenge" style="width:100%; background:#FF9800; color:white; padding:12px; border:none; border-radius:8px; font-weight:bold; margin-top:20px; cursor:pointer;">
+                🚀 Lancer le défi
+            </button>
+        </form>
+    </div>
+</div>
+
+<div id="modal-fil-rouge" class="modal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
+    <div class="modal-content" style="background:white; padding:30px; border-radius:12px; width:90%; max-width:600px; position:relative; max-height:90vh; overflow-y:auto;">
+        <span onclick="document.getElementById('modal-fil-rouge').style.display='none'" style="position:absolute; right:20px; top:15px; font-size:24px; cursor:pointer; color:#aaa;">&times;</span>
+        
+        <h2 style="margin-top:0; color:#9C27B0;">📈 Saisie Fil Rouge (KPIs)</h2>
+        <p style="color:#666; font-size:0.9em;">Entrez les résultats de la journée pour mettre à jour les graphiques.</p>
+        
+        <form id="form-fil-rouge" onsubmit="sauvegarderFilRouge(event)">
+            <label style="display:block; margin-bottom:5px; font-weight:bold;">Date</label>
+            <input type="date" id="date-fil-rouge" required style="width:100%; padding:10px; margin-bottom:20px; border:1px solid #ddd; border-radius:6px;">
+
+            <div style="background:#f9f9f9; padding:15px; border-radius:8px; margin-bottom:10px; border-left:4px solid #E91E63;">
+                <h4 style="margin:0 0 10px 0;">📞 Mover (TR %)</h4>
+                <div style="display:flex; gap:10px;">
+                    <input type="number" step="0.01" id="val-jour-Mover" placeholder="% Jour (ex: 85)" style="flex:1; padding:8px;">
+                    <input type="number" step="0.01" id="val-cumul-Mover" placeholder="% Global/Cumul" style="flex:1; padding:8px;">
+                </div>
+            </div>
+
+            <div style="background:#f9f9f9; padding:15px; border-radius:8px; margin-bottom:10px; border-left:4px solid #2196F3;">
+                <h4 style="margin:0 0 10px 0;">🔄 Switcher (Homeserve %)</h4>
+                <div style="display:flex; gap:10px;">
+                    <input type="number" step="0.01" id="val-jour-Switcher" placeholder="% Jour" style="flex:1; padding:8px;">
+                    <input type="number" step="0.01" id="val-cumul-Switcher" placeholder="% Global" style="flex:1; padding:8px;">
+                </div>
+            </div>
+
+            <div style="background:#f9f9f9; padding:15px; border-radius:8px; margin-bottom:10px; border-left:4px solid #FF9800;">
+                <h4 style="margin:0 0 10px 0;">🏆 Coach (Vol. Premium)</h4>
+                <div style="display:flex; gap:10px;">
+                    <input type="number" id="val-jour-Coach" placeholder="Vol. Jour" style="flex:1; padding:8px;">
+                    <input type="number" id="val-cumul-Coach" placeholder="Vol. Cumul" style="flex:1; padding:8px;">
+                </div>
+            </div>
+
+            <div style="background:#f9f9f9; padding:15px; border-radius:8px; margin-bottom:10px; border-left:4px solid #4CAF50;">
+                <h4 style="margin:0 0 10px 0;">🌱 Pépinière (Vol. Total)</h4>
+                <div style="display:flex; gap:10px;">
+                    <input type="number" id="val-jour-Pépinière" placeholder="Vol. Jour" style="flex:1; padding:8px;">
+                    <input type="number" id="val-cumul-Pépinière" placeholder="Vol. Cumul" style="flex:1; padding:8px;">
+                </div>
+            </div>
+
+            <button type="submit" id="btn-save-fil-rouge" style="width:100%; background:#9C27B0; color:white; padding:12px; border:none; border-radius:8px; font-weight:bold; margin-top:10px; cursor:pointer;">
+                💾 Enregistrer les KPIs
+            </button>
+        </form>
+    </div>
+</div>
 </body>
 </html>

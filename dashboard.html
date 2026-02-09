@@ -301,38 +301,6 @@
         document.getElementById(id).style.display = 'none';
     }
 </script>
-<div id="popup-nouveau-challenge" class="modal" style="display:none; align-items:center; justify-content:center; z-index:9999;">
-    <div class="modal-content" style="border-top: 5px solid #2196F3; text-align:center; position:relative;">
-        <span onclick="fermerPopup('popup-nouveau-challenge')" style="position:absolute; top:10px; right:15px; font-size:24px; cursor:pointer; font-weight:bold;">&times;</span>
-        <div style="font-size: 50px;">⚡</div>
-        <h2 style="color: #1565C0; margin: 10px 0;">Nouveau Challenge !</h2>
-        <h3 id="popup-titre-challenge" style="color: #333;">...</h3>
-        <p id="popup-desc-challenge" style="color: #666; margin: 15px 0;">...</p>
-        <div style="background:#e3f2fd; padding:10px; border-radius:8px; display:inline-block; font-weight:bold; color:#1565C0;">
-            Gains : <span id="popup-points-challenge"></span> pts
-        </div>
-        <br><br>
-        <button onclick="fermerPopup('popup-nouveau-challenge')" style="background:#2196F3; color:white; border:none; padding:10px 30px; border-radius:20px; font-weight:bold; cursor:pointer;">C'est parti !</button>
-    </div>
-</div>
 
-<div id="popup-victoire" class="modal" style="display:none; align-items:center; justify-content:center; z-index:9999;">
-    <div class="modal-content" style="border-top: 5px solid #FFD700; text-align:center; position:relative; background:linear-gradient(to bottom, #fff, #fffde7);">
-        <span onclick="fermerPopup('popup-victoire')" style="position:absolute; top:10px; right:15px; font-size:24px; cursor:pointer; font-weight:bold;">&times;</span>
-        <div style="font-size: 50px;">🏆</div>
-        <h2 style="color: #FBC02D; margin: 10px 0;">Challenge Remporté !</h2>
-        <p style="font-size:1.1em; margin-bottom:20px;">
-            Le défi a été gagné par :<br>
-            <strong id="popup-gagnant-nom" style="font-size:1.4em; color:#333;">...</strong>
-        </p>
-        <button onclick="fermerPopup('popup-victoire')" style="background:#FBC02D; color:white; border:none; padding:10px 30px; border-radius:20px; font-weight:bold; cursor:pointer;">Bravo !</button>
-    </div>
-</div>
-
-<script>
-    function fermerPopup(id) {
-        document.getElementById(id).style.display = 'none';
-    }
-</script>
 </body>
 </html>
