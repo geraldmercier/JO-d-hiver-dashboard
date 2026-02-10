@@ -169,15 +169,25 @@
                     </table>
                 </div>
 
-                <div class="panel" style="flex:1; min-width:350px;">
-                    <h3>👤 Classement Agents (Complet)</h3>
-                    <div class="table-scroll-container"> <table class="data-table">
-                            <thead><tr><th>#</th><th>Agent</th><th>Équipe</th><th>Pts</th></tr></thead>
-                            <tbody id="tbody-classement-agents"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+               <div class="panel" style="flex:1; min-width:350px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="margin:0;">👤 Classement Agents</h3>
+        <select id="filtre-classement-cellule" onchange="afficherClassements()" style="padding:5px; border-radius:4px; border:1px solid #ddd; font-size:0.9em;">
+            <option value="all">🌍 Toutes Cellules</option>
+            <option value="Mover">🏠 Mover</option>
+            <option value="Switcher">💰 Switcher</option>
+            <option value="Coach">⭐ Coach</option>
+            <option value="Pépinière">🌱 Pépinière</option>
+        </select>
+    </div>
+    
+    <div class="table-scroll-container"> 
+        <table class="data-table">
+            <thead><tr><th>#</th><th>Agent</th><th>Équipe</th><th>Pts</th></tr></thead>
+            <tbody id="tbody-classement-agents"></tbody>
+        </table>
+    </div>
+</div>
         </section>
 
         <section id="tab-actions" class="tab-content">

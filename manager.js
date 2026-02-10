@@ -14,61 +14,59 @@ let tousLesAgents = [];
 let tousLesContrats = [];
 let toutesLesEquipes = [];
 
+
 // =============================================================
-// 🏁 INITIALISATION
+// 🏁 INITIALISATION UNIQUE ET SÉCURISÉE
 // =============================================================
 document.addEventListener('DOMContentLoaded', async function() {
+    console.log('🚀 Démarrage du Dashboard Manager...');
+
+    // 1. Vérification Utilisateur
     const { data: { user } } = await sb.auth.getUser();
     if (!user) { window.location.href = 'connexion-finale.html'; return; }
 
     await chargerDonneesManager(user.id);
     
+    // Sécurité Rôle
     if (!managerActuel || (managerActuel.role !== 'manager' && managerActuel.role !== 'admin')) {
-        alert('❌ Accès refusé. Cette page est réservée aux managers.');
+        alert('❌ Accès refusé. Réservé aux managers.');
         window.location.href = 'dashboard.html';
         return;
     }
 
-    // Chargement des données principales
+    // 2. Chargement des données
     await Promise.all([
         chargerTousLesAgents(),
         chargerTousLesContrats(),
         chargerToutesLesEquipes()
     ]); 
 
-    // On charge le menu déroulant JUSTE APRÈS (Sécurité anti-bug)
     await chargerListeChallengesManuels();
 
-    // Affichage complet
-    afficherInformationsHeader();
-
-    // Affichage complet
+    // 3. Affichage initial
     afficherInformationsHeader();
     await calculerEtAfficherPerformanceEquipe();
     await chargerContratsAttente();
     await chargerChallengesAttente();
     await chargerAgentsEquipe();
     await chargerGraphiquesManager();
-    await chargerChallengesActifsManager();if(typeof chargerClassementDetailleManager === 'function') await chargerClassementDetailleManager();
+    await chargerChallengesActifsManager();
+    if(typeof chargerClassementDetailleManager === 'function') await chargerClassementDetailleManager();
 
-    console.log('✅ Manager initialisé');
-});
+    console.log('✅ Données chargées.');
 
-
-    // Boutons
-   const btnPlateau = document.getElementById('btn-vue-plateau');
-if (btnPlateau) {
-    // Si je suis Admin, je vois le bouton et je peux cliquer
-    if (managerActuel.role === 'admin') {
-        btnPlateau.style.display = 'inline-block'; // Ou 'block' selon votre design
-        btnPlateau.addEventListener('click', () => window.location.href = 'plateau.html');
-    } 
-    // Sinon (Manager simple), je cache le bouton
-    else {
-        btnPlateau.style.display = 'none';
+    // 4. Gestion du Bouton "Vue Plateau" (Admin seulement)
+    const btnPlateau = document.getElementById('btn-vue-plateau');
+    if (btnPlateau) {
+        if (managerActuel.role === 'admin') {
+            btnPlateau.style.display = 'inline-block';
+            btnPlateau.addEventListener('click', () => window.location.href = 'plateau.html');
+        } else {
+            btnPlateau.style.display = 'none';
+        }
     }
-}
 
+    // 5. Gestion du Bouton "Déconnexion"
     const btnDeconnexion = document.getElementById('btn-deconnexion');
     if (btnDeconnexion) {
         btnDeconnexion.addEventListener('click', async () => {
@@ -79,15 +77,16 @@ if (btnPlateau) {
         });
     }
 
-    // Menu équipes (admin)
+    // 6. Menu équipes (Admin seulement)
     if (managerActuel.role === 'admin') {
         initialiserMenuEquipes();
     }
 
-    // 8. Temps Réel
+    // 7. Lancement du Temps Réel
     ecouterRealtimeManager();
 
-    console.log('✅ Dashboard Manager initialisé');
+    console.log('✅ Dashboard Manager entièrement initialisé !');
+});
 
 // =============================================================
 // 📡 TEMPS RÉEL (REALTIME)
@@ -208,63 +207,63 @@ function afficherInformationsHeader() {
 async function calculerEtAfficherPerformanceEquipe() {
     if (!equipeActuelle) return;
 
-    // Agents de l'équipe
-    const agentsEquipe = tousLesAgents.filter(a => a.equipe_id === equipeActuelle.id);
+    // 1. On charge les VRAIS scores officiels (SQL)
+    const { data: scoresOfficiels } = await sb.from('view_score_live').select('user_id, score_total');
+    if (!scoresOfficiels) return;
+
+    // --- A. CALCUL DU SCORE TOTAL DE MON ÉQUIPE ---
+    const agentsDeMonEquipe = tousLesAgents.filter(a => a.equipe_id === equipeActuelle.id);
     
-    // Contrats validés de l'équipe
-    const contratsEquipe = tousLesContrats.filter(c => 
-        c.statut === 'valide' && 
-        agentsEquipe.find(a => a.id === c.agent_id)
-    );
-
-    const scoreTotal = contratsEquipe.length * 10;
-    const nbContratsValides = contratsEquipe.length;
-    const moyenneParAgent = agentsEquipe.length > 0 ? Math.round(scoreTotal / agentsEquipe.length) : 0;
-
-    // Affichage
-    const elNomEquipe = document.getElementById('nom-equipe');
-    if (elNomEquipe) {
-        elNomEquipe.textContent = `Équipe ${equipeActuelle.nom} ${equipeActuelle.drapeau_emoji || ''}`;
-    }
-
-    const elScoreTotal = document.getElementById('score-equipe-total');
-    if (elScoreTotal) {
-        elScoreTotal.textContent = `${scoreTotal.toLocaleString()} pts`;
-    }
-
-    const elContratsValides = document.getElementById('contrats-valides');
-    if (elContratsValides) {
-        elContratsValides.textContent = nbContratsValides;
-    }
-
-    const elMoyenne = document.getElementById('moyenne-agent');
-    if (elMoyenne) {
-        elMoyenne.textContent = `${moyenneParAgent} pts`;
-    }
-
-    // Calculer position équipe
-    const scoresEquipes = toutesLesEquipes.map(eq => {
-        const agentsEq = tousLesAgents.filter(a => a.equipe_id === eq.id);
-        const contratsEq = tousLesContrats.filter(c => 
-            c.statut === 'valide' && 
-            agentsEq.find(a => a.id === c.agent_id)
-        );
-        return { equipeId: eq.id, score: contratsEq.length * 10 };
+    let scoreEquipeTotal = 0;
+    agentsDeMonEquipe.forEach(agent => {
+        // On cherche le score de cet agent dans la liste officielle
+        const scoreAgent = scoresOfficiels.find(s => s.user_id === agent.id);
+        // On l'ajoute au pot commun de l'équipe
+        scoreEquipeTotal += scoreAgent ? scoreAgent.score_total : 0;
     });
 
-    scoresEquipes.sort((a, b) => b.score - a.score);
-    const position = scoresEquipes.findIndex(s => s.equipeId === equipeActuelle.id) + 1;
+    // Affichage du Score Total
+    const elScoreTotal = document.getElementById('score-equipe-total');
+    if (elScoreTotal) elScoreTotal.textContent = scoreEquipeTotal.toLocaleString() + ' pts';
+
+    // Affichage de la Moyenne par agent
+    const moyenne = agentsDeMonEquipe.length > 0 ? Math.round(scoreEquipeTotal / agentsDeMonEquipe.length) : 0;
+    const elMoyenne = document.getElementById('moyenne-agent');
+    if (elMoyenne) elMoyenne.textContent = moyenne + ' pts';
+
+
+    // --- B. CALCUL DU CLASSEMENT (RANG) PARMI TOUTES LES ÉQUIPES ---
+    // Pour savoir si on est 1er ou 2ème, il faut calculer le score des AUTRES équipes aussi
+    const scoresToutesEquipes = toutesLesEquipes.map(eq => {
+        const sesAgents = tousLesAgents.filter(a => a.equipe_id === eq.id);
+        const totalEq = sesAgents.reduce((sum, agent) => {
+            const scoreAgent = scoresOfficiels.find(s => s.user_id === agent.id);
+            return sum + (scoreAgent ? scoreAgent.score_total : 0);
+        }, 0);
+        return { id: eq.id, score: totalEq };
+    });
+
+    // On trie du plus grand au plus petit
+    scoresToutesEquipes.sort((a, b) => b.score - a.score);
+
+    // On trouve notre position
+    const maPosition = scoresToutesEquipes.findIndex(e => e.id === equipeActuelle.id) + 1;
     
     const elPosition = document.getElementById('position-equipe');
-    if (elPosition) {
-        elPosition.textContent = `${position}ème/${toutesLesEquipes.length}`;
-    }
+    if (elPosition) elPosition.textContent = `${maPosition}ème/${toutesLesEquipes.length}`;
 
-    // Nombre d'agents actifs
+
+    // --- C. AFFICHAGE DES INFOS BASIQUES (Nom, Drapeaux, Contrats) ---
+    const elNomEquipe = document.getElementById('nom-equipe');
+    if (elNomEquipe) elNomEquipe.textContent = `Équipe ${equipeActuelle.nom} ${equipeActuelle.drapeau_emoji || ''}`;
+
     const elNbAgents = document.getElementById('nb-agents-equipe');
-    if (elNbAgents) {
-        elNbAgents.textContent = agentsEquipe.length;
-    }
+    if (elNbAgents) elNbAgents.textContent = agentsDeMonEquipe.length;
+    
+    // Le nombre de contrats validés reste un calcul simple (Volume)
+    const contratsValides = tousLesContrats.filter(c => c.statut === 'valide' && agentsDeMonEquipe.find(a => a.id === c.agent_id)).length;
+    const elContrats = document.getElementById('contrats-valides');
+    if(elContrats) elContrats.textContent = contratsValides;
 }
 
 // =============================================================
@@ -569,20 +568,27 @@ async function chargerAgentsEquipe() {
     try {
         const agentsEquipe = tousLesAgents.filter(a => a.equipe_id === equipeActuelle.id);
 
-        // Calculer scores de chaque agent
+        // 1. On récupère les scores officiels depuis Supabase (C'est la clé !)
+        const { data: scoresOfficiels } = await sb.from('view_score_live').select('user_id, score_total');
+
+        // 2. On map les agents avec leur score officiel
         const agentsAvecScores = agentsEquipe.map(agent => {
-            const contratsAgent = tousLesContrats.filter(c => 
+            // On trouve le score officiel dans la liste
+            const scoreRow = scoresOfficiels ? scoresOfficiels.find(s => s.user_id === agent.id) : null;
+            const scoreFinal = scoreRow ? scoreRow.score_total : 0;
+
+            // Stats annexes (juste pour l'info visuelle)
+            const contratsValides = tousLesContrats.filter(c => 
                 c.agent_id === agent.id && c.statut === 'valide'
-            );
-            
+            ).length;
             const contratsEnAttente = tousLesContrats.filter(c => 
                 c.agent_id === agent.id && c.statut === 'en_attente'
             ).length;
 
             return {
                 ...agent,
-                nbContrats: contratsAgent.length,
-                score: contratsAgent.length * 10,
+                nbContrats: contratsValides,
+                score: scoreFinal, // 👈 ICI : ON PREND LE VRAI SCORE (Contrats + Bonus)
                 enAttente: contratsEnAttente
             };
         });
@@ -1003,7 +1009,7 @@ window.attribuerPointsManuels = async function() {
                 challenge_flash_id: idPourLaBase, // null si bonus, uuid si challenge
                 statut: 'valide',
                 date_validation: new Date().toISOString(),
-                points_manuel: parseInt(pointsInput),
+                points_gagnes: parseInt(pointsInput),
                 commentaire: (challengeId === 'bonus') ? 'Bonus Manager' : null // Petit commentaire pour s'y retrouver
             }
         ]);
@@ -1126,38 +1132,7 @@ window.stopperChallenge = async function(id) {
 };
 
 
-// =============================================================
-// 📡 TEMPS RÉEL GLOBAL (MANAGER) - VERSION ULTIME
-// =============================================================
-(function activerTempsReelManager() {
-    console.log("📡 Manager : Mode Temps Réel activé !");
 
-    const channel = sb.channel('manager-global-updates')
-    
-    // 1. Si un CHALLENGE change (création, stop, modif)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'challenges_flash' }, async (payload) => {
-        console.log("⚡ Challenge modifié !", payload);
-        if(typeof chargerChallengesActifsManager === 'function') await chargerChallengesActifsManager();
-    })
-
-    // 2. Si un CONTRAT est ajouté ou validé
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'contrats' }, async (payload) => {
-        console.log("📝 Mouvement de contrats !", payload);
-        if(typeof chargerTousLesAgents === 'function') await chargerTousLesAgents();
-        if(typeof chargerGraphiquesManager === 'function') await chargerGraphiquesManager();
-        // Si vous avez une liste de validations en attente
-        if(typeof chargerContratsAttente === 'function') await chargerContratsAttente();
-        if(typeof chargerClassementDetailleManager === 'function') await chargerClassementDetailleManager(); 
-    })
-
-    // 3. Si une RÉUSSITE de challenge arrive
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'challenge_reussites' }, async () => {
-        console.log("🏆 Quelqu'un a réussi un challenge !");
-        if(typeof chargerChallengesActifsManager === 'function') await chargerChallengesActifsManager();
-    })
-
-    .subscribe();
-})();
 
 // =============================================================
 // 👥 CLASSEMENT DÉTAILLÉ (Double Rang : Équipe + Global)
@@ -1176,19 +1151,18 @@ async function chargerClassementDetailleManager() {
     // Pour simplifier, on suppose que 'tousLesAgents' a déjà les scores ou on les recalcule vite fait
     // Ici, on va simuler que le calcul des scores est fait (souvent stocké dans une variable globale 'agentsGlobal' si vous l'avez)
     // Si vous n'avez pas de variable globale, on peut refaire un appel rapide aux contrats :
-    const { data: contrats } = await sb.from('contrats').select('*').in('statut', ['valide', 'en_attente']);
-    
-    // Calcul des scores pour tout le monde
-    tousLesAgents.forEach(agent => {
-        const sesContrats = contrats.filter(c => c.agent_id === agent.id);
-        agent.scoreTotal = sesContrats.reduce((sum, c) => sum + (c.created_at.includes('2026-02-20') ? 20 : 10), 0);
-        // Ajoutez ici la logique des points challenges si nécessaire
-    });
+   // 3. On récupère les vrais scores officiels (View SQL)
+    const { data: scoresOfficiels } = await sb.from('view_score_live').select('user_id, score_total');
 
+    // 4. On associe le bon score à chaque agent
+    tousLesAgents.forEach(agent => {
+        const scoreRow = scoresOfficiels ? scoresOfficiels.find(s => s.user_id === agent.id) : null;
+        agent.scoreTotal = scoreRow ? scoreRow.score_total : 0;
+    });
     // 4. TRI GLOBAL (Du 1er au dernier de l'entreprise)
     tousLesAgents.sort((a, b) => b.scoreTotal - a.scoreTotal);
 
-    // On attribue le rang global à chacun
+    // On attribue le rang global à chacuns
     tousLesAgents.forEach((agent, index) => {
         agent.rangGlobal = index + 1;
     });

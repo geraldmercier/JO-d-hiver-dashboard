@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // 4. Calculs initiaux
     calculerScoresComplets();
-
+    await chargerScoreLive();
     // 5. Vérification des challenges
     await detecterEtSoumettreChallenges();
 
@@ -116,21 +116,16 @@ async function chargerTousLesAgents() {
     
     tousLesAgents = agents || [];
 
-    // 2. LA CORRECTION : On récupère les points challenges DÉJÀ CALCULÉS par la base de données
-    // (C'est ici que se trouve votre "3")
+    // 2. MODE SQL MAÎTRE : On récupère le SCORE TOTAL OFFICIEL
     const { data: scores } = await sb.from('view_classement_general')
-        .select('user_id, points_challenges'); 
+        .select('user_id, score_total'); 
     
-    // 3. On distribue ces points aux agents
+    // 3. On injecte ce score officiel dans chaque agent
     if (scores) {
         tousLesAgents.forEach(agent => {
             const scoreRow = scores.find(s => s.user_id === agent.id);
-            if (scoreRow) {
-                // On stocke ça dans une variable spéciale
-                agent.pointsChallengesOfficiels = scoreRow.points_challenges || 0;
-            } else {
-                agent.pointsChallengesOfficiels = 0;
-            }
+            // On démarre avec le score officiel (Validé + Bonus)
+            agent.scoreTotal = scoreRow ? scoreRow.score_total : 0;
         });
     }
 }
@@ -153,60 +148,82 @@ async function chargerMesChallengesReussis() {
     challengesReussis = data || [];
 }
 
-// =============================================================
-// 🧠 MOTEUR DE CALCUL (LOGIQUE MÉTIER)
-// =============================================================
 
+// ==========================================
+// 💰 NOUVEAU : LECTURE DU SCORE LIVE (SQL)
+// ==========================================
+async function chargerScoreLive() {
+    const { data: { user } } = await sb.auth.getUser();
+    
+    // On lit la Super Vue SQL
+    const { data, error } = await sb
+        .from('view_score_live')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+    if (data) {
+        // Mise à jour de l'affichage
+        // Note: Assurez-vous d'avoir un élément avec id="score-total" dans votre HTML
+        const elScore = document.getElementById('score-total'); 
+        
+        if (elScore) {
+            elScore.textContent = data.score_total + ' pts';
+            
+            // Petit effet visuel "Pop"
+            elScore.style.animation = "none";
+            elScore.offsetHeight; 
+            elScore.style.animation = "pop 0.3s ease"; 
+        }
+        
+        // On met aussi à jour la variable globale
+        if (typeof utilisateurActuel !== 'undefined') {
+            utilisateurActuel.scoreTotal = data.score_total;
+        }
+        console.log(`💰 Score Live chargé : ${data.score_total} pts`);
+    }
+}
+
+// =============================================================
+// 🧠 MOTEUR DE CALCUL (MODE SÉCURISÉ & COMPLET)
+// =============================================================
 function calculerScoresComplets() {
-    // 0. Réinitialisation
+    
+    // 1. INITIALISATION (On garde le score SQL officiel comme base)
     tousLesAgents.forEach(a => { 
-        a.scoreTotal = 0; 
-        a.scoreJour = 0; 
+        a.scoreTotal = a.scoreTotal || 0; 
+        a.scoreJour = 0; // On remet le jour à 0 pour le recalculer
     });
 
-    // =====================================================
-    // 1. POINTS DE VOLUME (CONTRATS) - Calcul JS conservé
-    // (Pour garder la règle du "Vendredi x2" qui n'est pas dans la vue simple)
-    // =====================================================
+    // 2. AJOUT SÉCURISÉ DES CONTRATS
+    // (On n'ajoute que ce qui n'est PAS encore dans le SQL)
     tousLesContrats.forEach(c => {
-        if (c.statut === 'valide' || c.statut === 'en_attente') {
-            const agent = tousLesAgents.find(a => a.id === c.agent_id);
-            if (agent) {
-                const dateC = c.created_at.split('T')[0];
-                // Règle Spéciale : Vendredi = 20 pts, sinon 10 pts
-                const points = (dateC === DATE_SPRINT) ? 20 : 10;
-                
-                agent.scoreTotal += points;
+        const agent = tousLesAgents.find(a => a.id === c.agent_id);
+        
+        if (agent) {
+            const dateC = c.created_at.split('T')[0];
+            const points = (dateC === DATE_SPRINT) ? 20 : 10;
 
-                // Score du jour (pour le podium quotidien)
-                if (estAujourdhui(c.created_at)) {
-                    agent.scoreJour += points;
-                }
+            // A. TOTAL : On ajoute SEULEMENT si "en_attente"
+            // (Si c'est "valide", c'est déjà dans le score SQL chargé au début)
+            if (c.statut === 'en_attente') {
+                agent.scoreTotal += points;
+            }
+
+            // B. JOUR : Pour le podium du jour, on compte tout (Validé + Attente)
+            if (estAujourdhui(c.created_at) && (c.statut === 'valide' || c.statut === 'en_attente')) {
+                agent.scoreJour += points;
             }
         }
     });
 
-    // =====================================================
-    // 2. POINTS DES CHALLENGES (LA CORRECTION EST ICI 🛠️)
-    // =====================================================
-    // Au lieu de recalculer et d'échouer, on prend la valeur sûre de la base
-    tousLesAgents.forEach(agent => {
-        if (agent.pointsChallengesOfficiels) {
-            agent.scoreTotal += agent.pointsChallengesOfficiels;
-        }
-    });
-
-    // =====================================================
-    // 3. BONUS MÉDAILLES (PODIUMS QUOTIDIENS) - CONSERVÉ ✅
-    // =====================================================
+    // 3. BONUS MÉDAILLES (PODIUMS QUOTIDIENS) - CONSERVÉ INTÉGRALEMENT ✅
     const ajd = new Date().toISOString().split('T')[0];
     let dateCurseur = new Date(DATE_DEBUT);
     const dateFinObj = new Date(ajd < DATE_FIN ? ajd : DATE_FIN);
 
     while (dateCurseur <= dateFinObj) {
         const dateStr = dateCurseur.toISOString().split('T')[0];
-        
-        // Bonus doublés le vendredi
         const estVendredi = (dateStr === DATE_SPRINT);
         const bonusOr = estVendredi ? 20 : 10;
         const bonusArg = estVendredi ? 10 : 5;
@@ -214,29 +231,21 @@ function calculerScoresComplets() {
 
         ['Mover', 'Switcher', 'Coach', 'Pépinière'].forEach(cellule => {
             const agentsCellule = tousLesAgents.filter(a => a.cellule === cellule);
-            
-            // Classement du jour pour les médailles
             const classementJour = agentsCellule.map(a => {
                 const vol = tousLesContrats.filter(c => 
-                    c.agent_id === a.id && 
-                    c.created_at.startsWith(dateStr) &&
-                    c.statut === 'valide'
+                    c.agent_id === a.id && c.created_at.startsWith(dateStr) && c.statut === 'valide'
                 ).length;
                 return { agent: a, vol: vol };
             }).sort((a, b) => b.vol - a.vol);
 
-            // Distribution
             if (classementJour[0] && classementJour[0].vol > 0) classementJour[0].agent.scoreTotal += bonusOr;
             if (classementJour[1] && classementJour[1].vol > 0) classementJour[1].agent.scoreTotal += bonusArg;
             if (classementJour[2] && classementJour[2].vol > 0) classementJour[2].agent.scoreTotal += bonusBrz;
         });
-
         dateCurseur.setDate(dateCurseur.getDate() + 1);
     }
 
-    // =====================================================
     // 4. MISE À JOUR DE L'UTILISATEUR CONNECTÉ
-    // =====================================================
     const moiCalcule = tousLesAgents.find(a => a.id === utilisateurActuel.id);
     if (moiCalcule) {
         utilisateurActuel.scoreTotal = moiCalcule.scoreTotal;
@@ -478,17 +487,29 @@ function calculerEtAfficherPerformanceJour() {
     if (elClassementJour) elClassementJour.textContent = `${maPositionJour}ème`;
 }
 
+// =============================================================
+// 👥 GESTION ÉQUIPE (MODE LECTURE SIMPLE - CORRIGÉ)
+// =============================================================
 function calculerEtAfficherEquipe() {
-    if (!utilisateurActuel.equipe_id) return;
+    if (!utilisateurActuel || !utilisateurActuel.equipe_id) return;
     
+    // 1. On récupère les copains de l'équipe
     const mesCoequipiers = tousLesAgents.filter(a => a.equipe_id === utilisateurActuel.equipe_id);
-    const scoreEquipe = mesCoequipiers.reduce((total, agent) => total + (agent.scoreTotal || 0), 0);
 
+    // 2. On additionne simplement les scores DÉJÀ CALCULÉS
+    // (Puisqu'ils sont justes maintenant, on ne recalcule rien !)
+    const scoreEquipe = mesCoequipiers.reduce((total, agent) => {
+        return total + (agent.scoreTotal || 0);
+    }, 0);
+
+    // 3. Affichage du gros score bleu
     const elScoreEquipe = document.getElementById('score-equipe');
     if (elScoreEquipe) elScoreEquipe.textContent = `${scoreEquipe} pts`;
 
-    // Top 3 avec indication "Vous"
-    const top3 = mesCoequipiers.sort((a, b) => b.scoreTotal - a.scoreTotal).slice(0, 3);
+    // 4. Gestion du Top 3 (Liste)
+    // On trie par le score officiel corrigé
+    const top3 = mesCoequipiers.sort((a, b) => (b.scoreTotal || 0) - (a.scoreTotal || 0)).slice(0, 3);
+    
     const elTop3 = document.getElementById('top3-equipe');
     if (elTop3) {
         elTop3.innerHTML = top3.map((agent, index) => {
@@ -496,7 +517,7 @@ function calculerEtAfficherEquipe() {
             const classe = estMoi ? ' class="vous"' : '';
             return `<li${classe}>
                 <span class="top3-nom">${estMoi ? 'Vous' : agent.prenom + ' ' + agent.nom}</span>
-                <span class="top3-score">${agent.scoreTotal} pts</span>
+                <span class="top3-score">${agent.scoreTotal || 0} pts</span>
             </li>`;
         }).join('');
     }
