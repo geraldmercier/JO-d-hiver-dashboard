@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // 4. Calculs initiaux
     calculerScoresComplets();
-    await chargerScoreLive();
+    
     // 5. Vérification des challenges
     await detecterEtSoumettreChallenges();
 
@@ -185,71 +185,54 @@ async function chargerScoreLive() {
 }
 
 // =============================================================
-// 🧠 MOTEUR DE CALCUL (MODE SÉCURISÉ & COMPLET)
+// 🧠 MOTEUR DE CALCUL (MODE MANUEL - PRÉCISION 100%)
 // =============================================================
 function calculerScoresComplets() {
     
-    // 1. INITIALISATION (On garde le score SQL officiel comme base)
+    // 1. REMISE À ZÉRO ABSOLUE
+    // On ignore les scores existants et on part de 0
     tousLesAgents.forEach(a => { 
-        a.scoreTotal = a.scoreTotal || 0; 
-        a.scoreJour = 0; // On remet le jour à 0 pour le recalculer
+        a.scoreTotal = 0; 
+        a.scoreJour = 0; 
     });
 
-    // 2. AJOUT SÉCURISÉ DES CONTRATS
-    // (On n'ajoute que ce qui n'est PAS encore dans le SQL)
+    // 2. CALCUL DES CONTRATS (La base réelle)
     tousLesContrats.forEach(c => {
         const agent = tousLesAgents.find(a => a.id === c.agent_id);
         
         if (agent) {
             const dateC = c.created_at.split('T')[0];
+            // Si vous avez une règle spéciale pour le vendredi, gardez-la, sinon 10 pts
             const points = (dateC === DATE_SPRINT) ? 20 : 10;
 
-            // A. TOTAL : On ajoute SEULEMENT si "en_attente"
-            // (Si c'est "valide", c'est déjà dans le score SQL chargé au début)
-            if (c.statut === 'en_attente') {
+            // On ajoute TOUS les contrats (Valides ou En attente)
+            if (c.statut === 'valide' || c.statut === 'en_attente') {
                 agent.scoreTotal += points;
-            }
 
-            // B. JOUR : Pour le podium du jour, on compte tout (Validé + Attente)
-            if (estAujourdhui(c.created_at) && (c.statut === 'valide' || c.statut === 'en_attente')) {
-                agent.scoreJour += points;
+                // Si c'est aujourd'hui, on ajoute aussi au score du jour
+                if (estAujourdhui(c.created_at)) {
+                    agent.scoreJour += points;
+                }
             }
         }
     });
 
-    // 3. BONUS MÉDAILLES (PODIUMS QUOTIDIENS) - CONSERVÉ INTÉGRALEMENT ✅
-    const ajd = new Date().toISOString().split('T')[0];
-    let dateCurseur = new Date(DATE_DEBUT);
-    const dateFinObj = new Date(ajd < DATE_FIN ? ajd : DATE_FIN);
-
-    while (dateCurseur <= dateFinObj) {
-        const dateStr = dateCurseur.toISOString().split('T')[0];
-        const estVendredi = (dateStr === DATE_SPRINT);
-        const bonusOr = estVendredi ? 20 : 10;
-        const bonusArg = estVendredi ? 10 : 5;
-        const bonusBrz = estVendredi ? 4 : 2;
-
-        ['Mover', 'Switcher', 'Coach', 'Pépinière'].forEach(cellule => {
-            const agentsCellule = tousLesAgents.filter(a => a.cellule === cellule);
-            const classementJour = agentsCellule.map(a => {
-                const vol = tousLesContrats.filter(c => 
-                    c.agent_id === a.id && c.created_at.startsWith(dateStr) && c.statut === 'valide'
-                ).length;
-                return { agent: a, vol: vol };
-            }).sort((a, b) => b.vol - a.vol);
-
-            if (classementJour[0] && classementJour[0].vol > 0) classementJour[0].agent.scoreTotal += bonusOr;
-            if (classementJour[1] && classementJour[1].vol > 0) classementJour[1].agent.scoreTotal += bonusArg;
-            if (classementJour[2] && classementJour[2].vol > 0) classementJour[2].agent.scoreTotal += bonusBrz;
+    // 3. CALCUL DES BONUS (Challenges réussis)
+    if (window.toutesLesReussites) {
+        window.toutesLesReussites.forEach(r => {
+            const agent = tousLesAgents.find(a => a.id === r.agent_id);
+            if (agent) {
+                const pts = Number(r.points_gagnes) || Number(r.challenges_flash?.points_attribues) || 0;
+                agent.scoreTotal += pts;
+            }
         });
-        dateCurseur.setDate(dateCurseur.getDate() + 1);
     }
 
-    // 4. MISE À JOUR DE L'UTILISATEUR CONNECTÉ
+    // 4. SYNC UTILISATEUR COURANT
     const moiCalcule = tousLesAgents.find(a => a.id === utilisateurActuel.id);
     if (moiCalcule) {
         utilisateurActuel.scoreTotal = moiCalcule.scoreTotal;
-        if (utilisateurActuel.scoreJour !== undefined) utilisateurActuel.scoreJour = moiCalcule.scoreJour;
+        utilisateurActuel.scoreJour = moiCalcule.scoreJour;
     }
 }
 
@@ -551,11 +534,16 @@ function chargerContratsJour() {
         });
 
         const icone = {
-            'Telco': '📞',
+            'Box': '🌐',
+            'Box Premium': '⭐',
             'Mobile': '📱',
-            'MRH': '🏠',
-            'Premium': '⭐',
-            'Compensation Carbone': '🌱'
+            'MRH Homeserve': '🏠',
+            'Compensation Carbone': '🌱',
+            'Contrat Premium Coach': '🏆',
+            'Energie': '🔥',
+            'Proxiserve': '🛠️',
+            'Voltalis': '🔌',
+            'Autre': '📄'
         }[contrat.type_contrat] || '📄';
 
         const statutBadge = contrat.statut === 'valide' ? 
@@ -843,36 +831,76 @@ async function supprimerContrat(contratId) {
 }
 
 // =============================================================
-// 📝 ENREGISTREMENT (INTERACTION)
+// 📝 ENREGISTREMENT (CORRIGÉ & SÉCURISÉ)
 // =============================================================
-
 async function enregistrerContrat(e) {
     e.preventDefault();
+    console.log("🚀 Démarrage de l'enregistrement...");
+
     const btn = document.getElementById('btn-enregistrer');
     
+    // 1. Protection visuelle
     if (btn) {
         btn.disabled = true;
         btn.textContent = 'Enregistrement...';
     }
 
     try {
-        const { error } = await sb.from('contrats').insert({
+        // 2. RECUPERATION ET VERIFICATION DES CHAMPS
+        const inputType = document.getElementById('type-contrat');
+        const inputLien = document.getElementById('lien-piste');
+        const inputApi = document.getElementById('contrat-apiapp'); // Peut être null, pas grave
+
+        // Vérification de sécurité (Si Zencoder a cassé les IDs)
+        if (!inputType || !inputLien) {
+            throw new Error("ERREUR HTML : Les champs 'type-contrat' ou 'lien-piste' sont introuvables. Vérifiez les ID dans le fichier HTML.");
+        }
+
+        if (inputType.value === "") {
+            throw new Error("Merci de sélectionner un type de contrat dans la liste.");
+        }
+
+        // 3. PRÉPARATION DES DATES (Formatage strict pour éviter l'erreur 400)
+        const now = new Date();
+        const isoTimestamp = now.toISOString();       // Ex: 2026-02-10T19:30:00.000Z
+        const dateSeule = isoTimestamp.split('T')[0]; // Ex: 2026-02-10
+
+        // 4. CONSTRUCTION DE L'OBJET
+        const payload = {
             agent_id: utilisateurActuel.id,
-            type_contrat: document.getElementById('type-contrat').value,
-            lien_piste: document.getElementById('lien-piste').value,
-            api_app: document.getElementById('contrat-apiapp') ? document.getElementById('contrat-apiapp').checked : false,
+            type_contrat: inputType.value,
+            lien_piste: inputLien.value,
+            api_app: inputApi ? inputApi.checked : false,
             statut: 'en_attente',
-            created_at: new Date().toISOString()
-        });
+            
+            // 👇 INDISPENSABLE POUR VOTRE BASE DE DONNÉES
+            created_at: isoTimestamp,
+            heure_saisie: isoTimestamp,
+            date_contrat: dateSeule
+        };
 
-        if (error) throw error;
+        console.log("📤 Envoi vers Supabase :", payload);
 
+        // 5. ENVOI
+        const { error } = await sb.from('contrats').insert(payload);
+
+        if (error) {
+            console.error("❌ Erreur Supabase:", error);
+            // On affiche le message technique pour comprendre (ex: check constraint)
+            throw new Error(error.message || "Erreur base de données inconnue");
+        }
+
+        // 6. SUCCÈS
         document.getElementById('formulaire-contrat').reset();
         
-        // Recharger tout
-        await chargerTousLesContrats();
+        // Rafraichissement total
+        await Promise.all([
+            chargerTousLesContrats(),
+            detecterEtSoumettreChallenges()
+        ]);
         calculerScoresComplets();
         
+        // Mise à jour visuelle
         afficherScoreEtRang();
         afficherPodiumDuJour();
         calculerEtAfficherSkiFond();
@@ -882,16 +910,15 @@ async function enregistrerContrat(e) {
         afficherCalendrierComplet();
         afficherBadgesReels();
         
-        await detecterEtSoumettreChallenges();
-        
         alert('✅ Contrat enregistré avec succès !');
 
     } catch (err) { 
-        alert("Erreur : " + err.message); 
+        console.error("Erreur Catch:", err);
+        alert("Oups ! " + err.message); 
     } finally { 
         if (btn) {
             btn.disabled = false;
-            btn.textContent = 'Enregistrer';
+            btn.innerHTML = '<span id="btn-texte">✅ Enregistrer</span>';
         }
     }
 }

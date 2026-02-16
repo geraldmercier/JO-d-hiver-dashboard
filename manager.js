@@ -307,11 +307,16 @@ async function chargerContratsAttente() {
                            date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
             const icone = {
-                'Telco': '📞',
+                'Box': '🌐',
+                'Box Premium': '⭐',
                 'Mobile': '📱',
-                'MRH': '🏠',
-                'Premium': '⭐',
-                'Compensation Carbone': '🌱'
+                'MRH Homeserve': '🏠',
+                'Compensation Carbone': '🌱',
+                'Contrat Premium Coach': '🏆',
+                'Energie': '🔥',
+                'Proxiserve': '🛠️',
+                'Voltalis': '🔌',
+                'Autre': '📄'
             }[contrat.type_contrat] || '📄';
 
             div.innerHTML = `
